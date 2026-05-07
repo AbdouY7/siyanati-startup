@@ -4,6 +4,8 @@ import AboutUs from "../components/layaouts/AboutUs";
 import Services from "../components/layaouts/Services";
 import BestParts from "../components/layaouts/BestParts";
 import ProSection from "../components/layaouts/ProSection";
+import Testimonial from "../components/layaouts/Testimonial";
+import Footer from "../components/layaouts/Footer";
 
 const Home = () => {
   return (
@@ -13,6 +15,8 @@ const Home = () => {
       <Services />
       <BestParts />
       <ProSection />
+      <Testimonial />
+      <Footer />
     </div>
   );
 };

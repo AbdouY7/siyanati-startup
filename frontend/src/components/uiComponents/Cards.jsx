@@ -1,4 +1,6 @@
 import { useState } from "react";
+import magasinImage from "../../assets/img/magasin-pic.png";
+import professionalPicture from "../../assets/img/professional-pic.png";
 
 const globalStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
@@ -101,8 +103,7 @@ const cards = [
     id: 1,
     badge: "Magasin & Boutique",
     title: "Pour les magasins\nde pièces",
-    bgImage:
-      "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da35?w=900&q=80",
+    bgImage: magasinImage,
     details: [
       "Inscrivez votre magasin sur la plateforme",
       "Ajoutez et gérez vos produits (neufs ou d'occasion)",
@@ -140,8 +141,7 @@ const cards = [
     id: 2,
     badge: "Professionnels",
     title: "Pour les professionnels\n(mécaniciens, électriciens)",
-    bgImage:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80",
+    bgImage: professionalPicture,
     details: [
       "Accédez à un catalogue complet de pièces certifiées",
       "Commandez directement depuis votre atelier",

@@ -51,7 +51,7 @@ const Services = () => {
       {/* Top: title/description + image */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
         <div className="flex flex-col gap-6 max-w-[600px] items-center lg:items-start text-center lg:text-left">
-          <h1 className="text-[48px] sm:text-[60px] lg:text-[80px] font-bold font-secondary text-primary leading-[1.2] uppercase w-full md:w-0.5">
+          <h1 className="text-[48px] sm:text-[60px] lg:text-[80px] font-bold font-secondary text-primary leading-[1.2] uppercase w-full md:w-0.7">
             services de SIYANATI
           </h1>
           <p className="text-[16px] text-gray-700 font-medium font-primary tracking-wide">
