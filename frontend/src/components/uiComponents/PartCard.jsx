@@ -60,7 +60,7 @@ const PartCard = ({
 
         {/* Price badge */}
         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-secondary font-bold font-primary text-sm px-3 py-1 rounded-full shadow-sm border border-secondary/20">
-          {price.toFixed(2)} DA
+          {(price ?? 0).toLocaleString("fr-DZ")} DA
         </div>
       </div>
 

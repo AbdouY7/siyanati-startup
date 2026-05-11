@@ -62,6 +62,7 @@ function DispoBadge({ disponibilite }) {
 
 export default function Part({ part }) {
   const {
+    id,
     name,
     categorie,
     vehicule,
@@ -121,10 +122,18 @@ export default function Part({ part }) {
 
         {/* Actions */}
         <div className="flex gap-2 mt-auto pt-2">
-          <button className="flex-1 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-sm font-semibold py-2 rounded-xl flex items-center justify-center gap-1 transition-all duration-150">
+          <button
+            onClick={() => {
+              window.location.href = `/buy-part/${id}`;
+            }}
+            className="flex-1 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-sm font-semibold py-2 rounded-xl flex items-center justify-center gap-1 transition-all duration-150">
             Achetez <span className="text-base">＋</span>
           </button>
-          <button className="flex-1 border border-slate-200 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 text-slate-600 text-sm font-semibold py-2 rounded-xl transition-all duration-150">
+          <button
+            onClick={() => {
+              window.location.href = `/part-details/${id}`;
+            }}
+            className="flex-1 border border-slate-200 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 text-slate-600 text-sm font-semibold py-2 rounded-xl transition-all duration-150">
             Voir plus
           </button>
         </div>
