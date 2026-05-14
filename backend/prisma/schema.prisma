@@ -1,0 +1,352 @@
+// ═══════════════════════════════════════════════════════════
+// Automotive Platform — Prisma Schema (corrected & complete)
+// ═══════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  // url      = env("DATABASE_URL") // ← FIXED: was missing, every CLI command fails without this
+}
+
+// ─────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────
+
+enum UserRole {
+  customer
+  professional
+  store
+  admin
+}
+
+enum ProfileStatus {
+  pending
+  approved
+  rejected
+}
+
+enum SpecialtyType {
+  mechanic
+  electrician
+  bodywork
+  diagnostic
+  other
+}
+
+enum FuelType {
+  petrol
+  diesel
+  electric
+  hybrid
+  lpg
+}
+
+enum SellerType {
+  client
+  store
+}
+
+enum PartCondition {
+  new
+  used
+  refurbished
+}
+
+enum OrderDeliveryType {
+  home_delivery
+  store_pickup
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentMethod {
+  edahabia
+  cash_on_delivery
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+  refunded
+}
+
+enum AppointmentStatus {
+  pending
+  confirmed
+  in_progress
+  completed
+  cancelled
+}
+
+enum PostStatus {
+  open
+  resolved
+  closed
+}
+
+enum ReactionTarget {
+  post
+  comment
+}
+
+enum MessageType {
+  text
+  image
+  file
+  system
+}
+
+enum BillingCycle {
+  monthly
+  quarterly
+  annual
+}
+
+enum SubscriptionTarget {
+  professional
+  store
+}
+
+enum SubscriptionStatus {
+  active
+  cancelled
+  expired
+  suspended
+}
+
+enum ReviewTarget {
+  store
+  part
+  professional
+}
+
+enum LoyaltyOperation {
+  earn
+  redeem
+  expire
+  admin_adjust
+}
+
+enum FavoriteTarget {
+  store
+  professional
+  part
+}
+
+enum ReportTarget {
+  store
+  professional
+  post
+  comment
+  user
+}
+
+enum ReportReason {
+  spam
+  fraud
+  inappropriate_content
+  fake_parts
+  no_show
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  dismissed
+  actioned
+}
+
+enum NotificationType {
+  order_status_updated
+  appointment_requested
+  appointment_confirmed
+  appointment_cancelled
+  appointment_completed
+  new_message
+  subscription_expiring
+  subscription_expired
+  account_frozen
+  account_unfrozen
+  review_received
+  report_reviewed
+  professional_approved
+  professional_rejected
+  store_approved
+  store_rejected
+  loyalty_points_earned
+  diagnostic_post_answered
+  diagnostic_answer_accepted
+}
+
+// ─────────────────────────────────────────────────────────
+// USER & PROFILES
+// ─────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password_hash  String
+  role           UserRole @default(customer)
+  is_active      Boolean  @default(true)
+  email_verified Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  refresh_token  String?
+  phone          String  @unique // ← ADDED: persisted in the users table
+
+  // Profiles
+  client_profile       ClientProfile?
+  store_profile        StoreProfile?
+  professional_profile ProfessionalProfile?
+
+  // Vehicles
+  vehicles Vehicle[]
+
+  @@map("users")
+}
+
+model ClientProfile {
+  id                 String    @id @default(uuid())
+  user_id            String    @unique
+  full_name          String
+  wilaya             String?
+  address            String?
+  date_of_birth      DateTime?
+  national_id_number String?
+  national_id_card   String[]
+  avatar_url         String?
+  preferred_language String    @default("ar")
+  created_at         DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
+}
+
+model StoreProfile {
+  id                   String   @id @default(uuid())
+  user_id              String   @unique
+  owner_name           String
+  store_name           String
+  description          String?
+  address              String
+  wilaya               String
+  location_coordinates String?
+  documents            String[]
+  images               String[]
+  logo_url             String?
+
+  status               ProfileStatus @default(pending)
+  rejection_reason     String?
+  reviewed_by_admin_id String?
+  reviewed_at          DateTime?
+  submitted_at         DateTime      @default(now())
+
+  is_frozen    Boolean  @default(false)
+  rating_avg   Decimal  @default(0) @db.Decimal(3, 2)
+  rating_count Int      @default(0)
+  created_at   DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("store_profiles")
+}
+
+model ProfessionalProfile {
+  id               String        @id @default(uuid())
+  user_id          String        @unique
+  full_name        String
+  specialty_type   SpecialtyType
+  experience_years Int?
+  wilaya           String
+  location_address String?
+  shop_images      String[]
+  documents        String[]
+  bio              String?
+
+  status               ProfileStatus @default(pending)
+  rejection_reason     String?
+  reviewed_by_admin_id String?
+  reviewed_at          DateTime?
+  submitted_at         DateTime      @default(now())
+
+  is_available    Boolean  @default(true)
+  is_frozen       Boolean  @default(false)
+  hourly_rate_dzd Decimal? @db.Decimal(12, 2)
+  rating_avg      Decimal  @default(0) @db.Decimal(3, 2)
+  rating_count    Int      @default(0)
+  subscription_id String?
+  created_at      DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("professional_profiles")
+}
+
+// ─────────────────────────────────────────────────────────
+// VEHICLES
+// ─────────────────────────────────────────────────────────
+
+model Brand {
+  id       String  @id @default(uuid())
+  name     String  @unique
+  country  String?
+  logo_url String?
+  is_deleted Boolean  @default(false) // ← soft delete flag
+
+  models   Model[]
+  vehicles Vehicle[]
+
+  @@map("brands")
+}
+
+model Model {
+  id         String @id @default(uuid())
+  brand_id   String
+  name       String
+  year_start Int?
+  year_end   Int?
+
+  brand    Brand     @relation(fields: [brand_id], references: [id], onDelete: Cascade)
+  vehicles Vehicle[]
+
+  @@map("models")
+}
+
+model Vehicle {
+  id                        String    @id @default(uuid())
+  user_id                   String
+  brand_id                  String
+  model_id                  String
+  year                      Int
+  fuel_type                 FuelType?
+  engine_cc                 Int?
+  registration_number       String?
+  registration_document_url String?
+  vin                       String?   @unique
+  is_default                Boolean   @default(false)
+  color                     String?
+  mileage_km                Int?
+  notes                     String?
+  created_at                DateTime  @default(now())
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  brand Brand @relation(fields: [brand_id], references: [id])
+  model Model @relation(fields: [model_id], references: [id])
+
+  @@map("vehicles")
+}
