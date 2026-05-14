@@ -262,6 +262,56 @@ const updateModel = async (req, res, next) => {
   }
 };
 
+const deleteModel = async (req, res, next) => {
+  try {
+    const model = await prisma.model.findUnique({
+      where: { id: req.params.id },
+      include: {
+        _count: {
+          select: { vehicles: true },
+        },
+      },
+    });
+
+    if (!model) {
+      res.status(404).json({ success: false, message: "Model not found" });
+      return;
+    }
+
+    if (model._count.vehicles > 0) {
+      res.status(400).json({
+        success: false,
+        message: "Cannot delete model with existing vehicles",
+      });
+      return;
+    }
+
+    await prisma.model.delete({
+      where: { id: req.params.id },
+    });
+
+    res.json({
+      success: true,
+      message: "Model deleted successfully",
+    });
+  } catch (error) {
+    if (error.code === "P2025") {
+      res.status(404).json({ success: false, message: "Model not found" });
+      return;
+    }
+
+    if (error.code === "P2003") {
+      res.status(400).json({
+        success: false,
+        message: "Cannot delete model with existing related records",
+      });
+      return;
+    }
+
+    next(error);
+  }
+};
+
 module.exports = {
   createBrand,
   getAllBrands,
@@ -273,4 +323,5 @@ module.exports = {
   getModelById,
   getModelsByBrand,
   updateModel,
+  deleteModel,
 };

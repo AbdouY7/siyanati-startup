@@ -1,0 +1,314 @@
+const prisma = require("../prisma/client");
+
+const partInclude = {
+  category: true,
+  compatibilities: {
+    include: {
+      brand: { select: { id: true, name: true, logo_url: true } },
+      model: {
+        select: { id: true, name: true, year_start: true, year_end: true },
+      },
+    },
+  },
+};
+
+const isAdmin = (user) => user?.role === "admin";
+const canSellParts = (user) =>
+  user?.role === "customer" || user?.role === "store";
+const getSellerType = (user) => (user.role === "store" ? "store" : "client");
+
+const checkCategory = async (category_id) => {
+  if (!category_id) return true;
+
+  const category = await prisma.category.findUnique({
+    where: { id: category_id },
+  });
+
+  return Boolean(category);
+};
+
+// Create a part listing for the logged-in customer or store.
+const createPart = async (req, res, next) => {
+  try {
+    if (!canSellParts(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only customers and stores can create parts",
+      });
+    }
+
+    const { category_id, ...data } = req.body;
+    const categoryExists = await checkCategory(category_id);
+
+    if (!categoryExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
+    }
+
+    const seller_type = getSellerType(req.user);
+    const is_verified = seller_type === "store" ? true : false;
+
+    const part = await prisma.part.create({
+      data: {
+        ...data,
+        category_id,
+        seller_id: req.user.id,
+        seller_type,
+        images: data.images || [],
+        is_active: true,
+        is_verified,
+        verified_at: is_verified ? new Date() : undefined,
+      },
+      include: partInclude,
+    });
+
+    res.status(201).json({ success: true, data: part });
+  } catch (error) {
+    if (error.code === "P2002") {
+      return res.status(409).json({
+        success: false,
+        message: "This seller already has a part with this SKU",
+      });
+    }
+
+    next(error);
+  }
+};
+
+// Get visible parts. Admins see everything; sellers also see their own parts.
+const getAllParts = async (req, res, next) => {
+  try {
+    const { category_id, condition, seller_type, search, is_verified } =
+      req.query;
+
+    const parts = await prisma.part.findMany({
+      where: {
+        ...(category_id && { category_id }),
+        ...(condition && { condition }),
+        ...(seller_type && { seller_type }),
+        ...(search && { name: { contains: search, mode: "insensitive" } }),
+        ...(isAdmin(req.user) && is_verified !== undefined
+          ? { is_verified: is_verified === "true" }
+          : {}),
+        ...(!isAdmin(req.user)
+          ? {
+              OR: [
+                { seller_id: req.user.id },
+                { is_active: true, is_verified: true },
+              ],
+            }
+          : {}),
+      },
+      include: partInclude,
+      orderBy: { created_at: "desc" },
+    });
+
+    res.json({ success: true, data: parts });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get parts owned by the logged-in seller.
+const getMyParts = async (req, res, next) => {
+  try {
+    if (!canSellParts(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only customers and stores can own parts",
+      });
+    }
+
+    const parts = await prisma.part.findMany({
+      where: { seller_id: req.user.id },
+      include: partInclude,
+      orderBy: { created_at: "desc" },
+    });
+
+    res.json({ success: true, data: parts });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get one part by id.
+const getPartById = async (req, res, next) => {
+  try {
+    const part = await prisma.part.findUnique({
+      where: { id: req.params.id },
+      include: partInclude,
+    });
+
+    if (!part) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Part not found" });
+    }
+
+    const ownsPart = part.seller_id === req.user.id;
+
+    if (
+      !isAdmin(req.user) &&
+      !ownsPart &&
+      (!part.is_active || !part.is_verified)
+    ) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Part not found" });
+    }
+
+    res.json({ success: true, data: part });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update a part. Sellers update their own parts; admins moderate through dedicated endpoints.
+const updatePart = async (req, res, next) => {
+  try {
+    if (isAdmin(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Admins cannot create, update, or own parts",
+      });
+    }
+
+    const existing = await prisma.part.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!existing) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Part not found" });
+    }
+
+    if (existing.seller_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only update your own parts",
+      });
+    }
+
+    const { category_id, ...data } = req.body;
+    const categoryExists = await checkCategory(category_id);
+
+    if (!categoryExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
+    }
+
+    const moderationResetData =
+      existing.seller_type === "client"
+        ? {
+            is_verified: false,
+            verified_at: null,
+            verified_by_admin_id: null,
+          }
+        : {};
+
+    const part = await prisma.part.update({
+      where: { id: req.params.id },
+      data: {
+        ...data,
+        ...(category_id !== undefined && { category_id }),
+        ...moderationResetData,
+      },
+      include: partInclude,
+    });
+
+    res.json({ success: true, data: part });
+  } catch (error) {
+    if (error.code === "P2002") {
+      return res.status(409).json({
+        success: false,
+        message: "This seller already has a part with this SKU",
+      });
+    }
+
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ success: false, message: "Part not found" });
+    }
+
+    next(error);
+  }
+};
+
+// Verify or unverify a part. Admin only from the route.
+const verifyPart = async (req, res, next) => {
+  try {
+    const { is_verified, is_active, is_featured } = req.body;
+
+    const part = await prisma.part.update({
+      where: { id: req.params.id },
+      data: {
+        is_verified,
+        verified_at: is_verified ? new Date() : null,
+        verified_by_admin_id: is_verified ? req.user.id : null,
+        ...(is_active !== undefined && { is_active }),
+        ...(is_featured !== undefined && { is_featured }),
+      },
+      include: partInclude,
+    });
+
+    res.json({ success: true, data: part });
+  } catch (error) {
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ success: false, message: "Part not found" });
+    }
+
+    next(error);
+  }
+};
+
+// Delete a part. Compatibility rows are deleted by Prisma cascade.
+const deletePart = async (req, res, next) => {
+  try {
+    const existing = await prisma.part.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!existing) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Part not found" });
+    }
+
+    if (!isAdmin(req.user) && existing.seller_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own parts",
+      });
+    }
+
+    await prisma.part.delete({
+      where: { id: req.params.id },
+    });
+
+    res.json({ success: true, message: "Part deleted successfully" });
+  } catch (error) {
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ success: false, message: "Part not found" });
+    }
+
+    next(error);
+  }
+};
+
+module.exports = {
+  createPart,
+  getAllParts,
+  getMyParts,
+  getPartById,
+  updatePart,
+  verifyPart,
+  deletePart,
+};

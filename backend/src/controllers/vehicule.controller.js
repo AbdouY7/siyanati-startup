@@ -175,6 +175,81 @@ const getUserVehicles = async (req, res, next) => {
 
 // ─── GET VEHICLE BY ID ─────────────────────────────────────
 
+// GET /clients/:clientId/vehicles
+
+const getClientVehicles = async (req, res, next) => {
+  try {
+    const { clientId } = req.params;
+    const { brand_id, fuel_type, is_default } = req.query;
+
+    const client = await prisma.user.findFirst({
+      where: {
+        id: clientId,
+        role: "customer",
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: "Client not found",
+      });
+    }
+
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        user_id: clientId,
+
+        ...(brand_id && { brand_id }),
+
+        ...(fuel_type && {
+          fuel_type,
+        }),
+
+        ...(is_default !== undefined && {
+          is_default: is_default === "true",
+        }),
+      },
+
+      include: {
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            logo_url: true,
+          },
+        },
+
+        model: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+
+      orderBy: [
+        {
+          is_default: "desc",
+        },
+        {
+          created_at: "desc",
+        },
+      ],
+    });
+
+    res.json({
+      success: true,
+      data: vehicles,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getVehicleById = async (req, res, next) => {
   try {
     const user_id = req.user?.id;
@@ -348,9 +423,60 @@ const updateVehicle = async (req, res, next) => {
   }
 };
 
+// DELETE /vehicles/:id
+
+const deleteVehicle = async (req, res, next) => {
+  try {
+    const user_id = req.user?.id;
+
+    if (!user_id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const vehicle = await prisma.vehicle.findFirst({
+      where: {
+        id: req.params.id,
+        user_id,
+      },
+    });
+
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        message: "Vehicle not found",
+      });
+    }
+
+    await prisma.vehicle.delete({
+      where: {
+        id: req.params.id,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: "Vehicle deleted successfully",
+    });
+  } catch (error) {
+    if (error.code === "P2025") {
+      return res.status(404).json({
+        success: false,
+        message: "Vehicle not found",
+      });
+    }
+
+    next(error);
+  }
+};
+
 module.exports = {
   createVehicle,
   getUserVehicles,
+  getClientVehicles,
   getVehicleById,
   updateVehicle,
+  deleteVehicle,
 };

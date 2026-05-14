@@ -23,4 +23,9 @@ app.get("/", (req, res) => {
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api", require("./routes/user.routes"));
 app.use("/api", require("./routes/vehicule.routes"));
+app.use("/api", require("./routes/category.routes"));
+app.use("/api", require("./routes/part.routes"));
+app.use("/api", require("./routes/compatibility.routes"));
+app.use("/api/v1/orders", require("./routes/order.routes"));
+app.use("/api/v1/payments", require("./routes/payment.routes"));
 module.exports = app;
