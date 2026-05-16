@@ -1,6 +1,7 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
 const { requireAdmin } = require("../middlewares/admin.middleware");
+const upload = require("../middlewares/upload");
 const {
   createBrand,
   getAllBrands,
@@ -44,21 +45,37 @@ router.get("/models/:id", getModelById);
 router.get("/brands/:brandId/models", getModelsByBrand);
 
 // Vehicle routes
-router.post("/vehicles", createVehicle);
+router.post(
+  "/vehicles",
+  upload.fields([
+    { name: "registration_document", maxCount: 1 },
+    { name: "registration_document_url", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
+  createVehicle,
+);
 router.get("/vehicles", getUserVehicles);
 router.get("/clients/:clientId/vehicles", getClientVehicles);
 router.get("/vehicles/:id", getVehicleById);
-router.patch("/vehicles/:id", updateVehicle);
+router.patch(
+  "/vehicles/:id",
+  upload.fields([
+    { name: "registration_document", maxCount: 1 },
+    { name: "registration_document_url", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
+  updateVehicle,
+);
 router.delete("/vehicles/:id", deleteVehicle);
 
 // Admin routes
 
 // Only admins can manage brands and models.
 // Create a new brand
-router.post("/brands", requireAdmin, createBrand);
+router.post("/brands", requireAdmin, upload.single("image"), createBrand);
 
 // Update a brand by ID
-router.patch("/brands/:id", requireAdmin, updateBrand);
+router.patch("/brands/:id", requireAdmin, upload.single("image"), updateBrand);
 // Soft delete a brand by ID
 router.delete("/brands/:id", requireAdmin, deleteBrand);
 

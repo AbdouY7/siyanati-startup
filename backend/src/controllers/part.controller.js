@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client");
+const uploadImage = require("../utils/uploadImage");
 
 const partInclude = {
   category: true,
@@ -16,6 +17,29 @@ const isAdmin = (user) => user?.role === "admin";
 const canSellParts = (user) =>
   user?.role === "customer" || user?.role === "store";
 const getSellerType = (user) => (user.role === "store" ? "store" : "client");
+
+const getFiles = (req, fieldName) => {
+  if (req.file?.fieldname === fieldName) return [req.file];
+  if (!req.files) return [];
+  if (Array.isArray(req.files)) {
+    return req.files.filter((file) => file.fieldname === fieldName);
+  }
+
+  return req.files[fieldName] || [];
+};
+
+const getPartImageFiles = (req) => [
+  ...getFiles(req, "image"),
+  ...getFiles(req, "images"),
+];
+
+const uploadPartImages = async (req) => {
+  const results = await Promise.all(
+    getPartImageFiles(req).map((file) => uploadImage(file.buffer, "parts")),
+  );
+
+  return results.map((result) => result.secure_url);
+};
 
 const checkCategory = async (category_id) => {
   if (!category_id) return true;
@@ -48,6 +72,7 @@ const createPart = async (req, res, next) => {
 
     const seller_type = getSellerType(req.user);
     const is_verified = seller_type === "store" ? true : false;
+    const imageUrls = await uploadPartImages(req);
 
     const part = await prisma.part.create({
       data: {
@@ -55,7 +80,7 @@ const createPart = async (req, res, next) => {
         category_id,
         seller_id: req.user.id,
         seller_type,
-        images: data.images || [],
+        images: imageUrls.length ? imageUrls : data.images || [],
         is_active: true,
         is_verified,
         verified_at: is_verified ? new Date() : undefined,
@@ -208,11 +233,13 @@ const updatePart = async (req, res, next) => {
             verified_by_admin_id: null,
           }
         : {};
+    const imageUrls = await uploadPartImages(req);
 
     const part = await prisma.part.update({
       where: { id: req.params.id },
       data: {
         ...data,
+        ...(imageUrls.length && { images: imageUrls }),
         ...(category_id !== undefined && { category_id }),
         ...moderationResetData,
       },

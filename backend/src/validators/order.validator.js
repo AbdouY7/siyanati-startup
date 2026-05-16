@@ -51,14 +51,24 @@ const createOrderSchema = z
 const listOrdersSchema = z.object({
   body: z.object({}).optional(),
   params: z.object({}).optional(),
-  query: z.object({
-    status: orderStatusSchema.optional(),
-    delivery_type: deliveryTypeSchema.optional(),
-    from_date: z.coerce.date().optional(),
-    to_date: z.coerce.date().optional(),
-    page: z.coerce.number().int().min(1).default(1),
-    limit: z.coerce.number().int().min(1).max(100).default(20),
-  }),
+  query: z
+    .object({
+      status: orderStatusSchema.optional(),
+      delivery_type: deliveryTypeSchema.optional(),
+      from_date: z.coerce.date().optional(),
+      to_date: z.coerce.date().optional(),
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(100).default(20),
+    })
+    .superRefine((data, ctx) => {
+      if (data.from_date && data.to_date && data.from_date > data.to_date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["from_date"],
+          message: "from_date must be before or equal to to_date",
+        });
+      }
+    }),
 });
 
 const orderIdParamsSchema = z.object({

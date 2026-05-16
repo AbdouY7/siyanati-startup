@@ -1,6 +1,7 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
 const { requireAdmin } = require("../middlewares/admin.middleware");
+const upload = require("../middlewares/upload");
 const {
   createPart,
   getAllParts,
@@ -35,13 +36,29 @@ const validateSchema = (schema) => (req, res, next) => {
 router.use(authMiddleware);
 
 // Create and read part listings.
-router.post("/parts", validateSchema(partCreateSchema), createPart);
+router.post(
+  "/parts",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "images", maxCount: 10 },
+  ]),
+  validateSchema(partCreateSchema),
+  createPart,
+);
 router.get("/parts", getAllParts);
 router.get("/parts/my", getMyParts);
 router.get("/parts/:id", getPartById);
 
 // Update and delete part listings.
-router.patch("/parts/:id", validateSchema(partUpdateSchema), updatePart);
+router.patch(
+  "/parts/:id",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "images", maxCount: 10 },
+  ]),
+  validateSchema(partUpdateSchema),
+  updatePart,
+);
 router.delete("/parts/:id", deletePart);
 
 // Admin verifies or unverifies client part listings.

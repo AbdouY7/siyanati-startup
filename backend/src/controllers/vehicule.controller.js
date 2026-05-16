@@ -1,4 +1,44 @@
 const prisma = require("../prisma/client");
+const uploadImage = require("../utils/uploadImage");
+
+const getFile = (req, fieldNames) => {
+  for (const fieldName of fieldNames) {
+    if (req.file?.fieldname === fieldName) return req.file;
+    if (Array.isArray(req.files)) {
+      const file = req.files.find((item) => item.fieldname === fieldName);
+      if (file) return file;
+    }
+    if (req.files?.[fieldName]?.[0]) return req.files[fieldName][0];
+  }
+
+  return null;
+};
+
+const uploadRegistrationDocument = async (req) => {
+  const file = getFile(req, [
+    "registration_document",
+    "registration_document_url",
+    "document",
+  ]);
+
+  if (!file) return null;
+
+  const result = await uploadImage(file.buffer, "vehicle-documents");
+  return result.secure_url;
+};
+
+const toOptionalInt = (value) => {
+  if (value === undefined || value === null || value === "") return undefined;
+  return Number(value);
+};
+
+const toOptionalBoolean = (value) => {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value === "boolean") return value;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return Boolean(value);
+};
 
 // ─── POST /vehicles ─────────────────────────────────────────
 
@@ -43,8 +83,12 @@ const createVehicle = async (req, res, next) => {
       });
     }
 
+    const uploadedRegistrationDocumentUrl =
+      await uploadRegistrationDocument(req);
+    const parsedIsDefault = toOptionalBoolean(is_default);
+
     // Clear old default vehicle
-    if (is_default) {
+    if (parsedIsDefault) {
       await prisma.vehicle.updateMany({
         where: {
           user_id,
@@ -61,15 +105,16 @@ const createVehicle = async (req, res, next) => {
         user_id,
         brand_id,
         model_id,
-        year,
+        year: Number(year),
         fuel_type,
-        engine_cc,
+        engine_cc: toOptionalInt(engine_cc),
         registration_number,
-        registration_document_url,
+        registration_document_url:
+          uploadedRegistrationDocumentUrl || registration_document_url,
         vin,
-        is_default: is_default ?? false,
+        is_default: parsedIsDefault ?? false,
         color,
-        mileage_km,
+        mileage_km: toOptionalInt(mileage_km),
         notes,
       },
 
@@ -325,6 +370,16 @@ const updateVehicle = async (req, res, next) => {
     }
 
     const { brand_id, model_id, is_default, ...rest } = req.body;
+    const uploadedRegistrationDocumentUrl =
+      await uploadRegistrationDocument(req);
+    const parsedIsDefault = toOptionalBoolean(is_default);
+    const normalizedRest = { ...rest };
+
+    for (const field of ["year", "engine_cc", "mileage_km"]) {
+      if (field in normalizedRest) {
+        normalizedRest[field] = toOptionalInt(normalizedRest[field]);
+      }
+    }
 
     // Validate brand-model relation
     if (model_id || brand_id) {
@@ -348,7 +403,7 @@ const updateVehicle = async (req, res, next) => {
     }
 
     // Handle default vehicle
-    if (is_default === true) {
+    if (parsedIsDefault === true) {
       await prisma.vehicle.updateMany({
         where: {
           user_id,
@@ -375,11 +430,14 @@ const updateVehicle = async (req, res, next) => {
 
         ...(model_id && { model_id }),
 
-        ...(is_default !== undefined && {
-          is_default,
+        ...(parsedIsDefault !== undefined && {
+          is_default: parsedIsDefault,
         }),
 
-        ...rest,
+        ...normalizedRest,
+        ...(uploadedRegistrationDocumentUrl && {
+          registration_document_url: uploadedRegistrationDocumentUrl,
+        }),
       },
 
       include: {

@@ -31,6 +31,11 @@ const {
   initiatePayment,
   handleEdahabiaWebhook,
   getPaymentByOrder,
+  collectCodPayment,
+  getPaymentById,
+  adminUpdatePaymentStatus,
+  initiateSubscriptionPayment,
+  handleSubscriptionPaymentWebhook,
 } = require("../controllers/payment.controller");
 const {
   initiatePaymentSchema,
@@ -40,15 +45,17 @@ const {
 
 const router = express.Router();
 
-router.post(
-  "/webhook",
-  validate(edahabiaWebhookSchema),
-  handleEdahabiaWebhook,
-);
+router.post("/webhook", validate(edahabiaWebhookSchema), handleEdahabiaWebhook);
+router.post("/subscription", authMiddleware, initiateSubscriptionPayment);
+router.post("/subscription/webhook", handleSubscriptionPaymentWebhook);
 
 router.use(authMiddleware);
 
 router.post("/initiate", validate(initiatePaymentSchema), initiatePayment);
 router.get("/:order_id", validate(paymentByOrderParamsSchema), getPaymentByOrder);
+
+router.get("/id/:id", getPaymentById);
+router.patch("/:id/collect-cod", collectCodPayment);
+router.patch("/:id/status", adminUpdatePaymentStatus);
 
 module.exports = router;

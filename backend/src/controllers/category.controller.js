@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client");
+const uploadImage = require("../utils/uploadImage");
 
 const slugify = (value) =>
   value
@@ -23,6 +24,12 @@ const categoryInclude = {
 const createCategory = async (req, res, next) => {
   try {
     const { name, slug, parent_id, icon_url } = req.body;
+    let imageUrl = null;
+
+    if (req.file) {
+      const result = await uploadImage(req.file.buffer, "categories");
+      imageUrl = result.secure_url;
+    }
 
     // Check parent category before assigning it.
     if (parent_id) {
@@ -42,7 +49,7 @@ const createCategory = async (req, res, next) => {
         name,
         slug: slug || slugify(name),
         parent_id,
-        icon_url,
+        icon_url: imageUrl || icon_url,
       },
       include: categoryInclude,
     });
@@ -103,6 +110,12 @@ const getCategoryById = async (req, res, next) => {
 const updateCategory = async (req, res, next) => {
   try {
     const { name, slug, parent_id, icon_url } = req.body;
+    let imageUrl = null;
+
+    if (req.file) {
+      const result = await uploadImage(req.file.buffer, "categories");
+      imageUrl = result.secure_url;
+    }
 
     if (parent_id && parent_id === req.params.id) {
       return res.status(400).json({
@@ -130,6 +143,7 @@ const updateCategory = async (req, res, next) => {
         ...(slug && { slug }),
         ...(parent_id !== undefined && { parent_id }),
         ...(icon_url !== undefined && { icon_url }),
+        ...(imageUrl && { icon_url: imageUrl }),
       },
       include: categoryInclude,
     });

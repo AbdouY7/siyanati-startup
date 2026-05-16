@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const prisma = require("../prisma/client");
 const { randomUUID } = require("crypto");
 const jwt = require("jsonwebtoken");
+const uploadImage = require("../utils/uploadImage");
 const {
   professionalRegisterSchema,
   adminRegisterSchema,
@@ -20,6 +21,23 @@ function generateRefreshToken(user) {
     expiresIn: "7d",
   });
 }
+
+const getFiles = (req, fieldName) => {
+  if (!req.files) return [];
+  if (Array.isArray(req.files)) {
+    return req.files.filter((file) => file.fieldname === fieldName);
+  }
+
+  return req.files[fieldName] || [];
+};
+
+const uploadFiles = async (files, folder) => {
+  const results = await Promise.all(
+    files.map((file) => uploadImage(file.buffer, folder)),
+  );
+
+  return results.map((result) => result.secure_url);
+};
 
 // ── Controllers ───────────────────────────────────────────────────────────────
 
@@ -205,6 +223,13 @@ const registerStore = async (req, res, next) => {
 
     const password_hash = await bcrypt.hash(password, 12);
     const userId = randomUUID();
+    const storeImageUrls = await uploadFiles(getFiles(req, "images"), "stores");
+    const logoFiles = [
+      ...getFiles(req, "logo"),
+      ...getFiles(req, "image"),
+      ...getFiles(req, "logo_url"),
+    ];
+    const [uploadedLogoUrl] = await uploadFiles(logoFiles.slice(0, 1), "stores");
 
     await prisma.$transaction([
       prisma.user.create({
@@ -220,8 +245,8 @@ const registerStore = async (req, res, next) => {
           wilaya,
           location_coordinates,
           documents: documents || [],
-          images: images || [],
-          logo_url,
+          images: storeImageUrls.length ? storeImageUrls : images || [],
+          logo_url: uploadedLogoUrl || logo_url,
           status: "pending",
           submitted_at: new Date(),
         },
@@ -293,6 +318,11 @@ const registerProfessional = async (req, res, next) => {
 
     const password_hash = await bcrypt.hash(password, 12);
     const userId = randomUUID();
+    const shopImageFiles = [
+      ...getFiles(req, "shop_images"),
+      ...getFiles(req, "images"),
+    ];
+    const shopImageUrls = await uploadFiles(shopImageFiles, "professionals");
 
     await prisma.user.create({
       data: {
@@ -308,7 +338,7 @@ const registerProfessional = async (req, res, next) => {
             experience_years,
             wilaya,
             location_address,
-            shop_images: shop_images ?? [],
+            shop_images: shopImageUrls.length ? shopImageUrls : shop_images ?? [],
             documents: documents ?? [],
             bio,
             hourly_rate_dzd,

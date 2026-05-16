@@ -28,4 +28,13 @@ app.use("/api", require("./routes/part.routes"));
 app.use("/api", require("./routes/compatibility.routes"));
 app.use("/api/v1/orders", require("./routes/order.routes"));
 app.use("/api/v1/payments", require("./routes/payment.routes"));
+app.use("/api/professionals", require("./routes/schedule.routes"));
+app.use("/api/appointments", require("./routes/appointment.routes"));
+app.use("/api/reviews", require("./routes/review.routes"));
+app.use("/api/reports", require("./routes/report.routes"));
+app.use("/api/diagnostic", require("./routes/diagnostic.routes"));
+app.use("/api/diagnostic/:postId/comments", require("./routes/diagnosticComment.routes"));
+app.use("/api", require("./routes/subscriptionPlan.routes"));
+app.use("/api", require("./routes/subscription.routes"));
+
 module.exports = app;

@@ -221,6 +221,16 @@ model User {
   orders_as_customer Order[]   @relation("CustomerOrders")
 payments           Payment[] @relation("UserPayments")
 
+customer_appointments Appointment[] @relation("CustomerAppointments")
+  authored_reviews      Review[]      @relation("AuthoredReviews")
+  authored_reports      Report[]      @relation("AuthoredReports")
+
+  // diagnostics relations
+  diagnostic_posts     DiagnosticPost[]
+diagnostic_comments  DiagnosticComment[]
+diagnostic_saves     DiagnosticSave[]
+diagnostic_reactions DiagnosticReaction[]
+
   @@map("users")
 }
 
@@ -269,6 +279,7 @@ model StoreProfile {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   orders Order[] @relation("StoreOrders")
+ 
 
   @@map("store_profiles")
 }
@@ -301,6 +312,10 @@ model ProfessionalProfile {
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  schedules            ProfessionalSchedule[]
+  schedule_exceptions  ProfessionalScheduleException[]
+  appointments         Appointment[] @relation("ProfessionalAppointments")
+
   @@map("professional_profiles")
 }
 
@@ -319,6 +334,10 @@ model Brand {
   vehicles Vehicle[]
   part_compatibilities PartCompatibility[]
 
+  diagnostic_posts DiagnosticPost[]
+
+  
+
   @@map("brands")
 }
 
@@ -332,6 +351,8 @@ model Model {
   brand    Brand     @relation(fields: [brand_id], references: [id], onDelete: Cascade)
   vehicles Vehicle[]
   part_compatibilities PartCompatibility[]
+
+  diagnostic_posts DiagnosticPost[]
 
   @@map("models")
 }
@@ -356,6 +377,9 @@ model Vehicle {
   user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
   brand Brand @relation(fields: [brand_id], references: [id])
   model Model @relation(fields: [model_id], references: [id])
+  appointments Appointment[]
+
+  diagnostic_posts DiagnosticPost[]
 
   @@map("vehicles")
 }
@@ -471,6 +495,8 @@ model Order {
   items    OrderItem[]
   payment  Payment?
 
+  reviews Review[]
+
   @@index([customer_id, status])
   @@index([store_id, status])
   @@index([created_at])
@@ -506,7 +532,8 @@ model OrderItem {
 
 model Payment {
   id       String @id @default(uuid())
-  order_id String @unique   // one payment per order (1-to-1)
+   order_id        String? @unique   // nullable now — either order or subscription
+  subscription_id String? @unique   // new — for subscription payments
   payer_id String
 
   method           PaymentMethod
@@ -520,10 +547,343 @@ model Payment {
   paid_at    DateTime?
   created_at DateTime  @default(now())
 
-  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  payer User  @relation("UserPayments", fields: [payer_id], references: [id], onDelete: Restrict)
+ 
 
+  subscription Subscription? @relation(fields: [subscription_id], references: [id], onDelete: SetNull)
+  order        Order?        @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  payer        User          @relation("UserPayments", fields: [payer_id], references: [id], onDelete: Restrict)
+
+ 
   @@index([order_id, status])
+  @@index([subscription_id])
   @@index([payer_id])
   @@map("payments")
+}
+
+
+// ─────────────────────────────────────────────────────────
+// PROFESSIONAL SCHEDULE
+// ─────────────────────────────────────────────────────────
+
+model ProfessionalSchedule {
+  id              String  @id @default(uuid())
+  professional_id String
+
+  // 0 = Sunday, 1 = Monday ... 6 = Saturday
+  day_of_week           Int
+  start_time            String  // stored as "HH:MM" — Prisma has no Time scalar
+  end_time              String
+  slot_duration_minutes Int     @default(60)
+  is_active             Boolean @default(true)
+
+  professional ProfessionalProfile @relation(fields: [professional_id], references: [id], onDelete: Cascade)
+
+  @@index([professional_id, day_of_week])
+  @@map("professional_schedules")
+}
+
+model ProfessionalScheduleException {
+  id              String   @id @default(uuid())
+  professional_id String
+  exception_date  DateTime @db.Date
+
+  // true = full day off, false = special hours on that day
+  is_day_off Boolean @default(true)
+  start_time String? // only used when is_day_off = false
+  end_time   String? // only used when is_day_off = false
+  reason     String?
+
+  professional ProfessionalProfile @relation(fields: [professional_id], references: [id], onDelete: Cascade)
+
+  @@index([professional_id, exception_date])
+  @@map("professional_schedule_exceptions")
+}
+
+// ─────────────────────────────────────────────────────────
+// APPOINTMENTS
+// ─────────────────────────────────────────────────────────
+
+model Appointment {
+  id              String  @id @default(uuid())
+  customer_id     String
+  professional_id String
+  vehicle_id      String?
+
+  // ── Step 1: client fills these when submitting ──
+  service_type     String
+  description      String?
+  location_address String?
+
+  // ── Step 2: pro fills these when confirming ──
+  // All nullable — only set after pro accepts
+  scheduled_at      DateTime? // exact date + time the client should arrive
+  duration_minutes  Int?      // e.g. 90 means 10:00 → 11:30
+  quoted_price_dzd  Decimal?  @db.Decimal(12, 2) // starting/estimated price pro sends back
+  confirmation_note String?   // optional message from pro to client when confirming
+
+  // ── Step 3: pro fills these when completing ──
+  final_price_dzd       Decimal?  @db.Decimal(12, 2)
+  payment_collected     Boolean   @default(false)
+  payment_collected_at  DateTime?
+  completion_notes      String?
+  completed_at          DateTime?
+
+  // ── Cancellation ──
+  cancelled_by     String?   // user id of whoever cancelled
+  cancellation_reason String?
+  cancelled_at     DateTime?
+
+  status     AppointmentStatus @default(pending)
+  created_at DateTime          @default(now())
+  updated_at DateTime          @updatedAt
+
+  customer     User                @relation("CustomerAppointments", fields: [customer_id], references: [id], onDelete: Cascade)
+  professional ProfessionalProfile @relation("ProfessionalAppointments", fields: [professional_id], references: [id], onDelete: Restrict)
+  vehicle      Vehicle?            @relation(fields: [vehicle_id], references: [id], onDelete: SetNull)
+
+  reviews Review[]
+
+  @@index([customer_id, status])
+  @@index([professional_id, scheduled_at])
+  @@map("appointments")
+}
+
+// ─────────────────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────────────────
+
+model Review {
+  id          String       @id @default(uuid())
+  author_id   String
+  target_id   String
+  target_type ReviewTarget
+
+  // Proof of real interaction — service layer must validate
+  // at least one is set and matches target_type
+  order_id       String? // set when reviewing a store or part
+  appointment_id String? // set when reviewing a professional
+
+  rating        Int     // 1–5, validated in service layer
+  comment       String?
+  is_verified   Boolean @default(false)
+  helpful_count Int     @default(0)
+  media_urls    String[]
+
+  created_at DateTime @default(now())
+
+  author      User         @relation("AuthoredReviews", fields: [author_id], references: [id], onDelete: Cascade)
+  order       Order?       @relation(fields: [order_id], references: [id], onDelete: SetNull)
+  appointment Appointment? @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
+
+  @@unique([author_id, target_type, target_id])
+  @@index([author_id])
+  @@index([target_type, target_id])
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────────────────────────
+// REPORTS
+// ─────────────────────────────────────────────────────────
+
+model Report {
+  id          String       @id @default(uuid())
+  reporter_id String
+  target_id   String
+  target_type ReportTarget
+
+  reason      ReportReason
+  description String?
+
+  status               ReportStatus @default(pending)
+  reviewed_by_admin_id String?      // plain String — same pattern as the rest of your schema
+  admin_notes          String?
+  reviewed_at          DateTime?
+
+  created_at DateTime @default(now())
+
+  reporter User @relation("AuthoredReports", fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@index([reporter_id])
+  @@index([target_type, target_id])
+  @@index([status, created_at])
+  @@map("reports")
+}
+
+
+model DiagnosticPost {
+  id          String     @id @default(uuid())
+  author_id   String
+  vehicle_id  String?
+  title       String     @db.VarChar(200)
+  description String
+  images      String[]
+
+  // Optional tags (used when vehicle_id is null)
+  brand_id  String?
+  model_id  String?
+  year      Int?
+  fuel_type FuelType?   // ← ADDED
+
+  status      PostStatus @default(open)   // ← reuse existing enum
+  views_count Int        @default(0)
+  saves_count Int        @default(0)
+
+  // Admin soft-delete              ← ADDED block
+  is_deleted          Boolean   @default(false)
+  deleted_by_admin_id String?
+  deleted_at          DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  author   User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  vehicle  Vehicle? @relation(fields: [vehicle_id], references: [id], onDelete: SetNull)
+  brand    Brand?   @relation(fields: [brand_id], references: [id], onDelete: SetNull)
+  model    Model?   @relation(fields: [model_id], references: [id], onDelete: SetNull)
+
+  comments  DiagnosticComment[]
+  saves     DiagnosticSave[]
+  reactions DiagnosticReaction[]
+
+  @@index([author_id])
+  @@index([brand_id, model_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("diagnostic_posts")
+}
+
+model DiagnosticComment {
+  id        String  @id @default(uuid())
+  post_id   String
+  author_id String
+  parent_id String?   // null = top-level, set = reply (max 1 level deep, enforced in service)
+  body      String
+  images    String[]
+
+  is_accepted_answer Boolean @default(false)
+  is_deleted         Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  post      DiagnosticPost      @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  author    User                @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  parent    DiagnosticComment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: SetNull)
+  replies   DiagnosticComment[] @relation("CommentReplies")
+  reactions DiagnosticReaction[]
+
+  // Partial unique index for is_accepted_answer enforced via raw migration
+  @@index([post_id, parent_id])
+  @@index([author_id])
+  @@map("diagnostic_comments")
+}
+
+model DiagnosticSave {
+  id         String   @id @default(uuid())
+  user_id    String
+  post_id    String
+  created_at DateTime @default(now())
+
+  user User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  post DiagnosticPost @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, post_id])
+  @@index([post_id])
+  @@map("diagnostic_saves")
+}
+
+model DiagnosticReaction {
+  id          String         @id @default(uuid())
+  user_id     String
+  target_id   String
+  target_type ReactionTarget  // ← reuse existing enum
+  created_at  DateTime       @default(now())
+
+  post_id     String?
+  comment_id  String?
+
+  user    User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  post    DiagnosticPost?    @relation(fields: [post_id],    references: [id], onDelete: Cascade)
+  comment DiagnosticComment? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+
+@@unique([user_id, post_id])     // one reaction per user per post
+  @@unique([user_id, comment_id])
+  @@unique([user_id, target_id, target_type])
+  @@index([target_type, target_id])
+  @@map("diagnostic_reactions")
+}
+
+// ─────────────────────────────────────────────────────────
+// SUBSCRIPTION PLANS
+// ─────────────────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id            String             @id @default(uuid())
+  name          String
+  description   String?
+  price_dzd     Decimal            @db.Decimal(10, 2)
+  billing_cycle BillingCycle
+  duration_days Int
+  target_type   SubscriptionTarget  // store plans and pro plans are separate
+  features      Json?
+  is_free_trial Boolean            @default(false)
+  trial_days    Int?               // only used when is_free_trial = true
+  is_active     Boolean            @default(true)
+  created_at    DateTime           @default(now())
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+// ─────────────────────────────────────────────────────────
+// SUBSCRIPTIONS
+// ─────────────────────────────────────────────────────────
+
+model Subscription {
+  id              String             @id @default(uuid())
+
+  // Polymorphic — points to store_profiles.id or professional_profiles.id
+  // No @relation — same pattern as seller_id on Part
+  subscriber_id   String
+  subscriber_type SubscriptionTarget
+
+  plan_id    String
+  status     SubscriptionStatus @default(active)
+  is_trial   Boolean            @default(false)
+  started_at DateTime
+  expires_at DateTime
+  auto_renew Boolean            @default(true)
+
+  // Cancellation
+  cancelled_at DateTime?
+
+  // Notification tracking — prevents duplicate expiry emails
+  expiry_warning_sent_at DateTime?  // sent ~7 days before expires_at
+  expired_notified_at    DateTime?  // sent when status flipped to expired
+
+  created_at DateTime @default(now())
+
+
+  plan    SubscriptionPlan @relation(fields: [plan_id], references: [id], onDelete: Restrict)
+  payment Payment?         // ← back-relation only, no fields/references here      // one payment per subscription cycle
+
+  @@index([subscriber_id, subscriber_type])
+  @@index([status, expires_at])
+  @@map("subscriptions")
+}
+
+// ─────────────────────────────────────────────────────────
+// PLATFORM SETTINGS (singleton key-value store)
+// ─────────────────────────────────────────────────────────
+
+model PlatformSetting {
+  id                  String   @id @default(uuid())
+  key                 String   @unique
+  value               Json
+  description         String?
+  updated_by_admin_id String?
+  updated_at          DateTime @default(now()) @updatedAt
+
+  @@map("platform_settings")
 }

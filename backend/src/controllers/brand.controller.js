@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client");
+const uploadImage = require("../utils/uploadImage");
 const { randomUUID } = require("crypto");
 
 // ─── POST /brands ─────────────────────────────────────────────────────────────
@@ -7,9 +8,15 @@ const createBrand = async (req, res, next) => {
   try {
     const { name, country, logo_url } = req.body;
     const brand_id = randomUUID();
+    let imageUrl = null;
+
+    if (req.file) {
+      const result = await uploadImage(req.file.buffer, "brands");
+      imageUrl = result.secure_url;
+    }
 
     const brand = await prisma.brand.create({
-      data: { name, country, logo_url },
+      data: { name, country, logo_url: imageUrl || logo_url },
     });
 
     res.status(201).json({ success: true, data: brand });
@@ -73,9 +80,19 @@ const getBrandById = async (req, res, next) => {
 
 const updateBrand = async (req, res, next) => {
   try {
+    let imageUrl = null;
+
+    if (req.file) {
+      const result = await uploadImage(req.file.buffer, "brands");
+      imageUrl = result.secure_url;
+    }
+
     const brand = await prisma.brand.update({
       where: { id: req.params.id, is_deleted: false },
-      data: req.body,
+      data: {
+        ...req.body,
+        ...(imageUrl && { logo_url: imageUrl }),
+      },
     });
 
     res.json({ success: true, data: brand });

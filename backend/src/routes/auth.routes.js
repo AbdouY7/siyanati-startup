@@ -1,5 +1,6 @@
 const express = require("express");
 const authController = require("../controllers/auth.controller");
+const upload = require("../middlewares/upload");
 const {
   loginSchema,
   registerSchema,
@@ -30,11 +31,21 @@ router.post(
 );
 router.post(
   "/register/store",
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "logo", maxCount: 1 },
+    { name: "image", maxCount: 1 },
+    { name: "logo_url", maxCount: 1 },
+  ]),
   validateSchema(storeRegisterSchema),
   authController.registerStore,
 );
 router.post(
   "/register/professional",
+  upload.fields([
+    { name: "shop_images", maxCount: 10 },
+    { name: "images", maxCount: 10 },
+  ]),
   validateSchema(professionalRegisterSchema),
   authController.registerProfessional,
 );

@@ -1,6 +1,7 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
 const { requireAdmin } = require("../middlewares/admin.middleware");
+const upload = require("../middlewares/upload");
 const {
   createCategory,
   getAllCategories,
@@ -39,12 +40,14 @@ router.get("/categories/:id", getCategoryById);
 router.post(
   "/categories",
   requireAdmin,
+  upload.single("image"),
   validateSchema(categoryCreateSchema),
   createCategory,
 );
 router.patch(
   "/categories/:id",
   requireAdmin,
+  upload.single("image"),
   validateSchema(categoryUpdateSchema),
   updateCategory,
 );
