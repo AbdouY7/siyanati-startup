@@ -1,13 +1,36 @@
 const { z } = require("zod");
+const validator = require("validator");
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
+
+const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .refine((val) => validator.isEmail(val), {
+    message: "Invalid email format",
+  });
+
+const phoneSchema = z
+  .string()
+  .refine((val) => {
+    const phoneNumber = parsePhoneNumberFromString(val, "DZ");
+    return phoneNumber?.isValid();
+  }, {
+    message: "Invalid Algerian phone number",
+  })
+  .transform((val) => {
+    const phoneNumber = parsePhoneNumberFromString(val, "DZ");
+    return phoneNumber.format("E.164"); // +213XXXXXXXXX
+  });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(6),
 });
 
 const clientProfileSchema = z.object({
   full_name: z.string().optional(),
-  phone: z.string(),
+  phone: phoneSchema,
   wilaya: z.string().optional(),
   address: z.string().optional(),
   date_of_birth: z.string().datetime().optional(),
@@ -15,9 +38,9 @@ const clientProfileSchema = z.object({
 });
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(8),
-  phone: z.string().min(9).max(20),
+  phone: phoneSchema,
   full_name: z.string().min(2),
   wilaya: z.string().optional(),
   address: z.string().optional(),
@@ -27,16 +50,16 @@ const registerSchema = z.object({
 // admin validation schema
 
 const adminRegisterSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(8),
-  phone: z.string().min(9).max(20),
+  phone: phoneSchema,
   full_name: z.string().min(2), // optional, store in a separate field or skip
 });
 
 const storeRegisterSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(8),
-  phone: z.string().min(9).max(20),
+  phone: phoneSchema,
   owner_name: z.string().min(2),
   store_name: z.string().min(2),
   description: z.string().optional(),
@@ -49,9 +72,9 @@ const storeRegisterSchema = z.object({
 });
 
 const professionalRegisterSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(8),
-  phone: z.string().min(9).max(20),
+  phone: phoneSchema,
   specialty_type: z.enum([
     "mechanic",
     "electrician",

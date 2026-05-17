@@ -1,20 +1,548 @@
-// ═══════════════════════════════════════════════════════════
-// Automotive Platform — Prisma Schema (corrected & complete)
-// ═══════════════════════════════════════════════════════════
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL") // ← FIXED: was missing, every CLI command fails without this
 }
 
-// ─────────────────────────────────────────────────────────
-// ENUMS
-// ─────────────────────────────────────────────────────────
+model User {
+  id                    String               @id @default(uuid())
+  email                 String               @unique
+  password_hash         String
+  role                  UserRole             @default(customer)
+  is_active             Boolean              @default(true)
+  email_verified        Boolean              @default(false)
+  created_at            DateTime             @default(now())
+  updated_at            DateTime             @updatedAt
+  refresh_token         String?
+  phone                 String               @unique
+  customer_appointments Appointment[]        @relation("CustomerAppointments")
+  client_profile        ClientProfile?
+  diagnostic_comments   DiagnosticComment[]
+  diagnostic_posts      DiagnosticPost[]
+  diagnostic_reactions  DiagnosticReaction[]
+  diagnostic_saves      DiagnosticSave[]
+  orders_as_customer    Order[]              @relation("CustomerOrders")
+  payments              Payment[]            @relation("UserPayments")
+  professional_profile  ProfessionalProfile?
+  authored_reports      Report[]             @relation("AuthoredReports")
+  authored_reviews      Review[]             @relation("AuthoredReviews")
+  store_profile         StoreProfile?
+  vehicles              Vehicle[]
+
+  @@map("users")
+}
+
+model ClientProfile {
+  id                 String    @id @default(uuid())
+  user_id            String    @unique
+  full_name          String
+  profilePicUrl      String?
+  wilaya             String?
+  address            String?
+  date_of_birth      DateTime?
+  national_id_number String?
+  national_id_card   String[]
+  avatar_url         String?
+  preferred_language String    @default("ar")
+  created_at         DateTime  @default(now())
+  user               User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
+}
+
+model StoreProfile {
+  id                   String        @id @default(uuid())
+  user_id              String        @unique
+  owner_name           String
+  store_name           String
+  description          String?
+  address              String
+  wilaya               String
+  location_coordinates String?
+  documents            String[]
+  images               String[]
+  logo_url             String?
+  status               ProfileStatus @default(pending)
+  rejection_reason     String?
+  reviewed_by_admin_id String?
+  reviewed_at          DateTime?
+  submitted_at         DateTime      @default(now())
+  is_frozen            Boolean       @default(false)
+  rating_avg           Decimal       @default(0) @db.Decimal(3, 2)
+  rating_count         Int           @default(0)
+  created_at           DateTime      @default(now())
+  orders               Order[]       @relation("StoreOrders")
+  user                 User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("store_profiles")
+}
+
+model ProfessionalProfile {
+  id                   String                          @id @default(uuid())
+  user_id              String                          @unique
+  specialty_type       SpecialtyType
+  experience_years     Int?
+  wilaya               String
+  location_address     String?
+  shop_images          String[]
+  documents            String[]
+  bio                  String?
+  status               ProfileStatus                   @default(pending)
+  rejection_reason     String?
+  reviewed_by_admin_id String?
+  reviewed_at          DateTime?
+  submitted_at         DateTime                        @default(now())
+  is_available         Boolean                         @default(true)
+  is_frozen            Boolean                         @default(false)
+  hourly_rate_dzd      Decimal?                        @db.Decimal(12, 2)
+  rating_avg           Decimal                         @default(0) @db.Decimal(3, 2)
+  rating_count         Int                             @default(0)
+  subscription_id      String?
+  created_at           DateTime                        @default(now())
+  full_name            String
+  appointments         Appointment[]                   @relation("ProfessionalAppointments")
+  user                 User                            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  schedule_exceptions  ProfessionalScheduleException[]
+  schedules            ProfessionalSchedule[]
+
+  @@map("professional_profiles")
+}
+
+model Brand {
+  id                   String              @id @default(uuid())
+  name                 String              @unique
+  country              String?
+  logo_url             String?
+  is_deleted           Boolean             @default(false)
+  diagnostic_posts     DiagnosticPost[]
+  models               Model[]
+  part_compatibilities PartCompatibility[]
+  vehicles             Vehicle[]
+
+  @@map("brands")
+}
+
+model Model {
+  id                   String              @id @default(uuid())
+  brand_id             String
+  name                 String
+  year_start           Int?
+  year_end             Int?
+  diagnostic_posts     DiagnosticPost[]
+  brand                Brand               @relation(fields: [brand_id], references: [id], onDelete: Cascade)
+  part_compatibilities PartCompatibility[]
+  vehicles             Vehicle[]
+
+  @@map("models")
+}
+
+model Vehicle {
+  id                        String           @id @default(uuid())
+  user_id                   String
+  brand_id                  String
+  model_id                  String
+  year                      Int
+  fuel_type                 FuelType?
+  health_status             Int? // in percent 0-100
+  engine_cc                 Int?
+  registration_number       String?
+  registration_document_url String?
+  vin                       String?          @unique
+  is_default                Boolean          @default(false)
+  created_at                DateTime         @default(now())
+  color                     String?
+  mileage_km                Int?
+  notes                     String?
+  appointments              Appointment[]
+  diagnostic_posts          DiagnosticPost[]
+  brand                     Brand            @relation(fields: [brand_id], references: [id])
+  model                     Model            @relation(fields: [model_id], references: [id])
+  user                      User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("vehicles")
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  parent_id String?
+  name      String     @unique
+  slug      String
+  icon_url  String?
+  parent    Category?  @relation("CategoryTree", fields: [parent_id], references: [id])
+  children  Category[] @relation("CategoryTree")
+  parts     Part[]
+
+  @@map("categories")
+}
+
+model Part {
+  id                   String              @id @default(uuid())
+  seller_id            String
+  seller_type          SellerType
+  category_id          String?
+  name                 String
+  description          String?
+  sku                  String?
+  oem_reference        String?
+  condition            PartCondition       @default(new)
+  price_dzd            Decimal             @db.Decimal(12, 2)
+  stock_qty            Int                 @default(1)
+  weight_kg            Decimal?            @db.Decimal(6, 2)
+  images               String[]
+  is_active            Boolean             @default(true)
+  is_featured          Boolean             @default(false)
+  is_verified          Boolean             @default(false)
+  verified_at          DateTime?
+  verified_by_admin_id String?
+  views_count          Int                 @default(0)
+  created_at           DateTime            @default(now())
+  updated_at           DateTime            @updatedAt
+  order_items          OrderItem[]
+  compatibilities      PartCompatibility[]
+  category             Category?           @relation(fields: [category_id], references: [id])
+
+  @@unique([seller_id, sku])
+  @@index([seller_id, seller_type])
+  @@index([category_id])
+  @@index([condition, price_dzd])
+  @@index([is_verified, is_active])
+  @@map("parts")
+}
+
+model PartCompatibility {
+  id             String  @id @default(uuid())
+  part_id        String
+  brand_id       String
+  model_id       String
+  year_from      Int
+  year_to        Int?
+  engine_variant String?
+  brand          Brand   @relation(fields: [brand_id], references: [id])
+  model          Model   @relation(fields: [model_id], references: [id])
+  part           Part    @relation(fields: [part_id], references: [id], onDelete: Cascade)
+
+  @@index([part_id])
+  @@index([brand_id, model_id, year_from])
+  @@map("part_compatibility")
+}
+
+model Order {
+  id                    String            @id @default(uuid())
+  customer_id           String
+  store_id              String
+  order_number          String            @unique
+  status                OrderStatus       @default(pending)
+  subtotal_dzd          Decimal           @db.Decimal(12, 2)
+  discount_dzd          Decimal           @default(0) @db.Decimal(10, 2)
+  total_dzd             Decimal           @db.Decimal(12, 2)
+  delivery_type         OrderDeliveryType
+  delivery_address      String?
+  delivery_notes        String?
+  notes                 String?
+  loyalty_points_used   Int               @default(0)
+  loyalty_points_earned Int               @default(0)
+  cancelled_at          DateTime?
+  cancellation_reason   String?
+  created_at            DateTime          @default(now())
+  updated_at            DateTime          @updatedAt
+  items                 OrderItem[]
+  customer              User              @relation("CustomerOrders", fields: [customer_id], references: [id])
+  store                 StoreProfile      @relation("StoreOrders", fields: [store_id], references: [id])
+  payment               Payment?
+  reviews               Review[]
+
+  @@index([customer_id, status])
+  @@index([store_id, status])
+  @@index([created_at])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String  @id @default(uuid())
+  order_id       String
+  part_id        String
+  part_name      String
+  part_sku       String?
+  quantity       Int
+  unit_price_dzd Decimal @db.Decimal(12, 2)
+  discount_pct   Decimal @default(0) @db.Decimal(5, 2)
+  line_total_dzd Decimal @db.Decimal(12, 2)
+  order          Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  part           Part    @relation(fields: [part_id], references: [id])
+
+  @@index([order_id])
+  @@index([part_id])
+  @@map("order_items")
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  order_id         String?       @unique
+  payer_id         String
+  method           PaymentMethod
+  amount_dzd       Decimal       @db.Decimal(12, 2)
+  status           PaymentStatus @default(pending)
+  edahabia_ref     String?       @unique
+  gateway_response Json?
+  failed_reason    String?
+  paid_at          DateTime?
+  created_at       DateTime      @default(now())
+  subscription_id  String?       @unique
+  order            Order?        @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  payer            User          @relation("UserPayments", fields: [payer_id], references: [id])
+  subscription     Subscription? @relation(fields: [subscription_id], references: [id])
+
+  @@index([order_id, status])
+  @@index([subscription_id])
+  @@index([payer_id])
+  @@map("payments")
+}
+
+model ProfessionalSchedule {
+  id                    String              @id @default(uuid())
+  professional_id       String
+  day_of_week           Int
+  start_time            String
+  end_time              String
+  slot_duration_minutes Int                 @default(60)
+  is_active             Boolean             @default(true)
+  professional          ProfessionalProfile @relation(fields: [professional_id], references: [id], onDelete: Cascade)
+
+  @@index([professional_id, day_of_week])
+  @@map("professional_schedules")
+}
+
+model ProfessionalScheduleException {
+  id              String              @id @default(uuid())
+  professional_id String
+  exception_date  DateTime            @db.Date
+  is_day_off      Boolean             @default(true)
+  start_time      String?
+  end_time        String?
+  reason          String?
+  professional    ProfessionalProfile @relation(fields: [professional_id], references: [id], onDelete: Cascade)
+
+  @@index([professional_id, exception_date])
+  @@map("professional_schedule_exceptions")
+}
+
+model Appointment {
+  id                   String              @id @default(uuid())
+  customer_id          String
+  professional_id      String
+  vehicle_id           String?
+  service_type         String
+  description          String?
+  location_address     String?
+  scheduled_at         DateTime?
+  duration_minutes     Int?
+  quoted_price_dzd     Decimal?            @db.Decimal(12, 2)
+  confirmation_note    String?
+  final_price_dzd      Decimal?            @db.Decimal(12, 2)
+  payment_collected    Boolean             @default(false)
+  payment_collected_at DateTime?
+  completion_notes     String?
+  completed_at         DateTime?
+  cancelled_by         String?
+  cancellation_reason  String?
+  cancelled_at         DateTime?
+  status               AppointmentStatus   @default(pending)
+  created_at           DateTime            @default(now())
+  updated_at           DateTime            @updatedAt
+  customer             User                @relation("CustomerAppointments", fields: [customer_id], references: [id], onDelete: Cascade)
+  professional         ProfessionalProfile @relation("ProfessionalAppointments", fields: [professional_id], references: [id])
+  vehicle              Vehicle?            @relation(fields: [vehicle_id], references: [id])
+  reviews              Review[]
+
+  @@index([customer_id, status])
+  @@index([professional_id, scheduled_at])
+  @@map("appointments")
+}
+
+model Review {
+  id             String       @id @default(uuid())
+  author_id      String
+  target_id      String
+  target_type    ReviewTarget
+  order_id       String?
+  appointment_id String?
+  rating         Int
+  comment        String?
+  is_verified    Boolean      @default(false)
+  helpful_count  Int          @default(0)
+  media_urls     String[]
+  created_at     DateTime     @default(now())
+  appointment    Appointment? @relation(fields: [appointment_id], references: [id])
+  author         User         @relation("AuthoredReviews", fields: [author_id], references: [id], onDelete: Cascade)
+  order          Order?       @relation(fields: [order_id], references: [id])
+
+  @@unique([author_id, target_type, target_id])
+  @@index([author_id])
+  @@index([target_type, target_id])
+  @@map("reviews")
+}
+
+model Report {
+  id                   String       @id @default(uuid())
+  reporter_id          String
+  target_id            String
+  target_type          ReportTarget
+  reason               ReportReason
+  description          String?
+  status               ReportStatus @default(pending)
+  reviewed_by_admin_id String?
+  admin_notes          String?
+  reviewed_at          DateTime?
+  created_at           DateTime     @default(now())
+  reporter             User         @relation("AuthoredReports", fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@index([reporter_id])
+  @@index([target_type, target_id])
+  @@index([status, created_at])
+  @@map("reports")
+}
+
+model DiagnosticPost {
+  id                  String               @id @default(uuid())
+  author_id           String
+  vehicle_id          String?
+  title               String               @db.VarChar(200)
+  description         String
+  images              String[]
+  brand_id            String?
+  model_id            String?
+  year                Int?
+  fuel_type           FuelType?
+  status              PostStatus           @default(open)
+  views_count         Int                  @default(0)
+  saves_count         Int                  @default(0)
+  is_deleted          Boolean              @default(false)
+  deleted_by_admin_id String?
+  deleted_at          DateTime?
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+  comments            DiagnosticComment[]
+  author              User                 @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  brand               Brand?               @relation(fields: [brand_id], references: [id])
+  model               Model?               @relation(fields: [model_id], references: [id])
+  vehicle             Vehicle?             @relation(fields: [vehicle_id], references: [id])
+  reactions           DiagnosticReaction[]
+  saves               DiagnosticSave[]
+
+  @@index([author_id])
+  @@index([brand_id, model_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("diagnostic_posts")
+}
+
+model DiagnosticComment {
+  id                 String               @id @default(uuid())
+  post_id            String
+  author_id          String
+  parent_id          String?
+  body               String
+  images             String[]
+  is_accepted_answer Boolean              @default(false)
+  is_deleted         Boolean              @default(false)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  author             User                 @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  parent             DiagnosticComment?   @relation("CommentReplies", fields: [parent_id], references: [id])
+  replies            DiagnosticComment[]  @relation("CommentReplies")
+  post               DiagnosticPost       @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  reactions          DiagnosticReaction[]
+
+  @@index([post_id, parent_id])
+  @@index([author_id])
+  @@map("diagnostic_comments")
+}
+
+model DiagnosticSave {
+  id         String         @id @default(uuid())
+  user_id    String
+  post_id    String
+  created_at DateTime       @default(now())
+  post       DiagnosticPost @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, post_id])
+  @@index([post_id])
+  @@map("diagnostic_saves")
+}
+
+model DiagnosticReaction {
+  id          String             @id @default(uuid())
+  user_id     String
+  target_id   String
+  target_type ReactionTarget
+  created_at  DateTime           @default(now())
+  post_id     String?
+  comment_id  String?
+  comment     DiagnosticComment? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  post        DiagnosticPost?    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user        User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, post_id])
+  @@unique([user_id, comment_id])
+  @@unique([user_id, target_id, target_type])
+  @@index([target_type, target_id])
+  @@map("diagnostic_reactions")
+}
+
+model SubscriptionPlan {
+  id            String             @id @default(uuid())
+  name          String
+  description   String?
+  price_dzd     Decimal            @db.Decimal(10, 2)
+  billing_cycle BillingCycle
+  duration_days Int
+  target_type   SubscriptionTarget
+  features      Json?
+  is_free_trial Boolean            @default(false)
+  trial_days    Int?
+  is_active     Boolean            @default(true)
+  created_at    DateTime           @default(now())
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                     String             @id @default(uuid())
+  subscriber_id          String
+  subscriber_type        SubscriptionTarget
+  plan_id                String
+  status                 SubscriptionStatus @default(active)
+  is_trial               Boolean            @default(false)
+  started_at             DateTime
+  expires_at             DateTime
+  auto_renew             Boolean            @default(true)
+  cancelled_at           DateTime?
+  expiry_warning_sent_at DateTime?
+  expired_notified_at    DateTime?
+  created_at             DateTime           @default(now())
+  payment                Payment?
+  plan                   SubscriptionPlan   @relation(fields: [plan_id], references: [id])
+
+  @@index([subscriber_id, subscriber_type])
+  @@index([status, expires_at])
+  @@map("subscriptions")
+}
+
+model PlatformSetting {
+  id                  String   @id @default(uuid())
+  key                 String   @unique
+  value               Json
+  description         String?
+  updated_by_admin_id String?
+  updated_at          DateTime @default(now()) @updatedAt
+
+  @@map("platform_settings")
+}
 
 enum UserRole {
   customer
@@ -190,700 +718,4 @@ enum NotificationType {
   loyalty_points_earned
   diagnostic_post_answered
   diagnostic_answer_accepted
-}
-
-// ─────────────────────────────────────────────────────────
-// USER & PROFILES
-// ─────────────────────────────────────────────────────────
-
-model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  password_hash  String
-  role           UserRole @default(customer)
-  is_active      Boolean  @default(true)
-  email_verified Boolean  @default(false)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
-  refresh_token  String?
-  phone          String  @unique // ← ADDED: persisted in the users table
-
-  // Profiles
-  client_profile       ClientProfile?
-  store_profile        StoreProfile?
-  professional_profile ProfessionalProfile?
-
-  // Vehicles
-  vehicles Vehicle[]
-
-  //orders and payments relations
-
-  orders_as_customer Order[]   @relation("CustomerOrders")
-payments           Payment[] @relation("UserPayments")
-
-customer_appointments Appointment[] @relation("CustomerAppointments")
-  authored_reviews      Review[]      @relation("AuthoredReviews")
-  authored_reports      Report[]      @relation("AuthoredReports")
-
-  // diagnostics relations
-  diagnostic_posts     DiagnosticPost[]
-diagnostic_comments  DiagnosticComment[]
-diagnostic_saves     DiagnosticSave[]
-diagnostic_reactions DiagnosticReaction[]
-
-  @@map("users")
-}
-
-model ClientProfile {
-  id                 String    @id @default(uuid())
-  user_id            String    @unique
-  full_name          String
-  wilaya             String?
-  address            String?
-  date_of_birth      DateTime?
-  national_id_number String?
-  national_id_card   String[]
-  avatar_url         String?
-  preferred_language String    @default("ar")
-  created_at         DateTime  @default(now())
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@map("client_profiles")
-}
-
-model StoreProfile {
-  id                   String   @id @default(uuid())
-  user_id              String   @unique
-  owner_name           String
-  store_name           String
-  description          String?
-  address              String
-  wilaya               String
-  location_coordinates String?
-  documents            String[]
-  images               String[]
-  logo_url             String?
-
-  status               ProfileStatus @default(pending)
-  rejection_reason     String?
-  reviewed_by_admin_id String?
-  reviewed_at          DateTime?
-  submitted_at         DateTime      @default(now())
-
-  is_frozen    Boolean  @default(false)
-  rating_avg   Decimal  @default(0) @db.Decimal(3, 2)
-  rating_count Int      @default(0)
-  created_at   DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  orders Order[] @relation("StoreOrders")
- 
-
-  @@map("store_profiles")
-}
-
-model ProfessionalProfile {
-  id               String        @id @default(uuid())
-  user_id          String        @unique
-  full_name        String
-  specialty_type   SpecialtyType
-  experience_years Int?
-  wilaya           String
-  location_address String?
-  shop_images      String[]
-  documents        String[]
-  bio              String?
-
-  status               ProfileStatus @default(pending)
-  rejection_reason     String?
-  reviewed_by_admin_id String?
-  reviewed_at          DateTime?
-  submitted_at         DateTime      @default(now())
-
-  is_available    Boolean  @default(true)
-  is_frozen       Boolean  @default(false)
-  hourly_rate_dzd Decimal? @db.Decimal(12, 2)
-  rating_avg      Decimal  @default(0) @db.Decimal(3, 2)
-  rating_count    Int      @default(0)
-  subscription_id String?
-  created_at      DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  schedules            ProfessionalSchedule[]
-  schedule_exceptions  ProfessionalScheduleException[]
-  appointments         Appointment[] @relation("ProfessionalAppointments")
-
-  @@map("professional_profiles")
-}
-
-// ─────────────────────────────────────────────────────────
-// VEHICLES
-// ─────────────────────────────────────────────────────────
-
-model Brand {
-  id       String  @id @default(uuid())
-  name     String  @unique
-  country  String?
-  logo_url String?
-  is_deleted Boolean  @default(false) // ← soft delete flag
-
-  models   Model[]
-  vehicles Vehicle[]
-  part_compatibilities PartCompatibility[]
-
-  diagnostic_posts DiagnosticPost[]
-
-  
-
-  @@map("brands")
-}
-
-model Model {
-  id         String @id @default(uuid())
-  brand_id   String
-  name       String
-  year_start Int?
-  year_end   Int?
-
-  brand    Brand     @relation(fields: [brand_id], references: [id], onDelete: Cascade)
-  vehicles Vehicle[]
-  part_compatibilities PartCompatibility[]
-
-  diagnostic_posts DiagnosticPost[]
-
-  @@map("models")
-}
-
-model Vehicle {
-  id                        String    @id @default(uuid())
-  user_id                   String
-  brand_id                  String
-  model_id                  String
-  year                      Int
-  fuel_type                 FuelType?
-  engine_cc                 Int?
-  registration_number       String?
-  registration_document_url String?
-  vin                       String?   @unique
-  is_default                Boolean   @default(false)
-  color                     String?
-  mileage_km                Int?
-  notes                     String?
-  created_at                DateTime  @default(now())
-
-  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  brand Brand @relation(fields: [brand_id], references: [id])
-  model Model @relation(fields: [model_id], references: [id])
-  appointments Appointment[]
-
-  diagnostic_posts DiagnosticPost[]
-
-  @@map("vehicles")
-}
-
-model Category {
-  id        String  @id @default(uuid())
-  parent_id String?
-  name      String  @unique
-  slug      String
-  icon_url  String?
-
-  parent   Category?  @relation("CategoryTree", fields: [parent_id], references: [id], onDelete: SetNull)
-  children Category[] @relation("CategoryTree")
-  parts    Part[]
-
-  @@map("categories")
-}
-
-model Part {
-  id          String        @id @default(uuid())
-  seller_id   String
-  seller_type SellerType
-  category_id String?
-
-  name          String
-  description   String?
-  sku           String?
-  oem_reference String?
-  condition     PartCondition @default(new)
-  price_dzd     Decimal       @db.Decimal(12, 2)
-  stock_qty     Int           @default(1)
-  weight_kg     Decimal?      @db.Decimal(6, 2)
-  images        String[]
-
-  is_active   Boolean @default(true)
-  is_featured Boolean @default(false)
-
-  // false by default for client listings — admin must approve
-  // set to true automatically in service layer when seller_type = store
-  is_verified          Boolean   @default(false)
-  verified_at          DateTime?
-  verified_by_admin_id String?   // plain String? — same pattern as reviewed_by_admin_id in your profiles
-
-  views_count Int      @default(0)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  category        Category?           @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  compatibilities PartCompatibility[]
-
-  //orders relations
-  order_items OrderItem[]
-
-  // SKU unique per seller only — two stores can have the same SKU
-  @@unique([seller_id, sku])
-
-  @@index([seller_id, seller_type])
-  @@index([category_id])
-  @@index([condition, price_dzd])
-  @@index([is_verified, is_active])
-
-  @@map("parts")
-}
-
-model PartCompatibility {
-  id             String  @id @default(uuid())
-  part_id        String
-  brand_id       String
-  model_id       String
-  year_from      Int
-  year_to        Int?
-  engine_variant String?
-
-  part  Part  @relation(fields: [part_id], references: [id], onDelete: Cascade)
-  brand Brand @relation(fields: [brand_id], references: [id], onDelete: Restrict)
-  model Model @relation(fields: [model_id], references: [id], onDelete: Restrict)
-
-  @@index([part_id])
-  @@index([brand_id, model_id, year_from])
-
-  @@map("part_compatibility")
-}
-
-model Order {
-  id            String            @id @default(uuid())
-  customer_id   String
-  store_id      String            // → store_profiles.id
-  order_number  String            @unique
-
-  status          OrderStatus       @default(pending)
-  subtotal_dzd    Decimal           @db.Decimal(12, 2)
-  discount_dzd    Decimal           @default(0) @db.Decimal(10, 2)
-  total_dzd       Decimal           @db.Decimal(12, 2)
-
-  delivery_type    OrderDeliveryType
-  delivery_address String?           // required when delivery_type = home_delivery
-  delivery_notes   String?
-
-  notes                 String?
-  loyalty_points_used   Int      @default(0)
-  loyalty_points_earned Int      @default(0)
-
-  // Audit trail
-  cancelled_at          DateTime?
-  cancellation_reason   String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  // Relations
-  customer User         @relation("CustomerOrders", fields: [customer_id], references: [id], onDelete: Restrict)
-  store    StoreProfile @relation("StoreOrders",    fields: [store_id],    references: [id], onDelete: Restrict)
-  items    OrderItem[]
-  payment  Payment?
-
-  reviews Review[]
-
-  @@index([customer_id, status])
-  @@index([store_id, status])
-  @@index([created_at])
-  @@map("orders")
-}
-
-model OrderItem {
-  id       String @id @default(uuid())
-  order_id String
-  part_id  String
-
-  // ─── Part snapshot ───────────────────────────────────────
-  // Copied at order time so historical orders survive part edits/deletions
-  part_name String
-  part_sku  String?
-
-  quantity       Int
-  unit_price_dzd Decimal @db.Decimal(12, 2)
-  discount_pct   Decimal @default(0) @db.Decimal(5, 2)
-  line_total_dzd Decimal @db.Decimal(12, 2)
-
-  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  part  Part  @relation(fields: [part_id],  references: [id], onDelete: Restrict)
-
-  @@index([order_id])
-  @@index([part_id])
-  @@map("order_items")
-}
-
-// ─────────────────────────────────────────────────────────
-// PAYMENTS
-// ─────────────────────────────────────────────────────────
-
-model Payment {
-  id       String @id @default(uuid())
-   order_id        String? @unique   // nullable now — either order or subscription
-  subscription_id String? @unique   // new — for subscription payments
-  payer_id String
-
-  method           PaymentMethod
-  amount_dzd       Decimal       @db.Decimal(12, 2)
-  status           PaymentStatus @default(pending)
-
-  edahabia_ref     String?  @unique   // gateway transaction reference
-  gateway_response Json?              // full webhook/response payload
-  failed_reason    String?            // populated on status = failed
-
-  paid_at    DateTime?
-  created_at DateTime  @default(now())
-
- 
-
-  subscription Subscription? @relation(fields: [subscription_id], references: [id], onDelete: SetNull)
-  order        Order?        @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  payer        User          @relation("UserPayments", fields: [payer_id], references: [id], onDelete: Restrict)
-
- 
-  @@index([order_id, status])
-  @@index([subscription_id])
-  @@index([payer_id])
-  @@map("payments")
-}
-
-
-// ─────────────────────────────────────────────────────────
-// PROFESSIONAL SCHEDULE
-// ─────────────────────────────────────────────────────────
-
-model ProfessionalSchedule {
-  id              String  @id @default(uuid())
-  professional_id String
-
-  // 0 = Sunday, 1 = Monday ... 6 = Saturday
-  day_of_week           Int
-  start_time            String  // stored as "HH:MM" — Prisma has no Time scalar
-  end_time              String
-  slot_duration_minutes Int     @default(60)
-  is_active             Boolean @default(true)
-
-  professional ProfessionalProfile @relation(fields: [professional_id], references: [id], onDelete: Cascade)
-
-  @@index([professional_id, day_of_week])
-  @@map("professional_schedules")
-}
-
-model ProfessionalScheduleException {
-  id              String   @id @default(uuid())
-  professional_id String
-  exception_date  DateTime @db.Date
-
-  // true = full day off, false = special hours on that day
-  is_day_off Boolean @default(true)
-  start_time String? // only used when is_day_off = false
-  end_time   String? // only used when is_day_off = false
-  reason     String?
-
-  professional ProfessionalProfile @relation(fields: [professional_id], references: [id], onDelete: Cascade)
-
-  @@index([professional_id, exception_date])
-  @@map("professional_schedule_exceptions")
-}
-
-// ─────────────────────────────────────────────────────────
-// APPOINTMENTS
-// ─────────────────────────────────────────────────────────
-
-model Appointment {
-  id              String  @id @default(uuid())
-  customer_id     String
-  professional_id String
-  vehicle_id      String?
-
-  // ── Step 1: client fills these when submitting ──
-  service_type     String
-  description      String?
-  location_address String?
-
-  // ── Step 2: pro fills these when confirming ──
-  // All nullable — only set after pro accepts
-  scheduled_at      DateTime? // exact date + time the client should arrive
-  duration_minutes  Int?      // e.g. 90 means 10:00 → 11:30
-  quoted_price_dzd  Decimal?  @db.Decimal(12, 2) // starting/estimated price pro sends back
-  confirmation_note String?   // optional message from pro to client when confirming
-
-  // ── Step 3: pro fills these when completing ──
-  final_price_dzd       Decimal?  @db.Decimal(12, 2)
-  payment_collected     Boolean   @default(false)
-  payment_collected_at  DateTime?
-  completion_notes      String?
-  completed_at          DateTime?
-
-  // ── Cancellation ──
-  cancelled_by     String?   // user id of whoever cancelled
-  cancellation_reason String?
-  cancelled_at     DateTime?
-
-  status     AppointmentStatus @default(pending)
-  created_at DateTime          @default(now())
-  updated_at DateTime          @updatedAt
-
-  customer     User                @relation("CustomerAppointments", fields: [customer_id], references: [id], onDelete: Cascade)
-  professional ProfessionalProfile @relation("ProfessionalAppointments", fields: [professional_id], references: [id], onDelete: Restrict)
-  vehicle      Vehicle?            @relation(fields: [vehicle_id], references: [id], onDelete: SetNull)
-
-  reviews Review[]
-
-  @@index([customer_id, status])
-  @@index([professional_id, scheduled_at])
-  @@map("appointments")
-}
-
-// ─────────────────────────────────────────────────────────
-// REVIEWS
-// ─────────────────────────────────────────────────────────
-
-model Review {
-  id          String       @id @default(uuid())
-  author_id   String
-  target_id   String
-  target_type ReviewTarget
-
-  // Proof of real interaction — service layer must validate
-  // at least one is set and matches target_type
-  order_id       String? // set when reviewing a store or part
-  appointment_id String? // set when reviewing a professional
-
-  rating        Int     // 1–5, validated in service layer
-  comment       String?
-  is_verified   Boolean @default(false)
-  helpful_count Int     @default(0)
-  media_urls    String[]
-
-  created_at DateTime @default(now())
-
-  author      User         @relation("AuthoredReviews", fields: [author_id], references: [id], onDelete: Cascade)
-  order       Order?       @relation(fields: [order_id], references: [id], onDelete: SetNull)
-  appointment Appointment? @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
-
-  @@unique([author_id, target_type, target_id])
-  @@index([author_id])
-  @@index([target_type, target_id])
-  @@map("reviews")
-}
-
-// ─────────────────────────────────────────────────────────
-// REPORTS
-// ─────────────────────────────────────────────────────────
-
-model Report {
-  id          String       @id @default(uuid())
-  reporter_id String
-  target_id   String
-  target_type ReportTarget
-
-  reason      ReportReason
-  description String?
-
-  status               ReportStatus @default(pending)
-  reviewed_by_admin_id String?      // plain String — same pattern as the rest of your schema
-  admin_notes          String?
-  reviewed_at          DateTime?
-
-  created_at DateTime @default(now())
-
-  reporter User @relation("AuthoredReports", fields: [reporter_id], references: [id], onDelete: Cascade)
-
-  @@index([reporter_id])
-  @@index([target_type, target_id])
-  @@index([status, created_at])
-  @@map("reports")
-}
-
-
-model DiagnosticPost {
-  id          String     @id @default(uuid())
-  author_id   String
-  vehicle_id  String?
-  title       String     @db.VarChar(200)
-  description String
-  images      String[]
-
-  // Optional tags (used when vehicle_id is null)
-  brand_id  String?
-  model_id  String?
-  year      Int?
-  fuel_type FuelType?   // ← ADDED
-
-  status      PostStatus @default(open)   // ← reuse existing enum
-  views_count Int        @default(0)
-  saves_count Int        @default(0)
-
-  // Admin soft-delete              ← ADDED block
-  is_deleted          Boolean   @default(false)
-  deleted_by_admin_id String?
-  deleted_at          DateTime?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  author   User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
-  vehicle  Vehicle? @relation(fields: [vehicle_id], references: [id], onDelete: SetNull)
-  brand    Brand?   @relation(fields: [brand_id], references: [id], onDelete: SetNull)
-  model    Model?   @relation(fields: [model_id], references: [id], onDelete: SetNull)
-
-  comments  DiagnosticComment[]
-  saves     DiagnosticSave[]
-  reactions DiagnosticReaction[]
-
-  @@index([author_id])
-  @@index([brand_id, model_id])
-  @@index([status])
-  @@index([created_at])
-  @@map("diagnostic_posts")
-}
-
-model DiagnosticComment {
-  id        String  @id @default(uuid())
-  post_id   String
-  author_id String
-  parent_id String?   // null = top-level, set = reply (max 1 level deep, enforced in service)
-  body      String
-  images    String[]
-
-  is_accepted_answer Boolean @default(false)
-  is_deleted         Boolean @default(false)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  post      DiagnosticPost      @relation(fields: [post_id], references: [id], onDelete: Cascade)
-  author    User                @relation(fields: [author_id], references: [id], onDelete: Cascade)
-  parent    DiagnosticComment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: SetNull)
-  replies   DiagnosticComment[] @relation("CommentReplies")
-  reactions DiagnosticReaction[]
-
-  // Partial unique index for is_accepted_answer enforced via raw migration
-  @@index([post_id, parent_id])
-  @@index([author_id])
-  @@map("diagnostic_comments")
-}
-
-model DiagnosticSave {
-  id         String   @id @default(uuid())
-  user_id    String
-  post_id    String
-  created_at DateTime @default(now())
-
-  user User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  post DiagnosticPost @relation(fields: [post_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, post_id])
-  @@index([post_id])
-  @@map("diagnostic_saves")
-}
-
-model DiagnosticReaction {
-  id          String         @id @default(uuid())
-  user_id     String
-  target_id   String
-  target_type ReactionTarget  // ← reuse existing enum
-  created_at  DateTime       @default(now())
-
-  post_id     String?
-  comment_id  String?
-
-  user    User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  post    DiagnosticPost?    @relation(fields: [post_id],    references: [id], onDelete: Cascade)
-  comment DiagnosticComment? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
-
-@@unique([user_id, post_id])     // one reaction per user per post
-  @@unique([user_id, comment_id])
-  @@unique([user_id, target_id, target_type])
-  @@index([target_type, target_id])
-  @@map("diagnostic_reactions")
-}
-
-// ─────────────────────────────────────────────────────────
-// SUBSCRIPTION PLANS
-// ─────────────────────────────────────────────────────────
-
-model SubscriptionPlan {
-  id            String             @id @default(uuid())
-  name          String
-  description   String?
-  price_dzd     Decimal            @db.Decimal(10, 2)
-  billing_cycle BillingCycle
-  duration_days Int
-  target_type   SubscriptionTarget  // store plans and pro plans are separate
-  features      Json?
-  is_free_trial Boolean            @default(false)
-  trial_days    Int?               // only used when is_free_trial = true
-  is_active     Boolean            @default(true)
-  created_at    DateTime           @default(now())
-
-  subscriptions Subscription[]
-
-  @@map("subscription_plans")
-}
-
-// ─────────────────────────────────────────────────────────
-// SUBSCRIPTIONS
-// ─────────────────────────────────────────────────────────
-
-model Subscription {
-  id              String             @id @default(uuid())
-
-  // Polymorphic — points to store_profiles.id or professional_profiles.id
-  // No @relation — same pattern as seller_id on Part
-  subscriber_id   String
-  subscriber_type SubscriptionTarget
-
-  plan_id    String
-  status     SubscriptionStatus @default(active)
-  is_trial   Boolean            @default(false)
-  started_at DateTime
-  expires_at DateTime
-  auto_renew Boolean            @default(true)
-
-  // Cancellation
-  cancelled_at DateTime?
-
-  // Notification tracking — prevents duplicate expiry emails
-  expiry_warning_sent_at DateTime?  // sent ~7 days before expires_at
-  expired_notified_at    DateTime?  // sent when status flipped to expired
-
-  created_at DateTime @default(now())
-
-
-  plan    SubscriptionPlan @relation(fields: [plan_id], references: [id], onDelete: Restrict)
-  payment Payment?         // ← back-relation only, no fields/references here      // one payment per subscription cycle
-
-  @@index([subscriber_id, subscriber_type])
-  @@index([status, expires_at])
-  @@map("subscriptions")
-}
-
-// ─────────────────────────────────────────────────────────
-// PLATFORM SETTINGS (singleton key-value store)
-// ─────────────────────────────────────────────────────────
-
-model PlatformSetting {
-  id                  String   @id @default(uuid())
-  key                 String   @unique
-  value               Json
-  description         String?
-  updated_by_admin_id String?
-  updated_at          DateTime @default(now()) @updatedAt
-
-  @@map("platform_settings")
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -14,8 +14,8 @@ import {
 import { MdVerified } from "react-icons/md";
 import ShopCards from "../components/uiComponents/ShopCards";
 import Footer from "../components/layaouts/Footer";
-import stores from "../../data/shops";
-import parts from "../../data/parts";
+import { getStoreById, getAllStores } from "../services/storeService";
+import { getAllParts } from "../services/partService";
 
 // ─── PartCard (inline, matching the provided component) ──────────────────────
 function EtatBadge({ etat }) {
@@ -110,16 +110,19 @@ function FilterPill({ label }) {
 // ─── Image carousel ───────────────────────────────────────────────────────────
 function ImageCarousel({ images }) {
   const [idx, setIdx] = useState(0);
+  const displayImages = images.length > 0 ? images : [
+    "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=700&q=80",
+  ];
   return (
     <div className="relative rounded-2xl overflow-hidden h-full min-h-[280px] bg-slate-100">
       <img
-        src={images[idx]}
+        src={displayImages[idx]}
         alt="shop"
         className="w-full h-full object-cover"
       />
-      {images.length > 1 && (
+      {displayImages.length > 1 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {images.map((_, i) => (
+          {displayImages.map((_, i) => (
             <button
               key={i}
               onClick={() => setIdx(i)}
@@ -135,19 +138,130 @@ function ImageCarousel({ images }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function ShopProfilePage() {
   const { id } = useParams();
-  const store = stores.find((s) => s.id === id) ?? stores[0];
+  const [store, setStore] = useState(null);
+  const [storeParts, setStoreParts] = useState([]);
+  const [otherStores, setOtherStores] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [partSearch, setPartSearch] = useState("");
   const [wishlist, setWishlist] = useState(false);
 
-  const otherStores = stores.filter(
-    (s) => s.wilaya === store.wilaya && s.id !== store.id,
-  );
+  useEffect(() => {
+    const fetchStoreData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Fetch the store user data (includes store_profile)
+        const userData = await getStoreById(id);
+        const profile = userData.store_profile || {};
 
-  const filteredParts = parts.filter(
+        const mappedStore = {
+          id: userData.id,
+          owner_name: profile.owner_name || "Propriétaire",
+          store_name: profile.store_name || "Magasin",
+          description: profile.description || "",
+          address: profile.address || "",
+          wilaya: profile.wilaya || "N/A",
+          images: profile.images || [],
+          logo_url: profile.logo_url || "",
+          verified: profile.status === "approved",
+          rating_avg: Number(profile.rating_avg) || 0,
+          rating_count: profile.rating_count || 0,
+          created_at: userData.created_at,
+        };
+        setStore(mappedStore);
+
+        // Fetch parts sold by this store
+        try {
+          const allParts = await getAllParts();
+          const storePartsList = (allParts || []).filter(
+            (p) => p.seller_id === id
+          );
+          const mappedParts = storePartsList.map((p) => {
+            const comp = p.compatibilities?.[0];
+            return {
+              id: p.id,
+              name: p.name,
+              categorie: p.category?.name || "Général",
+              vehicule: {
+                marque: comp?.brand?.name || "Universel",
+                modele: comp?.model?.name || "",
+                annee: comp?.year_from || "N/A",
+                carburant: comp?.engine_variant || "N/A",
+              },
+              etat: p.condition === "new" ? "Neuf" : "Occasion",
+              disponibilite: p.stock_qty > 0 ? "En stock" : "Indisponible",
+              prix: Number(p.price_dzd),
+              image: p.images?.[0] || "/placeholder-part.png",
+            };
+          });
+          setStoreParts(mappedParts);
+        } catch (partsErr) {
+          console.error("Failed to fetch store parts", partsErr);
+        }
+
+        // Fetch other stores from the same wilaya
+        try {
+          const allStores = await getAllStores();
+          const others = (allStores || [])
+            .filter((s) => {
+              const sp = s.store_profile || {};
+              return sp.wilaya === mappedStore.wilaya && s.id !== id;
+            })
+            .map((s) => {
+              const sp = s.store_profile || {};
+              return {
+                id: s.id,
+                store_name: sp.store_name || "Magasin",
+                owner_name: sp.owner_name || "Propriétaire",
+                wilaya: sp.wilaya || "N/A",
+                images: sp.images || [],
+                logo_url: sp.logo_url || "",
+                rating_avg: Number(sp.rating_avg) || 0,
+              };
+            });
+          setOtherStores(others);
+        } catch (othersErr) {
+          console.error("Failed to fetch other stores", othersErr);
+        }
+      } catch (err) {
+        console.error("Failed to load store", err);
+        setError("Impossible de charger les informations du magasin.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStoreData();
+  }, [id]);
+
+  const filteredParts = storeParts.filter(
     (p) =>
       p.name.toLowerCase().includes(partSearch.toLowerCase()) ||
       p.categorie.toLowerCase().includes(partSearch.toLowerCase()),
   );
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+        <p className="text-gray-400 text-sm">Chargement du magasin...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !store) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+        <p className="text-red-400 text-lg font-medium">{error || "Magasin introuvable"}</p>
+        <Link to="/magasins" className="text-blue-600 hover:underline text-sm">
+          ← Retour aux magasins
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -163,7 +277,7 @@ export default function ShopProfilePage() {
           {/* Logo */}
           <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-lg shrink-0">
             <img
-              src={store.logo_url}
+              src={store.logo_url || "https://images.unsplash.com/photo-1612832020746-3f6c7b5e3d41?w=200&q=80"}
               alt={store.store_name}
               className="w-full h-full object-cover"
             />
@@ -215,7 +329,7 @@ export default function ShopProfilePage() {
           <div className="col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <h2 className="text-blue-700 font-bold text-base mb-2">Bio :</h2>
             <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              {store.description}
+              {store.description || "Aucune description disponible."}
             </p>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs mb-4">
@@ -231,23 +345,15 @@ export default function ShopProfilePage() {
               </div>
               <div>
                 <p className="text-gray-400 font-medium">
-                  Années d'experience :
-                </p>
-                <p className="text-gray-700 font-semibold">
-                  {store.years_experience} ans
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-400 font-medium">
                   Localisation du magasin :
                 </p>
                 <p className="text-gray-700 font-semibold text-[11px]">
-                  {store.address}
+                  {store.address || "Non renseignée"}
                 </p>
               </div>
             </div>
 
-            {/* Rating & Availability */}
+            {/* Rating */}
             <div className="flex gap-4 mb-4">
               <div>
                 <p className="text-gray-400 text-xs mb-1">
@@ -260,21 +366,13 @@ export default function ShopProfilePage() {
                   <FiStar className="text-amber-400 fill-amber-400" size={14} />
                 </div>
               </div>
-              <div>
-                <p className="text-gray-400 text-xs mb-1">
-                  Magasin disponibilité
-                </p>
-                <span className="text-emerald-600 font-semibold text-sm">
-                  {store.availability}
-                </span>
-              </div>
             </div>
 
             <h3 className="text-blue-700 font-bold text-sm mb-1">
               Plan de travail :
             </h3>
             <p className="text-gray-600 text-xs leading-relaxed mb-4">
-              {store.description}
+              {store.description || "Aucune description disponible."}
             </p>
 
             <button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
@@ -284,15 +382,7 @@ export default function ShopProfilePage() {
 
           {/* Image carousel */}
           <div className="col-span-2">
-            <ImageCarousel
-              images={
-                store.images.length
-                  ? store.images
-                  : [
-                      "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=700&q=80",
-                    ]
-              }
-            />
+            <ImageCarousel images={store.images} />
           </div>
         </div>
 
@@ -312,7 +402,7 @@ export default function ShopProfilePage() {
               <FiSearch size={14} className="text-gray-400 shrink-0" />
               <input
                 type="text"
-                placeholder="Input field"
+                placeholder="Rechercher une pièce..."
                 value={partSearch}
                 onChange={(e) => setPartSearch(e.target.value)}
                 className="flex-1 text-sm outline-none bg-transparent placeholder-gray-400"
@@ -357,11 +447,17 @@ export default function ShopProfilePage() {
           </div>
 
           {/* Parts grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredParts.map((part) => (
-              <PartCard key={part.id} part={part} />
-            ))}
-          </div>
+          {filteredParts.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <p className="text-sm">Aucune pièce trouvée dans ce magasin.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {filteredParts.map((part) => (
+                <PartCard key={part.id} part={part} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Same wilaya stores */}
@@ -376,7 +472,7 @@ export default function ShopProfilePage() {
                   key={s.id}
                   id={s.id}
                   name={s.store_name}
-                  image={s.images[0]}
+                  image={s.images[0] || s.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
                   owner={s.owner_name}
                   wilaya={s.wilaya}
                   rating={s.rating_avg}

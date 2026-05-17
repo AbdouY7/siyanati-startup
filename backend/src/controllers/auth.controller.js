@@ -172,6 +172,9 @@ const registerCustomer = async (req, res, next) => {
       .status(201)
       .json({ message: "Customer registration successful, please login" });
   } catch (err) {
+    if (err.code === "P2002") {
+      return res.status(409).json({ message: "Email or phone number already in use" });
+    }
     console.error(err);
     return res.status(500).json({ message: "Registration failed" });
   }
@@ -258,6 +261,9 @@ const registerStore = async (req, res, next) => {
         "Store registration submitted successfully, pending admin approval",
     });
   } catch (err) {
+    if (err.code === "P2002") {
+      return res.status(409).json({ message: "Email or phone number already in use" });
+    }
     console.error(err);
     return res.status(500).json({ message: "Registration failed" });
   }
@@ -352,13 +358,16 @@ const registerProfessional = async (req, res, next) => {
         "Professional registration submitted successfully, pending admin approval",
     });
   } catch (err) {
+    if (err.code === "P2002") {
+      return res.status(409).json({ message: "Email or phone number already in use" });
+    }
     next(err);
   }
 };
 
 const refreshToken = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken } = req.body || {};
     if (!refreshToken) {
       return res.status(400).json({ message: "Refresh token required" });
     }
@@ -399,7 +408,7 @@ const refreshToken = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken } = req.body || {};
     if (!refreshToken) {
       return res.status(400).json({ message: "Refresh token required" });
     }
@@ -443,6 +452,232 @@ const logout = async (req, res, next) => {
 //   }
 // };
 
+const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
+
+const sendEmailVerification = async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    if (user.email_verified) {
+      return res.status(400).json({ success: false, message: "Email already verified" });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email_verification_token: hashedToken,
+        email_verification_expires_at: expiresAt,
+      },
+    });
+
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Verify your email address</h2>
+        <p>Please click the button below to verify your email address. This link will expire in 24 hours.</p>
+        <a href="${verificationUrl}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
+      </div>
+    `;
+
+    await sendEmail(user.email, "Verify your email", html);
+
+    return res.json({ success: true, message: "Verification email sent" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: "Token is required" });
+
+    const hashedToken = hashToken(token);
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email_verification_token: hashedToken,
+        email_verification_expires_at: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired verification token" });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email_verified: true,
+        email_verification_token: null,
+        email_verification_expires_at: null,
+      },
+    });
+
+    return res.json({ success: true, message: "Email verified successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.json({ success: true, message: "If an account exists, a reset link has been sent" });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        reset_password_token: hashedToken,
+        reset_password_expires_at: expiresAt,
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Password Reset Request</h2>
+        <p>You requested a password reset. Click the button below to reset your password. This link will expire in 15 minutes.</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a>
+      </div>
+    `;
+
+    await sendEmail(user.email, "Password Reset", html);
+
+    return res.json({ success: true, message: "If an account exists, a reset link has been sent" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password, confirm_password } = req.body;
+    if (!token || !password || !confirm_password) {
+      return res.status(400).json({ success: false, message: "Token, password, and confirm_password are required" });
+    }
+
+    if (password !== confirm_password) {
+      return res.status(400).json({ success: false, message: "Passwords do not match" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: "Password must be at least 8 characters long" });
+    }
+
+    const hashedToken = hashToken(token);
+
+    const user = await prisma.user.findFirst({
+      where: {
+        reset_password_token: hashedToken,
+        reset_password_expires_at: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
+    }
+
+    const newPasswordHash = await bcrypt.hash(password, 12);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password_hash: newPasswordHash,
+        reset_password_token: null,
+        reset_password_expires_at: null,
+        refresh_token: null,
+      },
+    });
+
+    return res.json({ success: true, message: "Password reset successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const sendPhoneVerification = async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    if (!user.phone) {
+      return res.status(400).json({ success: false, message: "No phone number associated with account" });
+    }
+
+    if (user.phone_verified) {
+      return res.status(400).json({ success: false, message: "Phone already verified" });
+    }
+
+    const rawOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOTP = hashToken(rawOTP);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        phone_verification_code: hashedOTP,
+        phone_verification_expires_at: expiresAt,
+      },
+    });
+
+    await sendSMS(user.phone, `Your verification code is: ${rawOTP}. Valid for 5 minutes.`);
+
+    return res.json({ success: true, message: "Verification SMS sent" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyPhone = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ success: false, message: "Code is required" });
+
+    const hashedOTP = hashToken(code);
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: req.user.id,
+        phone_verification_code: hashedOTP,
+        phone_verification_expires_at: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired verification code" });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        phone_verified: true,
+        phone_verification_code: null,
+        phone_verification_expires_at: null,
+      },
+    });
+
+    return res.json({ success: true, message: "Phone verified successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   login,
   register: registerCustomer,
@@ -451,4 +686,10 @@ module.exports = {
   registerProfessional,
   refreshToken,
   logout,
+  sendEmailVerification,
+  verifyEmail,
+  forgotPassword,
+  resetPassword,
+  sendPhoneVerification,
+  verifyPhone,
 };

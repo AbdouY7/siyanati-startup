@@ -1,10 +1,13 @@
 import "./App.css";
+import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
+import useAuthStore from "./store/authStore";
 import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
 import Login from "./pages/registrationPages/Login";
 import UserHome from "./pages/normalUserPages/UserHome";
 import ResetPassword from "./pages/registrationPages/ResetPassword";
+import RegisterClient from "./pages/registrationPages/RegisterClient";
 import Catalogues from "./pages/Catalogues";
 import PartDetails from "./pages/PartDetails";
 import Magasins from "./pages/Magasins";
@@ -12,8 +15,27 @@ import ShopProfilePage from "./pages/ShopProfilePage";
 import BuyPage from "./pages/BuyPage";
 import ProfessionalProfilePage from "./pages/ProfessionnelProfilePage";
 import Professionals from "./pages/Professionals";
+import ProfilePage from "./pages/normalUserPages/ProfilePage";
+import EditProfilePage from "./pages/normalUserPages/EditProfilePage";
+
+import DashboardHome from "./pages/adminDashboard/DashboardHome";
+import Layout from "./pages/adminDashboard/layout/Layout";
 
 function App() {
+  const { checkAuth, isCheckingAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Routes>
@@ -33,7 +55,13 @@ function App() {
           <Route path="/diagnostic" element={<div>Diagnostic</div>} />
         </Route>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<RegisterClient />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/edit" element={<EditProfilePage />} />
+        <Route path="/admin" element={<Layout/>}>
+        <Route path="/admin/home" element={<DashboardHome/>}/>
+        </Route>
       </Routes>
     </>
   );

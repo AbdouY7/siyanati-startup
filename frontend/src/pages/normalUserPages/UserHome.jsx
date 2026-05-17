@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   FiSearch,
@@ -17,79 +17,27 @@ import { FaCar } from "react-icons/fa";
 
 import ProfessionalCard from "../../components/uiComponents/ProfessionalCard";
 import ShopCards from "../../components/uiComponents/ShopCards";
-import Part from "../../components/uiComponents/PartCard";
+import PartCard from "../../components/uiComponents/PartCard";
 import DiagnosticPostCard from "../../components/uiComponents/DiagnosticPostCard";
 import Footer from "../../components/layaouts/Footer";
 
-import professionalProfiles from "../../../data/professionelsList";
-import diagnosticPosts from "../../../data/DiagnosticPosts";
-import stores from "../../../data/shops";
-import parts from "../../../data/parts";
+import useAuthStore from "../../store/authStore";
+import { getAllStores } from "../../services/storeService";
+import { getAllProfessionals } from "../../services/professionalService";
+import { getAllParts } from "../../services/partService";
+import { getUserVehicles } from "../../services/vehicleService";
+import { getDiagnosticPosts } from "../../services/diagnosticService";
 
 import heroBg from "../../assets/img/home-user-hero.png";
 
-// ─── Current user (replace with auth context later) ───────────────────────────
-const currentUser = {
-  full_name: "Abdelouaheb Merabet",
-  wilaya: "Sétif",
-  avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+// ─── Specialty label map ──────────────────────────────────────────────────────
+const specialtyLabels = {
+  mechanic: "Mécanique générale",
+  electrician: "Électricité automobile",
+  bodywork: "Carrosserie et peinture",
+  diagnostic: "Diagnostic électronique",
+  other: "Services automobiles divers",
 };
-
-// ─── User cars (replace with API later) ──────────────────────────────────────
-const userCars = [
-  {
-    id: "car-1",
-    brand: "Dacia",
-    model: "Logan",
-    year: 2021,
-    fuel: "Essence",
-    image:
-      "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=300&q=80",
-  },
-  {
-    id: "car-2",
-    brand: "Renault",
-    model: "Clio 4",
-    year: 2019,
-    fuel: "Diesel",
-    image:
-      "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=300&q=80",
-  },
-  {
-    id: "car-3",
-    brand: "Volkswagen",
-    model: "Golf 7",
-    year: 2018,
-    fuel: "Essence",
-    image:
-      "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
-  },
-];
-
-// ─── Stats ────────────────────────────────────────────────────────────────────
-const stats = [
-  {
-    icon: FiMessageSquare,
-    label: "Questions posées",
-    value: "3",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-  },
-  {
-    icon: FiUsers,
-    label: "Vos réponses",
-    value: "12",
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-  },
-  {
-    icon: FiTool,
-    label: "Pros à Sétif",
-    value: "8",
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-  },
-];
 
 // ─── Horizontal scroll section ────────────────────────────────────────────────
 function ScrollSection({ title, viewAllTo, viewAllLabel, children }) {
@@ -169,7 +117,7 @@ function CarSwitcherModal({ cars, activeCar, onSelect, onClose }) {
               }}
               className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-150 text-left
                 ${
-                  activeCar.id === car.id
+                  activeCar?.id === car.id
                     ? "border-blue-500 bg-blue-50"
                     : "border-gray-100 hover:border-blue-200 hover:bg-gray-50"
                 }`}>
@@ -188,7 +136,7 @@ function CarSwitcherModal({ cars, activeCar, onSelect, onClose }) {
                   {car.year} · {car.fuel}
                 </p>
               </div>
-              {activeCar.id === car.id && (
+              {activeCar?.id === car.id && (
                 <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
                   <FiCheck size={11} className="text-white" />
                 </div>
@@ -209,41 +157,167 @@ function CarSwitcherModal({ cars, activeCar, onSelect, onClose }) {
 
 // ─── UserHome Page ────────────────────────────────────────────────────────────
 export default function UserHome() {
-  const [activeCar, setActiveCar] = useState(userCars[0]);
+  const { user } = useAuthStore();
+
+  // Derive user info from auth store
+  const userProfile = user?.client_profile || user?.store_profile || user?.professional_profile || {};
+  const userName = userProfile.full_name || userProfile.owner_name || userProfile.store_name || "Utilisateur";
+  const userWilaya = userProfile.wilaya || "N/A";
+
+  // State for data from APIs
+  const [userCars, setUserCars] = useState([]);
+  const [activeCar, setActiveCar] = useState(null);
   const [showCarModal, setShowCarModal] = useState(false);
   const [search, setSearch] = useState("");
 
-  // ── Derived data from real data files ────────────────────────────────────
-  const topShops = [...stores]
-    .sort((a, b) => b.rating_avg - a.rating_avg)
-    .slice(0, 6);
+  const [topShops, setTopShops] = useState([]);
+  const [topPros, setTopPros] = useState([]);
+  const [featuredParts, setFeaturedParts] = useState([]);
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [regionShops, setRegionShops] = useState([]);
+  const [regionPros, setRegionPros] = useState([]);
+  const [stats, setStats] = useState({ questions: 0, responses: 0, prosCount: 0 });
 
-  const topPros = [...professionalProfiles]
-    .sort((a, b) => b.rating_avg - a.rating_avg)
-    .slice(0, 8);
+  useEffect(() => {
+    // Fetch user vehicles
+    getUserVehicles()
+      .then((data) => {
+        const mapped = (data || []).map((v) => ({
+          id: v.id,
+          brand: v.brand?.name || "Véhicule",
+          model: v.model?.name || "",
+          year: v.year,
+          fuel: v.fuel_type || "N/A",
+          image: v.image_url || "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=300&q=80",
+        }));
+        setUserCars(mapped);
+        if (mapped.length > 0) setActiveCar(mapped[0]);
+      })
+      .catch(() => {});
 
-  const featuredParts = parts.slice(0, 6);
+    // Fetch stores
+    getAllStores()
+      .then((data) => {
+        const mapped = (data || []).map((s) => {
+          const sp = s.store_profile || {};
+          return {
+            id: s.id,
+            store_name: sp.store_name || "Magasin",
+            owner_name: sp.owner_name || "Propriétaire",
+            wilaya: sp.wilaya || "N/A",
+            images: sp.images || [],
+            logo_url: sp.logo_url || "",
+            rating_avg: Number(sp.rating_avg) || 0,
+            verified: sp.status === "approved",
+            is_frozen: sp.is_frozen || false,
+          };
+        });
+        const sorted = [...mapped].sort((a, b) => b.rating_avg - a.rating_avg);
+        setTopShops(sorted.slice(0, 5));
+        setRegionShops(sorted.filter((s) => s.wilaya === userWilaya).slice(0, 5));
+      })
+      .catch(() => {});
 
-  const regionShops = stores
-    .filter((s) => s.wilaya === currentUser.wilaya)
-    .slice(0, 6);
+    // Fetch professionals
+    getAllProfessionals()
+      .then((data) => {
+        const mapped = (data || []).map((p) => {
+          const pp = p.professional_profile || {};
+          return {
+            id: p.id,
+            full_name: pp.full_name || "Professionnel",
+            specialty: specialtyLabels[pp.specialty_type] || pp.specialty_type || "Autre",
+            wilaya: pp.wilaya || "N/A",
+            rating_avg: Number(pp.rating_avg) || 0,
+            is_available: pp.is_available !== false,
+            avatar: pp.shop_images?.[0] || "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
+          };
+        });
+        const sorted = [...mapped].sort((a, b) => b.rating_avg - a.rating_avg);
+        setTopPros(sorted.slice(0, 5));
+        const regional = sorted.filter((p) => p.wilaya === userWilaya).slice(0, 5);
+        setRegionPros(regional);
+        setStats((prev) => ({ ...prev, prosCount: regional.length }));
+      })
+      .catch(() => {});
 
-  const regionPros = professionalProfiles
-    .filter((p) => p.wilaya === currentUser.wilaya)
-    .slice(0, 6);
+    // Fetch parts
+    getAllParts()
+      .then((data) => {
+        const mapped = (data || []).slice(0, 6).map((p) => {
+          const comp = p.compatibilities?.[0];
+          return {
+            id: p.id,
+            title: p.name,
+            details: `${comp?.brand?.name || "Universel"} ${comp?.model?.name || ""} · ${comp?.year_from || ""}`,
+            description: p.description || "",
+            price: Number(p.price_dzd),
+            status: 4,
+            image: p.images?.[0] || null,
+          };
+        });
+        setFeaturedParts(mapped);
+      })
+      .catch(() => {});
 
-  // avatar fallback: derive a deterministic portrait from user_id digits
-  const proAvatar = (p) =>
-    p.avatar ??
-    `https://randomuser.me/api/portraits/men/${
-      (parseInt(p.user_id?.replace(/\D/g, "").slice(0, 2) || "10") % 90) + 1
-    }.jpg`;
+    // Fetch diagnostic posts
+    getDiagnosticPosts({ limit: 3 })
+      .then((data) => {
+        const posts = data?.posts || [];
+        const mapped = posts.map((p) => ({
+          id: p.id,
+          posted_at: new Date(p.created_at).toLocaleDateString("fr-FR"),
+          user: {
+            full_name: "Utilisateur",
+            profile_picture: "https://randomuser.me/api/portraits/men/32.jpg",
+            wilaya: "N/A",
+          },
+          title: p.title,
+          car: {
+            brand: p.brand?.name || p.vehicle?.brand?.name || "N/A",
+            model: p.model?.name || p.vehicle?.model?.name || "",
+            year: p.year || p.vehicle?.year || "",
+            engine: p.fuel_type || p.vehicle?.fuel_type || "",
+          },
+          car_images: p.images || [],
+          tags: [],
+          description: p.description || "",
+        }));
+        setRecentPosts(mapped);
+        setStats((prev) => ({ ...prev, questions: data?.total || 0 }));
+      })
+      .catch(() => {});
+  }, [userWilaya]);
+
+  const computedStats = [
+    {
+      icon: FiMessageSquare,
+      label: "Questions posées",
+      value: String(stats.questions),
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+    },
+    {
+      icon: FiUsers,
+      label: "Magasins",
+      value: String(topShops.length),
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      icon: FiTool,
+      label: `Pros à ${userWilaya}`,
+      value: String(stats.prosCount),
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#f5f6fa] font-sans">
       {/* ══════════════════════════════ HERO ══════════════════════════════════ */}
       <div
-        className="relative overflow-hidden px-6 pt-8 pb-28"
+        className="relative overflow-hidden px-6 pt-[100px] pb-28"
         style={{
           backgroundImage: `linear-gradient(to right, rgba(10,20,80,0.93) 30%, rgba(10,20,80,0.65) 60%, rgba(10,20,80,0.35) 100%), url(${heroBg})`,
           backgroundSize: "cover",
@@ -257,14 +331,14 @@ export default function UserHome() {
                 Bienvenue de retour
               </p>
               <h1 className="text-white font-black text-3xl md:text-4xl leading-tight mb-1 tracking-tight">
-                {currentUser.full_name.split(" ")[0]}{" "}
+                {userName.split(" ")[0]}{" "}
                 <span className="text-blue-200">
-                  {currentUser.full_name.split(" ").slice(1).join(" ")}
+                  {userName.split(" ").slice(1).join(" ")}
                 </span>
               </h1>
               <div className="flex items-center gap-1 text-blue-300 text-sm mb-5">
                 <FiMapPin size={12} />
-                <span>{currentUser.wilaya}</span>
+                <span>{userWilaya}</span>
               </div>
 
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 max-w-md focus-within:bg-white/15 transition-colors">
@@ -285,28 +359,41 @@ export default function UserHome() {
                 <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
                   <FaCar size={10} /> Mon véhicule
                 </p>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-16 h-11 rounded-lg overflow-hidden bg-white/10 shrink-0">
-                    <img
-                      src={activeCar.image}
-                      alt={activeCar.model}
-                      className="w-full h-full object-cover"
-                    />
+                {activeCar ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-16 h-11 rounded-lg overflow-hidden bg-white/10 shrink-0">
+                        <img
+                          src={activeCar.image}
+                          alt={activeCar.model}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-white font-black text-lg leading-tight">
+                          {activeCar.brand} {activeCar.model}
+                        </p>
+                        <p className="text-blue-200 text-[11px]">
+                          {activeCar.year} · {activeCar.fuel}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowCarModal(true)}
+                      className="w-full flex items-center justify-center gap-1.5 bg-white text-blue-700 text-[12px] font-bold py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
+                      <FiRepeat size={12} /> Changer véhicule
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-2">
+                    <p className="text-blue-200 text-xs mb-2">Aucun véhicule enregistré</p>
+                    <Link
+                      to="/add-car"
+                      className="text-white text-xs font-semibold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors">
+                      + Ajouter un véhicule
+                    </Link>
                   </div>
-                  <div>
-                    <p className="text-white font-black text-lg leading-tight">
-                      {activeCar.brand} {activeCar.model}
-                    </p>
-                    <p className="text-blue-200 text-[11px]">
-                      {activeCar.year} · {activeCar.fuel}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCarModal(true)}
-                  className="w-full flex items-center justify-center gap-1.5 bg-white text-blue-700 text-[12px] font-bold py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
-                  <FiRepeat size={12} /> Changer véhicule
-                </button>
+                )}
               </div>
             </div>
           </div>
@@ -316,7 +403,7 @@ export default function UserHome() {
       {/* ══════════════════════════════ STATS ═════════════════════════════════ */}
       <div className="max-w-6xl mx-auto px-6 -mt-12 mb-10 relative z-10">
         <div className="grid grid-cols-3 gap-4">
-          {stats.map(({ icon: Icon, label, value, color, bg }) => (
+          {computedStats.map(({ icon: Icon, label, value, color, bg }) => (
             <div
               key={label}
               className="bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-4 flex items-center gap-4">
@@ -344,19 +431,23 @@ export default function UserHome() {
           title="LES MEILLEURS MAGASINS DE PIÈCES"
           viewAllTo="/magasins"
           viewAllLabel="Voir tous les magasins">
-          {topShops.map((store) => (
-            <div key={store.id} className="shrink-0 w-[200px]">
-              <ShopCards
-                id={store.id}
-                name={store.store_name}
-                image={store.images?.[0] ?? ""}
-                owner={store.owner_name}
-                wilaya={store.wilaya}
-                rating={store.rating_avg}
-                available={store.verified}
-              />
-            </div>
-          ))}
+          {topShops.length === 0 ? (
+            <p className="text-sm text-gray-400 py-8">Aucun magasin disponible.</p>
+          ) : (
+            topShops.map((store) => (
+              <div key={store.id} className="shrink-0 w-[200px]">
+                <ShopCards
+                  id={store.id}
+                  name={store.store_name}
+                  image={store.images?.[0] || store.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                  owner={store.owner_name}
+                  wilaya={store.wilaya}
+                  rating={store.rating_avg}
+                  available={!store.is_frozen}
+                />
+              </div>
+            ))
+          )}
         </ScrollSection>
 
         {/* ── Top Professionals ── */}
@@ -364,19 +455,23 @@ export default function UserHome() {
           title="LES MEILLEURS PROFESSIONNELS"
           viewAllTo="/professionnels"
           viewAllLabel="Voir tous les professionnels">
-          {topPros.map((p) => (
-            <div key={p.id} className="shrink-0 w-[180px]">
-              <ProfessionalCard
-                id={p.id}
-                name={p.full_name ?? p.specialty}
-                specialty={p.specialty}
-                avatar={proAvatar(p)}
-                wilaya={p.wilaya}
-                rating={p.rating_avg}
-                isAvailable={p.is_available}
-              />
-            </div>
-          ))}
+          {topPros.length === 0 ? (
+            <p className="text-sm text-gray-400 py-8">Aucun professionnel disponible.</p>
+          ) : (
+            topPros.map((p) => (
+              <div key={p.id} className="shrink-0 w-[180px]">
+                <ProfessionalCard
+                  id={p.id}
+                  name={p.full_name}
+                  specialty={p.specialty}
+                  avatar={p.avatar}
+                  wilaya={p.wilaya}
+                  rating={p.rating_avg}
+                  isAvailable={p.is_available}
+                />
+              </div>
+            ))
+          )}
         </ScrollSection>
 
         {/* ── Featured Parts ── */}
@@ -384,11 +479,23 @@ export default function UserHome() {
           title="PIÈCES EN VEDETTE"
           viewAllTo="/catalogues"
           viewAllLabel="Voir plus de pièces">
-          {featuredParts.map((part) => (
-            <div key={part.id} className="shrink-0 w-[210px]">
-              <Part part={part} />
-            </div>
-          ))}
+          {featuredParts.length === 0 ? (
+            <p className="text-sm text-gray-400 py-8">Aucune pièce disponible.</p>
+          ) : (
+            featuredParts.map((part) => (
+              <div key={part.id} className="shrink-0 w-[210px]">
+                <PartCard
+                  title={part.title}
+                  details={part.details}
+                  description={part.description}
+                  price={part.price}
+                  status={part.status}
+                  isConnected={true}
+                  image={part.image}
+                />
+              </div>
+            ))
+          )}
         </ScrollSection>
 
         {/* ── Recent Posts ── */}
@@ -403,11 +510,15 @@ export default function UserHome() {
               Aller au page des articles <FiChevronRight size={15} />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {diagnosticPosts.slice(0, 3).map((post) => (
-              <DiagnosticPostCard key={post.id} post={post} />
-            ))}
-          </div>
+          {recentPosts.length === 0 ? (
+            <p className="text-sm text-gray-400 py-8">Aucun article récent.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {recentPosts.map((post) => (
+                <DiagnosticPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* ── Regional Section ── */}
@@ -426,7 +537,7 @@ export default function UserHome() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-gray-700 flex items-center gap-2">
                   <FiPackage size={16} className="text-blue-500" />
-                  Magasins à {currentUser.wilaya}
+                  Magasins à {userWilaya}
                 </h3>
                 <Link
                   to="/magasins"
@@ -440,11 +551,11 @@ export default function UserHome() {
                     key={store.id}
                     id={store.id}
                     name={store.store_name}
-                    image={store.images?.[0] ?? ""}
+                    image={store.images?.[0] || store.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
                     owner={store.owner_name}
                     wilaya={store.wilaya}
                     rating={store.rating_avg}
-                    available={store.verified}
+                    available={!store.is_frozen}
                   />
                 ))}
               </div>
@@ -461,7 +572,7 @@ export default function UserHome() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-gray-700 flex items-center gap-2">
                   <FiTool size={16} className="text-blue-500" />
-                  Professionnels à {currentUser.wilaya}
+                  Professionnels à {userWilaya}
                 </h3>
                 <Link
                   to="/professionnels"
@@ -474,9 +585,9 @@ export default function UserHome() {
                   <ProfessionalCard
                     key={p.id}
                     id={p.id}
-                    name={p.full_name ?? p.specialty}
+                    name={p.full_name}
                     specialty={p.specialty}
-                    avatar={proAvatar(p)}
+                    avatar={p.avatar}
                     wilaya={p.wilaya}
                     rating={p.rating_avg}
                     isAvailable={p.is_available}

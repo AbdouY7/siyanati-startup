@@ -8,7 +8,7 @@ const Hero = () => {
   return (
     <div className="relative min-h-[calc(100vh-60px)] bg-gradient-to-tl from-white via-blue-200 to-blue-400  lg:to-blue-200 overflow-hidden  ">
       {/* Desktop layout */}
-      <div className="hidden lg:flex items-center justify-between gap-6 px-10 xl:px-16 h-full min-h-[calc(100vh-60px)] py-10">
+      <div className="hidden lg:flex items-center justify-between gap-6 px-10 xl:px-16 h-full min-h-[calc(100vh-60px)] pt-[100px] pb-10">
         <div className="flex flex-col gap-12 items-baseline max-w-[55%]">
           <div className="flex flex-col w-full gap-6 text-center md:text-left">
             <h1 className="text-[80px] xl:text-[80px] font-bold font-secondary text-black leading-[1.2] uppercase">
@@ -42,7 +42,7 @@ const Hero = () => {
       {/* Mobile & Tablet layout */}
       <div className="lg:hidden flex flex-col min-h-[calc(100vh-60px)]">
         {/* Top: text + buttons */}
-        <div className="flex flex-col gap-6 px-5 sm:px-10 pt-8 sm:pt-12 pb-4">
+        <div className="flex flex-col gap-6 px-5 sm:px-10 pt-[100px] pb-4">
           <h1 className="text-[42px] sm:text-[56px] font-bold font-secondary text-black leading-[1.15] uppercase text-left">
             Pièces auto & réparations, en un seul{" "}
             <b className="bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">

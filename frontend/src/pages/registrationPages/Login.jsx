@@ -2,9 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import registrationImg from "../../assets/img/registrationImg.png";
 import Input from "../../components/uiComponents/InputField";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from "../../api/axios";
+import useAuthStore from "../../store/authStore";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -57,46 +62,40 @@ const Login = () => {
       setErrors(validationErrors);
       setIsSubmitting(false);
       return;
-    } else {
-      setErrors({}); // Clear any previous errors
-      window.location.href = "/home-user";
     }
 
-    // No errors — call your API
-    // const submitLogin = async () => {
-    //   try {
-    //     const response = await fetch("/api/auth/login", {
-    //       method: "POST",
-    //       headers: { "Content-Type": "application/json" },
-    //       body: JSON.stringify({
-    //         email: formData.email,
-    //         password: formData.password,
-    //       }),
-    //     });
+    setErrors({}); // Clear any previous errors
 
-    //     const data = await response.json();
+    const submitLogin = async () => {
+      try {
+        const response = await axiosInstance.post("/auth/login", {
+          email: formData.email,
+          password: formData.password,
+        });
 
-    //     if (!response.ok) {
-    //       // Server returned an error (401, 403, etc.)
-    //       setErrors({ general: data.message || "Invalid email or password." });
-    //       setSubmitStatus("error");
-    //     } else {
-    //       // Success — store token, redirect, etc.
-    //       localStorage.setItem("token", data.token);
-    //       setSubmitStatus("success");
-    //       // Example redirect:
-    //       // window.location.href = "/dashboard";
-    //     }
-    //   } catch (err) {
-    //     setErrors({ general: "Network error. Please try again." });
-    //     setSubmitStatus("error");
-    //   } finally {
-    //     setIsSubmitting(false);
-    //   }
-    // };
+        const { user, accessToken, refreshToken } = response.data;
+        
+        // Success — store token and user in Zustand
+        await setAuth(user, accessToken, refreshToken);
+        setSubmitStatus("success");
+        
+        setTimeout(() => {
+          navigate("/home-user");
+        }, 1000);
+      } catch (err) {
+        if (err.response && err.response.data && err.response.data.message) {
+          setErrors({ general: err.response.data.message });
+        } else {
+          setErrors({ general: "Erreur de connexion. Veuillez vérifier vos identifiants." });
+        }
+        setSubmitStatus("error");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
 
-    // submitLogin();
-  }, [isSubmitting]); // runs every time isSubmitting flips to true
+    submitLogin();
+  }, [isSubmitting, formData, navigate, setAuth]); // runs every time isSubmitting flips to true
 
   // ─── Handlers ───────────────────────────────────────────────────
   const handleChange = (e) => {

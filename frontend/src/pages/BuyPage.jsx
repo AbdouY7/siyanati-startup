@@ -334,7 +334,7 @@ export default function BuyPartPage() {
   // ── Main page ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-8">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}

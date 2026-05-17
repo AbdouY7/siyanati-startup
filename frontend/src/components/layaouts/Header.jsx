@@ -1,23 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
-import { FiUser, FiMessageSquare, FiInfo, FiMenu, FiX } from "react-icons/fi";
+import { FiUser, FiMessageSquare, FiSettings, FiMenu, FiX } from "react-icons/fi";
 import siyanatiLogo from "../../assets/img/siyanati-vertical-logo.png";
-
-// ─── Swap this with your real auth hook/context ───────────────────────────────
-// e.g. import { useAuth } from "../../context/AuthContext";
-// const { isAuthenticated } = useAuth();
-const useAuth = () => ({ isAuthenticated: false }); // ← placeholder
-// ─────────────────────────────────────────────────────────────────────────────
+import useAuthStore from "../../store/authStore";
 
 const Header = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthStore();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState(null);
   const drawerRef = useRef(null);
 
   const menuItems = [
-    { name: "Accueil", href: "/" },
+    { name: "Accueil", href: isAuthenticated ? "/home-user" : "/" },
     { name: "Catalogues", href: "/catalogues" },
     { name: "Magasins", href: "/magasins" },
     { name: "Professionnels", href: "/professionnels" },
@@ -25,9 +20,9 @@ const Header = () => {
   ];
 
   const icons = [
-    { name: "User", icon: <FiUser size={18} />, label: "Profil" },
-    { name: "Message", icon: <FiMessageSquare size={18} />, label: "Messages" },
-    { name: "Info", icon: <FiInfo size={18} />, label: "Info" },
+    { name: "User", icon: <FiUser size={18} />, label: "Profil" , link: "/profile" },
+    { name: "Message", icon: <FiMessageSquare size={18} />, label: "Messages", link: "/messages" },
+    { name: "Settings", icon: <FiSettings size={18} />, label: "Paramètres" , link: "/settings" },
   ];
 
   // Close on outside click
@@ -60,7 +55,8 @@ const Header = () => {
 
   return (
     <>
-      <header className="bg-primary-dark flex items-center justify-between px-4 sm:px-6 lg:px-10 h-[60px] border-b border-white/[0.07] relative z-50 max-w-[100vw] overflow-x-hidden">
+      <div className="w-full pt-4 px-4 sm:px-6 lg:px-8 fixed top-0 left-0 z-50 flex justify-center pointer-events-none">
+        <header className="bg-primary-dark/95 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 lg:px-8 h-[64px] rounded-full shadow-xl border border-white/10 w-full max-w-7xl pointer-events-auto transition-all duration-300">
         {/* Logo */}
         <NavLink to="/" className="flex-shrink-0">
           <img src={siyanatiLogo} alt="Siyanati Logo" className="h-8 w-auto" />
@@ -89,7 +85,7 @@ const Header = () => {
           {isAuthenticated ? (
             // ── Authenticated: icon buttons ──────────────────────────────────
             icons.map((icon) => (
-              <button
+              <NavLink
                 key={icon.name}
                 onClick={() => setSelectedIcon(icon.name)}
                 aria-label={icon.label}
@@ -97,9 +93,11 @@ const Header = () => {
                   selectedIcon === icon.name
                     ? "bg-white text-secondary shadow-md scale-105"
                     : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}>
+                }`}
+                to={icon.link}
+                >
                 {icon.icon}
-              </button>
+              </NavLink>
             ))
           ) : (
             // ── Guest: Log in + Sign up ──────────────────────────────────────
@@ -125,7 +123,8 @@ const Header = () => {
           className="lg:hidden text-white/60 hover:text-white hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200">
           {menuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
         </button>
-      </header>
+        </header>
+      </div>
 
       {/* Backdrop */}
       <div
@@ -140,8 +139,8 @@ const Header = () => {
       {/* Mobile / Tablet Drawer */}
       <div
         ref={drawerRef}
-        className={`lg:hidden fixed top-[60px] left-0 right-0 z-40 bg-primary-dark border-b border-white/[0.07] transition-all duration-300 ease-in-out overflow-hidden ${
-          menuOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+        className={`lg:hidden fixed top-[90px] left-4 right-4 sm:left-6 sm:right-6 z-40 bg-primary-dark/95 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl transition-all duration-300 ease-in-out overflow-hidden ${
+          menuOpen ? "max-h-[600px] opacity-100 py-2" : "max-h-0 opacity-0 py-0"
         }`}>
         {/* Nav links */}
         <nav className="flex flex-col px-4 pt-3 gap-1">

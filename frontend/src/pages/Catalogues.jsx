@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { IoSearchOutline } from "react-icons/io5";
 import { FiFilter } from "react-icons/fi";
 import DropDownList from "../components/uiComponents/DropDownList";
 import Part from "../components/uiComponents/Part";
-import parts from "../../data/parts";
+import { getAllParts } from "../services/partService";
 
 // ─── Filter config ────────────────────────────────────────────────────────────
 const filters = [
@@ -68,10 +68,45 @@ const filters = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const Catalogues = () => {
+  const [parts, setParts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState(
     Object.fromEntries(filters.map((f) => [f.key, ""])),
   );
+
+  useEffect(() => {
+    const fetchParts = async () => {
+      try {
+        const data = await getAllParts();
+        const mappedParts = data.map((p) => {
+          const comp = p.compatibilities?.[0];
+          return {
+            id: p.id,
+            name: p.name,
+            categorie: p.category?.name || "Général",
+            vehicule: {
+              marque: comp?.brand?.name || "Universel",
+              modele: comp?.model?.name || "",
+              annee: comp?.year_from || "N/A",
+              carburant: comp?.engine_variant || "N/A",
+            },
+            etat: p.condition === "new" ? "Neuf" : "Occasion",
+            disponibilite: p.stock_qty > 0 ? "En stock" : "Indisponible",
+            prix: Number(p.price_dzd),
+            boutique: p.seller_type === "store" ? "Boutique Pro" : "Particulier",
+            image: p.images?.[0] || "/placeholder-part.png",
+          };
+        });
+        setParts(mappedParts);
+      } catch (err) {
+        console.error("Failed to load parts", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchParts();
+  }, []);
 
   const setFilter = (key, val) =>
     setActiveFilters((prev) => ({ ...prev, [key]: val }));
@@ -104,11 +139,11 @@ const Catalogues = () => {
       }
       return true;
     });
-  }, [search, activeFilters]);
+  }, [search, activeFilters, parts]);
 
   return (
     <div className="w-full min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 pt-[100px] pb-8">
         {/* Page header */}
         <div className="mb-7">
           <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-1.5">
@@ -191,7 +226,11 @@ const Catalogues = () => {
         </p>
 
         {/* Parts grid */}
-        {filteredParts.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-24">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+          </div>
+        ) : filteredParts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
             {filteredParts.map((part, index) => (
               <Part key={index} part={part} />

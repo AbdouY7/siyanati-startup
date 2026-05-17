@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiSearch, FiFilter, FiPlus, FiChevronDown } from "react-icons/fi";
 import ShopCards from "../components/uiComponents/ShopCards";
-import stores from "../../data/shops";
+import { getAllStores } from "../services/storeService";
 
 const wilayas = ["Toutes", "Sétif", "Alger", "Annaba", "Oran"];
 const ratings = ["Toutes", "4.5+", "4.0+", "3.5+"];
@@ -47,11 +47,49 @@ function FilterDropdown({ label, options, value, onChange }) {
 }
 
 export default function Magasins() {
+  const [stores, setStores] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [wilaya, setWilaya] = useState("Toutes");
   const [rating, setRating] = useState("Toutes");
   const [experience, setExperience] = useState("Toutes");
   const [availability, setAvailability] = useState("Toutes");
+
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const data = await getAllStores();
+        // Map backend response to the shape the UI expects
+        const mappedStores = (data || []).map((s) => {
+          const profile = s.store_profile || {};
+          return {
+            id: s.id,
+            user_id: s.id,
+            owner_name: profile.owner_name || "Propriétaire",
+            store_name: profile.store_name || "Magasin",
+            description: profile.description || "",
+            address: profile.address || "",
+            wilaya: profile.wilaya || "N/A",
+            images: profile.images || [],
+            logo_url: profile.logo_url || "",
+            verified: profile.status === "approved",
+            rating_avg: Number(profile.rating_avg) || 0,
+            rating_count: profile.rating_count || 0,
+            is_frozen: profile.is_frozen || false,
+            created_at: s.created_at || profile.created_at,
+          };
+        });
+        setStores(mappedStores);
+      } catch (err) {
+        console.error("Failed to load stores", err);
+        setError("Impossible de charger les magasins.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStores();
+  }, []);
 
   const filtered = stores.filter((s) => {
     const matchSearch =
@@ -63,14 +101,8 @@ export default function Magasins() {
       (rating === "4.5+" && s.rating_avg >= 4.5) ||
       (rating === "4.0+" && s.rating_avg >= 4.0) ||
       (rating === "3.5+" && s.rating_avg >= 3.5);
-    const matchExp =
-      experience === "Toutes" ||
-      (experience === "2+ ans" && s.years_experience >= 2) ||
-      (experience === "5+ ans" && s.years_experience >= 5) ||
-      (experience === "8+ ans" && s.years_experience >= 8);
-    const matchAvail =
-      availability === "Toutes" || s.availability === availability;
-    return matchSearch && matchWilaya && matchRating && matchExp && matchAvail;
+    const matchAvail = availability === "Toutes";
+    return matchSearch && matchWilaya && matchRating && matchAvail;
   });
 
   const anyActive =
@@ -82,14 +114,14 @@ export default function Magasins() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-8">
         {/* Search bar */}
         <div className="flex items-center gap-3 mb-5">
           <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full max-w-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
             <FiSearch className="text-gray-400 shrink-0" size={16} />
             <input
               type="text"
-              placeholder="rechercher le professionels ..."
+              placeholder="rechercher les magasins ..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
@@ -148,8 +180,24 @@ export default function Magasins() {
           </button>
         </div>
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+            <p className="text-gray-400 text-sm">Chargement des magasins...</p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {!isLoading && error && (
+          <div className="text-center py-24 text-red-400">
+            <p className="text-lg font-medium">{error}</p>
+            <p className="text-sm mt-1">Veuillez vous connecter et réessayer.</p>
+          </div>
+        )}
+
         {/* Shop grid */}
-        {filtered.length === 0 ? (
+        {!isLoading && !error && filtered.length === 0 ? (
           <div className="text-center py-24 text-gray-400">
             <p className="text-lg font-medium">Aucun magasin trouvé</p>
             <p className="text-sm mt-1">
@@ -157,20 +205,22 @@ export default function Magasins() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filtered.map((store) => (
-              <ShopCards
-                key={store.id}
-                id={store.id}
-                name={store.store_name}
-                image={store.images[0]}
-                owner={store.owner_name}
-                wilaya={store.wilaya}
-                rating={store.rating_avg}
-                available={true}
-              />
-            ))}
-          </div>
+          !isLoading && !error && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {filtered.map((store) => (
+                <ShopCards
+                  key={store.id}
+                  id={store.id}
+                  name={store.store_name}
+                  image={store.images[0] || store.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                  owner={store.owner_name}
+                  wilaya={store.wilaya}
+                  rating={store.rating_avg}
+                  available={!store.is_frozen}
+                />
+              ))}
+            </div>
+          )
         )}
       </main>
     </div>

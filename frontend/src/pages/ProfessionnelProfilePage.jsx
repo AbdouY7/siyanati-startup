@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -15,7 +15,16 @@ import { MdVerified } from "react-icons/md";
 import ProfessionalCard from "../components/uiComponents/ProfessionalCard";
 
 import Footer from "../components/layaouts/Footer";
-import professionalProfiles from "../../data/professionelsList";
+import { getProfessionalById, getAllProfessionals } from "../services/professionalService";
+
+// ─── Specialty type to label map ──────────────────────────────────────────────
+const specialtyTypeLabels = {
+  mechanic: "Mécanique générale",
+  electrician: "Électricité automobile",
+  bodywork: "Carrosserie et peinture",
+  diagnostic: "Diagnostic électronique",
+  other: "Services automobiles divers",
+};
 
 // ─── Image carousel ───────────────────────────────────────────────────────────
 function ImageCarousel({ images }) {
@@ -46,18 +55,6 @@ function ImageCarousel({ images }) {
   );
 }
 
-// ─── Info row ─────────────────────────────────────────────────────────────────
-function InfoRow({ icon, label, value }) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <p className="text-gray-400 text-xs font-medium">{label} :</p>
-        <p className="text-gray-700 text-sm font-semibold mt-0.5">{value}</p>
-      </div>
-    </div>
-  );
-}
-
 // ─── Specialty icon map ────────────────────────────────────────────────────────
 const specialtyIcons = {
   mechanic: "🔧",
@@ -67,25 +64,100 @@ const specialtyIcons = {
   other: "🛠️",
 };
 
+// ─── Helper: map backend user data to UI-friendly shape ───────────────────────
+function mapProfessional(userData) {
+  const profile = userData.professional_profile || {};
+  return {
+    id: userData.id,
+    full_name: profile.full_name || "Professionnel",
+    specialty: specialtyTypeLabels[profile.specialty_type] || profile.specialty_type || "Autre",
+    specialty_type: profile.specialty_type || "other",
+    experience_years: profile.experience_years || 0,
+    wilaya: profile.wilaya || "N/A",
+    location_address: profile.location_address || "",
+    shop_images: profile.shop_images || [],
+    is_available: profile.is_available !== false,
+    is_frozen: profile.is_frozen || false,
+    hourly_rate_dzd: Number(profile.hourly_rate_dzd) || 0,
+    rating_avg: Number(profile.rating_avg) || 0,
+    rating_count: profile.rating_count || 0,
+    bio: profile.bio || "",
+    created_at: userData.created_at || profile.created_at,
+    avatar: profile.shop_images?.[0] || "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
+  };
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ProfessionalProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const pro =
-    professionalProfiles.find((p) => p.id === id) ?? professionalProfiles[0];
 
+  const [pro, setPro] = useState(null);
+  const [topRated, setTopRated] = useState([]);
+  const [sameWilaya, setSameWilaya] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [wishlist, setWishlist] = useState(false);
 
-  // Top rated (others, sorted by rating, exclude current)
-  const topRated = [...professionalProfiles]
-    .filter((p) => p.id !== pro.id)
-    .sort((a, b) => b.rating_avg - a.rating_avg)
-    .slice(0, 5);
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Fetch the individual professional
+        const userData = await getProfessionalById(id);
+        const mappedPro = mapProfessional(userData);
+        setPro(mappedPro);
 
-  // Same wilaya (exclude current)
-  const sameWilaya = professionalProfiles.filter(
-    (p) => p.wilaya === pro.wilaya && p.id !== pro.id,
-  );
+        // Fetch all professionals for related sections
+        try {
+          const allData = await getAllProfessionals();
+          const allMapped = (allData || [])
+            .filter((p) => p.id !== id)
+            .map(mapProfessional);
+
+          // Top rated (sorted by rating)
+          const sorted = [...allMapped].sort((a, b) => b.rating_avg - a.rating_avg).slice(0, 5);
+          setTopRated(sorted);
+
+          // Same wilaya
+          const sameW = allMapped.filter((p) => p.wilaya === mappedPro.wilaya);
+          setSameWilaya(sameW);
+        } catch (othersErr) {
+          console.error("Failed to fetch other professionals", othersErr);
+        }
+      } catch (err) {
+        console.error("Failed to load professional", err);
+        setError("Impossible de charger le profil du professionnel.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+        <p className="text-gray-400 text-sm">Chargement du profil...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !pro) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+        <p className="text-red-400 text-lg font-medium">{error || "Professionnel introuvable"}</p>
+        <Link to="/professionnels" className="text-blue-600 hover:underline text-sm">
+          ← Retour aux professionnels
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -116,7 +188,7 @@ export default function ProfessionalProfilePage() {
               {specialtyIcons[pro.specialty_type]} {pro.specialty}
             </p>
             <div className="flex items-center gap-1 text-blue-200 text-sm mb-0.5">
-              <FiMapPin size={12} /> <span>{pro.location_address}</span>
+              <FiMapPin size={12} /> <span>{pro.location_address || pro.wilaya}</span>
             </div>
             <div className="flex items-center gap-1 text-blue-200 text-sm">
               <FiCalendar size={12} />
@@ -148,7 +220,7 @@ export default function ProfessionalProfilePage() {
           <div className="col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
             <h2 className="text-blue-700 font-bold text-base mb-2">Bio :</h2>
             <p className="text-gray-600 text-sm leading-relaxed mb-5">
-              {pro.bio}
+              {pro.bio || "Aucune description disponible."}
             </p>
 
             {/* Meta grid */}
@@ -175,10 +247,10 @@ export default function ProfessionalProfilePage() {
               </div>
               <div>
                 <p className="text-gray-400 font-medium">
-                  Localisation du magasin :
+                  Localisation :
                 </p>
                 <p className="text-gray-700 font-semibold mt-0.5 text-[11px]">
-                  {pro.location_address}
+                  {pro.location_address || "Non renseignée"}
                 </p>
               </div>
             </div>
@@ -208,24 +280,26 @@ export default function ProfessionalProfilePage() {
             </div>
 
             {/* Hourly rate */}
-            <div className="flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2.5 mb-5">
-              <FiDollarSign size={14} className="text-blue-500 shrink-0" />
-              <div>
-                <p className="text-blue-400 text-[10px] font-medium uppercase tracking-wider">
-                  Tarif horaire
-                </p>
-                <p className="text-blue-700 font-bold text-sm">
-                  {pro.hourly_rate_dzd.toLocaleString("fr-DZ")} Da / heure
-                </p>
+            {pro.hourly_rate_dzd > 0 && (
+              <div className="flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2.5 mb-5">
+                <FiDollarSign size={14} className="text-blue-500 shrink-0" />
+                <div>
+                  <p className="text-blue-400 text-[10px] font-medium uppercase tracking-wider">
+                    Tarif horaire
+                  </p>
+                  <p className="text-blue-700 font-bold text-sm">
+                    {pro.hourly_rate_dzd.toLocaleString("fr-DZ")} Da / heure
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Work plan */}
             <h3 className="text-blue-700 font-bold text-sm mb-1">
               Plan de travail :
             </h3>
             <p className="text-gray-600 text-xs leading-relaxed mb-5 flex-1">
-              {pro.work_plan}
+              {pro.bio || "Aucune description disponible."}
             </p>
 
             <button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
@@ -240,25 +314,27 @@ export default function ProfessionalProfilePage() {
         </div>
 
         {/* ── Top rated professionals ── */}
-        <section className="mb-10">
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-6">
-            LES PROFESSIONELS AVEC PLUS DE NOTATION
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {topRated.map((p) => (
-              <ProfessionalCard
-                key={p.id}
-                id={p.id}
-                name={p.full_name}
-                specialty={p.specialty}
-                avatar={p.avatar}
-                wilaya={p.wilaya}
-                rating={p.rating_avg}
-                isAvailable={p.is_available}
-              />
-            ))}
-          </div>
-        </section>
+        {topRated.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-6">
+              LES PROFESSIONELS AVEC PLUS DE NOTATION
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {topRated.map((p) => (
+                <ProfessionalCard
+                  key={p.id}
+                  id={p.id}
+                  name={p.full_name}
+                  specialty={p.specialty}
+                  avatar={p.avatar}
+                  wilaya={p.wilaya}
+                  rating={p.rating_avg}
+                  isAvailable={p.is_available}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── Same wilaya ── */}
         {sameWilaya.length > 0 && (

@@ -1,9 +1,18 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { FiSearch, FiFilter, FiPlus, FiChevronDown } from "react-icons/fi";
 
 import Footer from "../components/layaouts/Footer";
 import ProfessionalCard from "../components/uiComponents/ProfessionalCard";
-import professionalProfiles from "../../data/professionelsList";
+import { getAllProfessionals } from "../services/professionalService";
+
+// ─── Specialty type to label map ──────────────────────────────────────────────
+const specialtyTypeLabels = {
+  mechanic: "Mécanique générale",
+  electrician: "Électricité automobile",
+  bodywork: "Carrosserie et peinture",
+  diagnostic: "Diagnostic électronique",
+  other: "Services automobiles divers",
+};
 
 // ─── Filter config ────────────────────────────────────────────────────────────
 const specialties = [
@@ -73,12 +82,53 @@ function FilterDropdown({ label, options, value, onChange }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Professionals() {
+  const [professionals, setProfessionals] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [specialty, setSpecialty] = useState("Toutes");
   const [wilaya, setWilaya] = useState("Toutes");
   const [rating, setRating] = useState("Toutes");
   const [experience, setExperience] = useState("Toutes");
   const [availability, setAvailability] = useState("Toutes");
+
+  useEffect(() => {
+    const fetchProfessionals = async () => {
+      try {
+        const data = await getAllProfessionals();
+        // Map backend response to the shape the UI expects
+        const mappedPros = (data || []).map((p) => {
+          const profile = p.professional_profile || {};
+          return {
+            id: p.id,
+            user_id: p.id,
+            full_name: profile.full_name || "Professionnel",
+            specialty: specialtyTypeLabels[profile.specialty_type] || profile.specialty_type || "Autre",
+            specialty_type: profile.specialty_type || "other",
+            experience_years: profile.experience_years || 0,
+            wilaya: profile.wilaya || "N/A",
+            location_address: profile.location_address || "",
+            shop_images: profile.shop_images || [],
+            is_available: profile.is_available !== false,
+            is_frozen: profile.is_frozen || false,
+            hourly_rate_dzd: Number(profile.hourly_rate_dzd) || 0,
+            rating_avg: Number(profile.rating_avg) || 0,
+            rating_count: profile.rating_count || 0,
+            bio: profile.bio || "",
+            created_at: p.created_at || profile.created_at,
+            avatar: profile.shop_images?.[0] || "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
+          };
+        });
+        setProfessionals(mappedPros);
+      } catch (err) {
+        console.error("Failed to load professionals", err);
+        setError("Impossible de charger les professionnels.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfessionals();
+  }, []);
 
   const anyActive =
     search.trim() !== "" ||
@@ -99,7 +149,7 @@ export default function Professionals() {
 
   const filtered = useMemo(
     () =>
-      professionalProfiles.filter((p) => {
+      professionals.filter((p) => {
         if (search.trim()) {
           const q = search.toLowerCase();
           if (
@@ -125,12 +175,12 @@ export default function Professionals() {
         }
         return true;
       }),
-    [search, specialty, wilaya, rating, experience, availability],
+    [professionals, search, specialty, wilaya, rating, experience, availability],
   );
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-8">
         {/* Search row */}
         <div className="flex items-center gap-3 mb-5">
           <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full max-w-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
@@ -198,8 +248,24 @@ export default function Professionals() {
           </button>
         </div>
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+            <p className="text-gray-400 text-sm">Chargement des professionnels...</p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {!isLoading && error && (
+          <div className="text-center py-24 text-red-400">
+            <p className="text-lg font-medium">{error}</p>
+            <p className="text-sm mt-1">Veuillez vous connecter et réessayer.</p>
+          </div>
+        )}
+
         {/* Grid */}
-        {filtered.length === 0 ? (
+        {!isLoading && !error && filtered.length === 0 ? (
           <div className="text-center py-24 text-gray-400">
             <p className="text-lg font-medium">Aucun professionnel trouvé</p>
             <p className="text-sm mt-1">
@@ -212,20 +278,22 @@ export default function Professionals() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filtered.map((pro) => (
-              <ProfessionalCard
-                key={pro.id}
-                id={pro.id}
-                name={pro.full_name}
-                specialty={pro.specialty}
-                avatar={pro.avatar}
-                wilaya={pro.wilaya}
-                rating={pro.rating_avg}
-                isAvailable={pro.is_available}
-              />
-            ))}
-          </div>
+          !isLoading && !error && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {filtered.map((pro) => (
+                <ProfessionalCard
+                  key={pro.id}
+                  id={pro.id}
+                  name={pro.full_name}
+                  specialty={pro.specialty}
+                  avatar={pro.avatar}
+                  wilaya={pro.wilaya}
+                  rating={pro.rating_avg}
+                  isAvailable={pro.is_available}
+                />
+              ))}
+            </div>
+          )
         )}
       </main>
 
