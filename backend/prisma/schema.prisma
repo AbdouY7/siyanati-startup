@@ -32,7 +32,23 @@ model User {
   store_profile         StoreProfile?
   vehicles              Vehicle[]
 
+  favorites Favorite[]
+
   @@map("users")
+}
+
+model Favorite {
+  id          String        @id @default(uuid())
+  user_id     String
+  target_id   String        // ID of store/professional/part
+  target_type FavoriteTarget
+  created_at  DateTime      @default(now())
+  user        User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, target_id, target_type])
+  @@index([user_id, target_type])
+  @@index([target_id, target_type])
+  @@map("favorites")
 }
 
 model ClientProfile {
@@ -50,6 +66,7 @@ model ClientProfile {
   created_at         DateTime  @default(now())
   user               User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  payment_accounts    PaymentAccount[]
   @@map("client_profiles")
 }
 
@@ -111,6 +128,8 @@ model ProfessionalProfile {
   @@map("professional_profiles")
 }
 
+
+
 model Brand {
   id                   String              @id @default(uuid())
   name                 String              @unique
@@ -145,6 +164,7 @@ model Vehicle {
   brand_id                  String
   model_id                  String
   year                      Int
+  vehicule_picture_url           String?
   fuel_type                 FuelType?
   health_status             Int? // in percent 0-100
   engine_cc                 Int?
@@ -299,6 +319,25 @@ model Payment {
   @@index([subscription_id])
   @@index([payer_id])
   @@map("payments")
+}
+
+model PaymentAccount {
+  id            String   @id @default(uuid())
+  client_id     String
+  account_name  String   @default("Compte CCP")
+  ccp_code      String
+  ccp_key       String
+  full_name     String
+  is_default    Boolean  @default(false)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  client ClientProfile @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@unique([client_id, ccp_code])
+  @@index([client_id, is_active])
+  @@map("payment_accounts")
 }
 
 model ProfessionalSchedule {

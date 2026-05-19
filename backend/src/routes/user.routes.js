@@ -1,5 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
+const upload = require("../middlewares/upload");
 const userController = require("../controllers/user.controller");
 
 const router = express.Router();
@@ -12,6 +13,9 @@ router.get("/users", userController.getAllUsers);
 
 // Get user by ID
 router.get("/users/:id", userController.getUser);
+
+// Update user profile (with optional profile picture upload)
+router.put("/users/:id", upload.single("profilePicture"), userController.updateUserProfile);
 
 // Get all clients
 router.get("/clients", userController.getClients);

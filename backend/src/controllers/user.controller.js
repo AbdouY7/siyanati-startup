@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const prisma = require("../prisma/client");
+const uploadImage = require("../utils/uploadImage");
 
 // Get all users
 const getAllUsers = async (req, res, next) => {
@@ -343,6 +344,93 @@ const getPendingRegistrations = async (req, res, next) => {
   }
 };
 
+// Update user profile (for the authenticated user)
+const updateUserProfile = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Only allow the user to update their own profile or admin
+    if (req.user.id !== id && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { client_profile: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { full_name, wilaya, address, date_of_birth, phone, preferred_language } = req.body;
+
+    // Handle profile picture upload
+    let profilePicUrl;
+    if (req.file) {
+      const result = await uploadImage(req.file.buffer, "profile-pictures");
+      profilePicUrl = result.secure_url;
+    }
+
+    // Update user fields (phone)
+    const userUpdateData = {};
+    if (phone !== undefined) userUpdateData.phone = phone;
+
+    // Update client profile fields
+    const profileUpdateData = {};
+    if (full_name !== undefined) profileUpdateData.full_name = full_name;
+    if (wilaya !== undefined) profileUpdateData.wilaya = wilaya;
+    if (address !== undefined) profileUpdateData.address = address;
+    if (preferred_language !== undefined) profileUpdateData.preferred_language = preferred_language;
+    if (profilePicUrl) profileUpdateData.profilePicUrl = profilePicUrl;
+    if (date_of_birth !== undefined) {
+      profileUpdateData.date_of_birth = date_of_birth ? new Date(date_of_birth) : null;
+    }
+
+    // Run updates in transaction
+    await prisma.$transaction(async (tx) => {
+      if (Object.keys(userUpdateData).length > 0) {
+        await tx.user.update({
+          where: { id },
+          data: userUpdateData,
+        });
+      }
+
+      if (user.client_profile && Object.keys(profileUpdateData).length > 0) {
+        await tx.clientProfile.update({
+          where: { user_id: id },
+          data: profileUpdateData,
+        });
+      }
+    });
+
+    // Fetch updated user
+    const updatedUser = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        phone: true,
+        is_active: true,
+        email_verified: true,
+        created_at: true,
+        updated_at: true,
+        client_profile: true,
+        store_profile: true,
+        professional_profile: true,
+      },
+    });
+
+    res.status(200).json({ user: updatedUser });
+  } catch (error) {
+    if (error.code === "P2002") {
+      return res.status(409).json({ message: "Phone number already in use" });
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUser,
@@ -354,4 +442,5 @@ module.exports = {
   approveProfessionalRegistration,
   rejectProfessionalRegistration,
   getPendingRegistrations,
+  updateUserProfile,
 };

@@ -176,9 +176,13 @@ const Header = () => {
             </p>
             <div className="flex gap-2">
               {icons.map((icon, index) => (
-                <button
+                <NavLink
                   key={icon.name}
-                  onClick={() => setSelectedIcon(icon.name)}
+                  to={icon.link}
+                  onClick={() => {
+                    setSelectedIcon(icon.name);
+                    setMenuOpen(false);
+                  }}
                   aria-label={icon.label}
                   style={{
                     transitionDelay: menuOpen
@@ -195,7 +199,7 @@ const Header = () => {
                       : "bg-white/[0.07] text-white/60 hover:text-white hover:bg-white/[0.12]"
                   }`}>
                   {icon.icon}
-                </button>
+                </NavLink>
               ))}
             </div>
           </div>

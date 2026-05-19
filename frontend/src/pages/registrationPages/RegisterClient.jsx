@@ -308,7 +308,7 @@ const RegisterClient = () => {
               {/* Link to professional registration */}
               <div className="flex justify-center mt-2 text-center">
                 <Link
-                  to="/register-pro"
+                  to="/register-role"
                   className="text-sm text-gray-500 hover:text-blue-600 underline underline-offset-2 transition-colors">
                   Vous êtes un professionnel ou un magasin ? S'inscrire ici
                 </Link>

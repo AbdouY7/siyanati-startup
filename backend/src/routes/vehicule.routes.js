@@ -45,12 +45,14 @@ router.get("/models/:id", getModelById);
 router.get("/brands/:brandId/models", getModelsByBrand);
 
 // Vehicle routes
+// ✅ FIXED: Added "image" field for vehicle picture upload
 router.post(
   "/vehicles",
   upload.fields([
     { name: "registration_document", maxCount: 1 },
     { name: "registration_document_url", maxCount: 1 },
     { name: "document", maxCount: 1 },
+    { name: "image", maxCount: 1 },        // ✅ ADD THIS
   ]),
   createVehicle,
 );
@@ -59,10 +61,12 @@ router.get("/clients/:clientId/vehicles", getClientVehicles);
 router.get("/vehicles/:id", getVehicleById);
 router.patch(
   "/vehicles/:id",
+  // ✅ FIXED: Added "image" field for vehicle picture upload
   upload.fields([
     { name: "registration_document", maxCount: 1 },
     { name: "registration_document_url", maxCount: 1 },
     { name: "document", maxCount: 1 },
+    { name: "image", maxCount: 1 },        // ✅ ADD THIS
   ]),
   updateVehicle,
 );

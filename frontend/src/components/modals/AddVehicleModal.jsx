@@ -15,6 +15,7 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
     engine_cc: "",
     registration_number: "",
     vin: "",
+    health_status: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -65,9 +66,10 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
       await createVehicle({
         ...formData,
         year: parseInt(formData.year, 10),
+        ...(formData.health_status !== "" && { health_status: parseInt(formData.health_status, 10) }),
       });
       setFormData({
-        brand_id: "", model_id: "", year: "", fuel_type: "", engine_cc: "", registration_number: "", vin: ""
+        brand_id: "", model_id: "", year: "", fuel_type: "", engine_cc: "", registration_number: "", vin: "", health_status: ""
       });
       onSuccess();
       onClose();
@@ -180,6 +182,31 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
                 value={formData.vin}
                 onChange={handleChange}
               />
+            </div>
+
+            {/* Health Status */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">
+                État de santé du véhicule {formData.health_status !== "" && (
+                  <span className={`font-bold ${
+                    parseInt(formData.health_status) >= 70 ? 'text-green-500' :
+                    parseInt(formData.health_status) >= 40 ? 'text-yellow-500' : 'text-red-500'
+                  }`}>{formData.health_status}%</span>
+                )}
+              </label>
+              <input
+                type="range"
+                name="health_status"
+                min="0"
+                max="100"
+                value={formData.health_status || 0}
+                onChange={handleChange}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-gray-400">
+                <span>Mauvais (0%)</span>
+                <span>Excellent (100%)</span>
+              </div>
             </div>
 
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}

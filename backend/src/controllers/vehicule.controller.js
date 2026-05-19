@@ -27,6 +27,22 @@ const uploadRegistrationDocument = async (req) => {
   return result.secure_url;
 };
 
+// ✅ NEW: Vehicle picture upload helper
+const uploadVehiclePicture = async (req) => {
+  const file = getFile(req, [
+    "image",
+    "vehicule_picture",
+    "vehicle_picture",
+    "photo",
+    "picture",
+  ]);
+
+  if (!file) return null;
+
+  const result = await uploadImage(file.buffer, "vehicle-pictures");
+  return result.secure_url;
+};
+
 const toOptionalInt = (value) => {
   if (value === undefined || value === null || value === "") return undefined;
   return Number(value);
@@ -58,6 +74,7 @@ const createVehicle = async (req, res, next) => {
       model_id,
       year,
       fuel_type,
+      health_status,
       engine_cc,
       registration_number,
       registration_document_url,
@@ -85,6 +102,8 @@ const createVehicle = async (req, res, next) => {
 
     const uploadedRegistrationDocumentUrl =
       await uploadRegistrationDocument(req);
+    // ✅ NEW: Upload vehicle picture
+    const uploadedVehiclePictureUrl = await uploadVehiclePicture(req);
     const parsedIsDefault = toOptionalBoolean(is_default);
 
     // Clear old default vehicle
@@ -107,10 +126,13 @@ const createVehicle = async (req, res, next) => {
         model_id,
         year: Number(year),
         fuel_type,
+        health_status: toOptionalInt(health_status),
         engine_cc: toOptionalInt(engine_cc),
         registration_number,
         registration_document_url:
           uploadedRegistrationDocumentUrl || registration_document_url,
+        // ✅ NEW: Save vehicle picture URL
+        vehicule_picture_url: uploadedVehiclePictureUrl || req.body.vehicule_picture_url || null,
         vin,
         is_default: parsedIsDefault ?? false,
         color,
@@ -372,10 +394,12 @@ const updateVehicle = async (req, res, next) => {
     const { brand_id, model_id, is_default, ...rest } = req.body;
     const uploadedRegistrationDocumentUrl =
       await uploadRegistrationDocument(req);
+    // ✅ NEW: Upload vehicle picture
+    const uploadedVehiclePictureUrl = await uploadVehiclePicture(req);
     const parsedIsDefault = toOptionalBoolean(is_default);
     const normalizedRest = { ...rest };
 
-    for (const field of ["year", "engine_cc", "mileage_km"]) {
+    for (const field of ["year", "engine_cc", "mileage_km", "health_status"]) {
       if (field in normalizedRest) {
         normalizedRest[field] = toOptionalInt(normalizedRest[field]);
       }
@@ -437,6 +461,10 @@ const updateVehicle = async (req, res, next) => {
         ...normalizedRest,
         ...(uploadedRegistrationDocumentUrl && {
           registration_document_url: uploadedRegistrationDocumentUrl,
+        }),
+        // ✅ NEW: Update vehicle picture URL if uploaded
+        ...(uploadedVehiclePictureUrl && {
+          vehicule_picture_url: uploadedVehiclePictureUrl,
         }),
       },
 

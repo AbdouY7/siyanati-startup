@@ -17,9 +17,21 @@ import ProfessionalProfilePage from "./pages/ProfessionnelProfilePage";
 import Professionals from "./pages/Professionals";
 import ProfilePage from "./pages/normalUserPages/ProfilePage";
 import EditProfilePage from "./pages/normalUserPages/EditProfilePage";
+import VehiculesPage from "./pages/normalUserPages/vehiculesPage";
 
 import DashboardHome from "./pages/adminDashboard/DashboardHome";
 import Layout from "./pages/adminDashboard/layout/Layout";
+import ProfileInfoPage from "./pages/normalUserPages/ProfileInfosPage";
+import PaymentAccountsPage from "./pages/normalUserPages/PaymentAcountsPage";
+import OrderHistoryPage from "./pages/normalUserPages/OrderHistoryPage";
+import AppointmentHistoryPage from "./pages/normalUserPages/AppointmentHistoryPage";
+import FavoritePiecesPage from "./pages/normalUserPages/FavoritePiecesPage";
+import FollowedStoresPage from "./pages/normalUserPages/FolowedStoresPage";
+import SavedProfessionalsPage from "./pages/normalUserPages/SavedProfessionalsPage";
+import PublicationsProblemsPage from "./pages/normalUserPages/PublicationsProblemsPage";
+import SelectionScreen from "./pages/registrationPages/SelectionScreen";
+import ProfessionalRegistration from "./pages/registrationPages/ProfessionalRegistration";
+import StoreRegistration from "./pages/registrationPages/StoreRegistration";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -57,10 +69,42 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterClient />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/edit" element={<EditProfilePage />} />
-        <Route path="/admin" element={<Layout/>}>
-        <Route path="/admin/home" element={<DashboardHome/>}/>
+        <Route path="/register-role" element={<SelectionScreen />} />
+        <Route path="/register-pro" element={<ProfessionalRegistration />} />
+        <Route path="/register-store" element={<StoreRegistration />} />
+        <Route path="/profile" element={<ProfilePage />}>
+          <Route index element={<ProfileInfoPage />} />
+          <Route path="/profile/edit" element={<EditProfilePage />} />
+          <Route path="/profile/vehicules" element={<VehiculesPage />} />
+          <Route
+            path="/profile/payment-accounts"
+            element={<PaymentAccountsPage />}
+          />
+          <Route path="/profile/orders" element={<OrderHistoryPage />} />
+          <Route
+            path="/profile/appointments"
+            element={<AppointmentHistoryPage />}
+          />
+          <Route
+            path="/profile/favorite-pieces"
+            element={<FavoritePiecesPage />}
+          />
+          <Route
+            path="/profile/followed-stores"
+            element={<FollowedStoresPage />}
+          />
+          <Route
+            path="/profile/saved-professionals"
+            element={<SavedProfessionalsPage />}
+          />
+          <Route
+            path="/profile/publications"
+            element={<PublicationsProblemsPage />}
+          />
+        </Route>
+
+        <Route path="/admin" element={<Layout />}>
+          <Route path="/admin/home" element={<DashboardHome />} />
         </Route>
       </Routes>
     </>
