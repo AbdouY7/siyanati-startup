@@ -9,6 +9,7 @@ const getAllUsers = async (req, res, next) => {
       select: {
         id: true,
         email: true,
+        phone: true,
         role: true,
         is_active: true,
         email_verified: true,
@@ -31,6 +32,7 @@ const getUser = async (req, res, next) => {
       select: {
         id: true,
         email: true,
+        phone: true,
         role: true,
         is_active: true,
         email_verified: true,
@@ -60,6 +62,7 @@ const getClients = async (req, res, next) => {
       select: {
         id: true,
         email: true,
+        phone: true,
         role: true,
         is_active: true,
         email_verified: true,
@@ -82,6 +85,7 @@ const getAllStores = async (req, res, next) => {
       select: {
         id: true,
         email: true,
+        phone: true,
         role: true,
         is_active: true,
         email_verified: true,
@@ -104,6 +108,7 @@ const getAllProfessionals = async (req, res, next) => {
       select: {
         id: true,
         email: true,
+        phone: true,
         role: true,
         is_active: true,
         email_verified: true,
@@ -359,6 +364,55 @@ const getPendingRegistrations = async (req, res, next) => {
   }
 };
 
+// Admin block or unblock a user account.
+const updateUserStatusAdmin = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;
+    const { id } = req.params;
+    const { is_active } = req.body;
+
+    const admin = await prisma.user.findUnique({ where: { id: adminId } });
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ message: "Only admins can update user status" });
+    }
+
+    if (typeof is_active !== "boolean") {
+      return res.status(400).json({ message: "is_active must be a boolean" });
+    }
+
+    if (id === adminId && !is_active) {
+      return res.status(400).json({ message: "Admins cannot block their own account" });
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { is_active },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        is_active: true,
+        email_verified: true,
+        created_at: true,
+        updated_at: true,
+        client_profile: true,
+        store_profile: true,
+        professional_profile: {
+          include: { ProfessionalStore: true },
+        },
+      },
+    });
+
+    res.status(200).json({ user });
+  } catch (error) {
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "User not found" });
+    }
+    next(error);
+  }
+};
+
 // Update user profile (for the authenticated user)
 const updateUserProfile = async (req, res, next) => {
   try {
@@ -459,5 +513,6 @@ module.exports = {
   approveProfessionalRegistration,
   rejectProfessionalRegistration,
   getPendingRegistrations,
+  updateUserStatusAdmin,
   updateUserProfile,
 };

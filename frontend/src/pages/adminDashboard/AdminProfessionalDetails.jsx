@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProfessionalDetailsAdmin } from "../../services/adminService";
+import { approveProfessional, getProfessionalDetailsAdmin, rejectProfessional, updateUserStatusAdmin } from "../../services/adminService";
 import axiosInstance from "../../api/axios";
-import { FiArrowLeft, FiStar, FiMapPin, FiPhone, FiMail, FiCalendar } from "react-icons/fi";
+import { FiArrowLeft, FiStar, FiMapPin, FiPhone, FiMail, FiCalendar, FiCheck, FiX, FiSlash } from "react-icons/fi";
 
 const AdminProfessionalDetails = () => {
   const { id } = useParams(); // This is the user ID of the professional
@@ -10,6 +10,7 @@ const AdminProfessionalDetails = () => {
   const [appointments, setAppointments] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -53,6 +54,47 @@ const AdminProfessionalDetails = () => {
     }
   };
 
+  const handleApprove = async () => {
+    try {
+      setActionLoading(true);
+      await approveProfessional(pro.professional_profile.id);
+      await fetchData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to approve professional.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    const reason = window.prompt("Reason for refusing this professional:");
+    if (reason === null) return;
+
+    try {
+      setActionLoading(true);
+      await rejectProfessional(pro.professional_profile.id, reason.trim() || "Registration refused by admin");
+      await fetchData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to refuse professional.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!window.confirm("Block this professional user?")) return;
+
+    try {
+      setActionLoading(true);
+      const updatedUser = await updateUserStatusAdmin(pro.id, false);
+      setPro(updatedUser);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to block professional user.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -75,8 +117,6 @@ const AdminProfessionalDetails = () => {
   }
 
   const profile = pro.professional_profile || {};
-  const store = profile.ProfessionalStore?.[0];
-
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Header Navigation */}
@@ -85,6 +125,43 @@ const AdminProfessionalDetails = () => {
           <FiArrowLeft className="mr-2" /> Back to Professionals List
         </Link>
         <h1 className="text-2xl font-bold text-gray-800">Professional Details</h1>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-wrap gap-3">
+        {profile.status === "pending" && (
+          <>
+            <button
+              onClick={handleApprove}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60 transition-colors"
+            >
+              <FiCheck /> Approve professional
+            </button>
+            <button
+              onClick={handleReject}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
+            >
+              <FiX /> Refuse
+            </button>
+          </>
+        )}
+
+        {profile.status === "approved" && pro.is_active && (
+          <button
+            onClick={handleBlock}
+            disabled={actionLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors"
+          >
+            <FiSlash /> Banne / Block user
+          </button>
+        )}
+
+        {!pro.is_active && (
+          <span className="inline-flex items-center rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 border border-red-100">
+            User blocked
+          </span>
+        )}
       </div>
 
       {/* Main Info Card */}

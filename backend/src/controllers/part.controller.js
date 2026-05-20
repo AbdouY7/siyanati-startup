@@ -104,7 +104,7 @@ const createPart = async (req, res, next) => {
 // Get visible parts. Admins see everything; sellers also see their own parts.
 const getAllParts = async (req, res, next) => {
   try {
-    const { category_id, condition, seller_type, search, is_verified } =
+    const { category_id, condition, seller_type, seller_id, search, is_verified } =
       req.query;
 
     const parts = await prisma.part.findMany({
@@ -112,6 +112,7 @@ const getAllParts = async (req, res, next) => {
         ...(category_id && { category_id }),
         ...(condition && { condition }),
         ...(seller_type && { seller_type }),
+        ...(seller_id && { seller_id }),
         ...(search && { name: { contains: search, mode: "insensitive" } }),
         ...(isAdmin(req.user) && is_verified !== undefined
           ? { is_verified: is_verified === "true" }

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FiArrowLeft, FiMail, FiPhone, FiMapPin, FiCalendar, FiUser } from "react-icons/fi";
-import { getClientDetailsAdmin } from "../../services/adminService";
+import { FiArrowLeft, FiMail, FiPhone, FiMapPin, FiCalendar, FiUser, FiSlash } from "react-icons/fi";
+import { getClientDetailsAdmin, updateUserStatusAdmin } from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
 
 const AdminClientDetails = () => {
   const { id } = useParams();
   const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -24,6 +25,20 @@ const AdminClientDetails = () => {
       setError("Failed to fetch client details. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!window.confirm("Block this client user?")) return;
+
+    try {
+      setActionLoading(true);
+      const updatedUser = await updateUserStatusAdmin(client.id, false);
+      setClient(updatedUser);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to block client user.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -75,10 +90,22 @@ const AdminClientDetails = () => {
               {profile.full_name || "Unknown Client"}
             </h1>
             <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              Active Client
+              {client.is_active ? "Active Client" : "Blocked Client"}
             </div>
           </div>
         </div>
+
+        {client.is_active && (
+          <div className="px-8 py-5 border-b border-gray-100 bg-white">
+            <button
+              onClick={handleBlock}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors"
+            >
+              <FiSlash /> Banne / Block user
+            </button>
+          </div>
+        )}
 
         {/* Info Grid */}
         <div className="p-8">

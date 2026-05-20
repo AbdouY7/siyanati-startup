@@ -1,0 +1,6 @@
+{
+  "delay": 1000,
+  "signal": "SIGTERM",
+  "ext": "ts,js,json",
+  "ignore": ["node_modules", "dist"]
+}

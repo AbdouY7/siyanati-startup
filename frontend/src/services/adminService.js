@@ -113,3 +113,15 @@ export const rejectStore = async (profileId, rejection_reason) => {
     throw error;
   }
 };
+
+export const updateUserStatusAdmin = async (userId, is_active) => {
+  try {
+    const response = await axiosInstance.patch(`/admin/users/${userId}/status`, {
+      is_active,
+    });
+    return response.data.user;
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    throw error;
+  }
+};

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FiArrowLeft, FiMail, FiPhone, FiMapPin, FiCalendar, FiUser, FiHome, FiFileText, FiImage } from "react-icons/fi";
-import { getStoreDetailsAdmin } from "../../services/adminService";
+import { FiArrowLeft, FiMail, FiPhone, FiMapPin, FiCalendar, FiHome, FiFileText, FiImage, FiCheck, FiX, FiSlash, FiPackage } from "react-icons/fi";
+import { approveStore, getStoreDetailsAdmin, rejectStore, updateUserStatusAdmin } from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
 
 const AdminStoreDetails = () => {
   const { id } = useParams();
   const [store, setStore] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -24,6 +25,47 @@ const AdminStoreDetails = () => {
       setError("Failed to fetch store details. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    try {
+      setActionLoading(true);
+      await approveStore(store.store_profile.id);
+      await fetchStoreDetails();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to approve store.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    const reason = window.prompt("Reason for refusing this store:");
+    if (reason === null) return;
+
+    try {
+      setActionLoading(true);
+      await rejectStore(store.store_profile.id, reason.trim() || "Registration refused by admin");
+      await fetchStoreDetails();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to refuse store.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!window.confirm("Block this store user?")) return;
+
+    try {
+      setActionLoading(true);
+      const updatedUser = await updateUserStatusAdmin(store.id, false);
+      setStore(updatedUser);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to block store user.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -77,6 +119,9 @@ const AdminStoreDetails = () => {
                   {profile.store_name || "Unknown Store"}
                 </h1>
                 <p className="text-gray-600 font-medium">Owner: {profile.owner_name}</p>
+                {!store.is_active && (
+                  <p className="text-red-600 text-sm font-semibold mt-1">This user is blocked</p>
+                )}
               </div>
               <div className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider inline-block ${
                 profile.status === "approved"
@@ -89,6 +134,44 @@ const AdminStoreDetails = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="px-8 py-5 border-b border-gray-100 bg-white flex flex-wrap gap-3">
+          <Link
+            to={`/admin/stores/${store.id}/parts`}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            <FiPackage /> Voir les pieces de magasin
+          </Link>
+
+          {profile.status === "pending" && (
+            <>
+              <button
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60 transition-colors"
+              >
+                <FiCheck /> Approve store
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
+              >
+                <FiX /> Refuse
+              </button>
+            </>
+          )}
+
+          {profile.status === "approved" && store.is_active && (
+            <button
+              onClick={handleBlock}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors"
+            >
+              <FiSlash /> Banne / Block user
+            </button>
+          )}
         </div>
 
         {profile.description && (

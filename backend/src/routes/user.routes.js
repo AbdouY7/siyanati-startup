@@ -47,5 +47,9 @@ router.get(
   "/admin/pending-registrations",
   userController.getPendingRegistrations,
 );
+router.patch(
+  "/admin/users/:id/status",
+  userController.updateUserStatusAdmin,
+);
 
 module.exports = router;

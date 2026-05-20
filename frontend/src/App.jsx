@@ -27,6 +27,7 @@ import AdminClients from "./pages/adminDashboard/AdminClients";
 import AdminClientDetails from "./pages/adminDashboard/AdminClientDetails";
 import AdminStores from "./pages/adminDashboard/AdminStores";
 import AdminStoreDetails from "./pages/adminDashboard/AdminStoreDetails";
+import AdminStoreParts from "./pages/adminDashboard/AdminStoreParts";
 import ProfileInfoPage from "./pages/normalUserPages/ProfileInfosPage";
 import PaymentAccountsPage from "./pages/normalUserPages/PaymentAcountsPage";
 import OrderHistoryPage from "./pages/normalUserPages/OrderHistoryPage";
@@ -159,6 +160,7 @@ function App() {
             />
             <Route path="stores" element={<AdminStores />} />
             <Route path="stores/:id" element={<AdminStoreDetails />} />
+            <Route path="stores/:id/parts" element={<AdminStoreParts />} />
             <Route path="parts" element={<div>Parts Page</div>} />
             <Route path="reports" element={<div>Reports Page</div>} />
             <Route path="chat" element={<div>Chat Page</div>} />
