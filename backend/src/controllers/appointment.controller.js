@@ -22,6 +22,13 @@ const appointmentListInclude = {
       model: { select: { name: true } },
     },
   },
+  reviews: {
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+    },
+  },
 };
 
 const appointmentDetailInclude = {
@@ -38,6 +45,16 @@ const appointmentDetailInclude = {
     include: {
       brand: true,
       model: true,
+    },
+  },
+  reviews: {
+    include: {
+      author: {
+        select: {
+          id: true,
+          client_profile: { select: { full_name: true, avatar_url: true } },
+        },
+      },
     },
   },
 };
@@ -138,11 +155,12 @@ const getAppointments = async (req, res, next) => {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
-    const { status, from_date, to_date, page = 1, limit = 10 } = req.query;
+    const { status, from_date, to_date, page = 1, limit = 10, professional_id } = req.query;
 
     const where = {
       ...accessWhere,
       ...(status && { status }),
+      ...(professional_id && req.user.role === "admin" && { professional_id }),
       ...((from_date || to_date) && {
         created_at: {
           ...(from_date && { gte: new Date(from_date) }),

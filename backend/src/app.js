@@ -14,7 +14,11 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:5175"
+    ],
     credentials: true,
   }),
 );
@@ -48,6 +52,9 @@ app.use("/api", require("./routes/subscription.routes"));
 app.use("/api/statistics", require("./routes/statistics.routes"));
 
 app.use("/api/payment-accounts", require("./routes/paymentAccount.routes"));
+app.use("/api/professional-stores", require("./routes/professionalStore.routes"));
+
+app.use("/api/admin", require("./routes/admin.routes"));
 
 // error handler
 app.use((err, req, res, next) => {

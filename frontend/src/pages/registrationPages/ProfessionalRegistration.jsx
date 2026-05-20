@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, User, MapPin, Upload, Calendar, Phone, Wrench, Mail, Lock, ArrowRight, ArrowLeft, CheckCircle, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from '../../api/axios';
 
 const SPECIALTIES = [
   'Mécanique générale','Électricité auto','Carrosserie','Peinture','Climatisation',
@@ -98,12 +99,13 @@ const ProfessionalRegistration = () => {
       if (workType === 'avec_magasin' && formData.store_documents) Array.from(formData.store_documents).forEach(f => data.append('store_documents', f));
       if (workType === 'avec_magasin' && formData.store_images) Array.from(formData.store_images).forEach(f => data.append('store_images', f));
 
-      const response = await fetch('/api/auth/register-professional', { method: 'POST', body: data });
-      const result = await response.json();
-      if (response.ok) setSubmitSuccess(true);
-      else setErrors({ general: result.message || 'Erreur lors de l\'inscription' });
-    } catch {
-      setErrors({ general: 'Erreur de connexion au serveur' });
+      const response = await axios.post('/auth/register-professional', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (response.status === 201) setSubmitSuccess(true);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Erreur de connexion au serveur';
+      setErrors({ general: msg });
     } finally {
       setIsSubmitting(false);
     }

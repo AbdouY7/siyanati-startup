@@ -75,21 +75,16 @@ const professionalRegisterSchema = z.object({
   email: emailSchema,
   password: z.string().min(8),
   phone: phoneSchema,
-  specialty_type: z.enum([
-    "mechanic",
-    "electrician",
-    "bodywork",
-    "diagnostic",
-    "other",
-  ]),
+  specialty_type: z.string().min(2),
   full_name: z.string().min(2),
   experience_years: z.coerce.number().int().nonnegative().optional(),
   wilaya: z.string().min(2),
   location_address: z.string().min(2).optional(),
-  shop_images: z.array(z.string().url()).optional(),
+  work_phone: z.string().optional(),
   documents: z.array(z.string().url()).optional(),
   bio: z.string().optional(),
   hourly_rate_dzd: z.coerce.number().nonnegative().optional(),
+  work_type: z.enum(["individuel", "avec_magasin"]).optional(),
 });
 
 module.exports = {

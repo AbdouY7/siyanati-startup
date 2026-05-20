@@ -244,7 +244,7 @@ export default function ShopProfilePage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3 pt-[100px]">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
         <p className="text-gray-400 text-sm">Chargement du magasin...</p>
       </div>
@@ -254,7 +254,7 @@ export default function ShopProfilePage() {
   // Error state
   if (error || !store) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3 pt-[100px]">
         <p className="text-red-400 text-lg font-medium">{error || "Magasin introuvable"}</p>
         <Link to="/magasins" className="text-blue-600 hover:underline text-sm">
           ← Retour aux magasins
@@ -266,7 +266,7 @@ export default function ShopProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Blue hero header */}
-      <div className="bg-blue-700 px-6 pt-4 pb-20 relative">
+      <div className="bg-blue-700 px-6 pt-[110px] pb-20 relative">
         <Link
           to="/magasins"
           className="text-white/80 hover:text-white flex items-center gap-1 text-sm mb-4 no-underline w-fit">
@@ -274,13 +274,24 @@ export default function ShopProfilePage() {
         </Link>
 
         <div className="max-w-6xl mx-auto flex items-start gap-5">
-          {/* Logo */}
-          <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-lg shrink-0">
-            <img
-              src={store.logo_url || "https://images.unsplash.com/photo-1612832020746-3f6c7b5e3d41?w=200&q=80"}
-              alt={store.store_name}
-              className="w-full h-full object-cover"
-            />
+          {/* Logo with clean initials fallback if no logo exists */}
+          <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-lg shrink-0 bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">
+            {store.logo_url ? (
+              <img
+                src={store.logo_url}
+                alt={store.store_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>
+                {store.store_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </span>
+            )}
           </div>
 
           {/* Name & meta */}

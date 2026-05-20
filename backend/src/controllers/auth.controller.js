@@ -3,10 +3,6 @@ const prisma = require("../prisma/client");
 const { randomUUID } = require("crypto");
 const jwt = require("jsonwebtoken");
 const uploadImage = require("../utils/uploadImage");
-const {
-  professionalRegisterSchema,
-  adminRegisterSchema,
-} = require("../validators/auth.validator");
 
 // ── Token helpers ─────────────────────────────────────────────────────────────
 
@@ -64,8 +60,6 @@ const login = async (req, res, next) => {
       data: { refresh_token: refreshToken },
     });
 
-    // const safeUser = { ...user, password_hash: undefined, refresh_token: undefined };
-
     return res.status(200).json({ accessToken, refreshToken });
   } catch (error) {
     next(error);
@@ -74,46 +68,46 @@ const login = async (req, res, next) => {
 
 // register admin controller
 
-// const registerAdmin = async (req, res, next) => {
-//   const result = adminRegisterSchema.safeParse(req.body);
-//   if (!result.success) {
-//     return res.status(400).json({
-//       message: "Validation error",
-//       errors: result.error.flatten().fieldErrors,
-//     });
-//   }
+const registerAdmin = async (req, res, next) => {
+  // const result = adminRegisterSchema.safeParse(req.body);
+  // if (!result.success) {
+  //   return res.status(400).json({
+  //     message: "Validation error",
+  //     errors: result.error.flatten().fieldErrors,
+  //   });
+  // }
 
-//   const { email, password, phone } = result.data;
+  const { email, password, phone } = req.body;
 
-//   try {
-//     const existingEmail = await prisma.user.findUnique({ where: { email } });
-//     if (existingEmail) {
-//       return res.status(409).json({ message: "Email already in use" });
-//     }
+  try {
+    const existingEmail = await prisma.user.findUnique({ where: { email } });
+    if (existingEmail) {
+      return res.status(409).json({ message: "Email already in use" });
+    }
 
-//     const existingPhone = await prisma.user.findUnique({ where: { phone } });
-//     if (existingPhone) {
-//       return res.status(409).json({ message: "Phone number already in use" });
-//     }
+    const existingPhone = await prisma.user.findUnique({ where: { phone } });
+    if (existingPhone) {
+      return res.status(409).json({ message: "Phone number already in use" });
+    }
 
-//     const password_hash = await bcrypt.hash(password, 12);
+    const password_hash = await bcrypt.hash(password, 12);
 
-//     await prisma.user.create({
-//       data: {
-//         email,
-//         phone,
-//         password_hash,
-//         role: "admin",
-//         is_active: true,
-//         email_verified: true, // admins are trusted, skip verification
-//       },
-//     });
+    await prisma.user.create({
+      data: {
+        email,
+        phone,
+        password_hash,
+        role: "admin",
+        is_active: true,
+        email_verified: true, // admins are trusted, skip verification
+      },
+    });
 
-//     return res.status(201).json({ message: "Admin registered successfully" });
-//   } catch (err) {
-//     next(err);
-//   }
-// };
+    return res.status(201).json({ message: "Admin registered successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
 
 const registerCustomer = async (req, res, next) => {
   const { email, password, phone, full_name, wilaya, address, date_of_birth } =
@@ -270,14 +264,6 @@ const registerStore = async (req, res, next) => {
 };
 
 const registerProfessional = async (req, res, next) => {
-  const result = professionalRegisterSchema.safeParse(req.body);
-  if (!result.success) {
-    return res.status(400).json({
-      message: "Validation error",
-      errors: result.error.flatten().fieldErrors,
-    });
-  }
-
   const {
     email,
     password,
@@ -287,34 +273,48 @@ const registerProfessional = async (req, res, next) => {
     experience_years,
     wilaya,
     location_address,
-    shop_images,
-    documents,
+    work_phone,
     bio,
     hourly_rate_dzd,
-  } = result.data;
+    work_type,
+    // Store fields (conditional — only when work_type === "avec_magasin")
+    store_name,
+    store_address,
+    store_wilaya,
+    store_location,
+  } = req.body;
 
   if (
     !email ||
     !password ||
     !full_name ||
     !phone ||
-    !location_address ||
     !wilaya
   ) {
     return res.status(400).json({
       message:
-        "email, password, phone, full_name, location_address, and wilaya are required",
+        "email, password, phone, full_name, and wilaya are required",
     });
   }
 
+  const resolvedWorkType = work_type || "individuel";
+
+  // Validate store fields when "avec_magasin"
+  if (resolvedWorkType === "avec_magasin") {
+    if (!store_name || !store_address || !store_wilaya) {
+      return res.status(400).json({
+        message:
+          "store_name, store_address, and store_wilaya are required for 'avec_magasin' work type",
+      });
+    }
+  }
+
   try {
-    // Check email uniqueness
     const existingEmail = await prisma.user.findUnique({ where: { email } });
     if (existingEmail) {
       return res.status(409).json({ message: "Email already in use" });
     }
 
-    // Check phone uniqueness (phone exists on User model)
     if (phone) {
       const existingPhone = await prisma.user.findUnique({ where: { phone } });
       if (existingPhone) {
@@ -324,34 +324,65 @@ const registerProfessional = async (req, res, next) => {
 
     const password_hash = await bcrypt.hash(password, 12);
     const userId = randomUUID();
-    const shopImageFiles = [
-      ...getFiles(req, "shop_images"),
-      ...getFiles(req, "images"),
-    ];
-    const shopImageUrls = await uploadFiles(shopImageFiles, "professionals");
 
-    await prisma.user.create({
-      data: {
-        id: userId,
-        email,
-        phone,
-        password_hash,
-        role: "professional",
-        professional_profile: {
-          create: {
-            full_name,
-            specialty_type,
-            experience_years,
-            wilaya,
-            location_address,
-            shop_images: shopImageUrls.length ? shopImageUrls : shop_images ?? [],
-            documents: documents ?? [],
-            bio,
-            hourly_rate_dzd,
-          },
+    // Upload professional documents
+    const docFiles = getFiles(req, "documents");
+    const docUrls = docFiles.length ? await uploadFiles(docFiles, "professionals") : [];
+
+    // Create user + professional profile
+    const professionalProfileId = randomUUID();
+
+    const transactionOps = [
+      prisma.user.create({
+        data: {
+          id: userId,
+          email,
+          phone,
+          password_hash,
+          role: "professional",
         },
-      },
-    });
+      }),
+      prisma.professionalProfile.create({
+        data: {
+          id: professionalProfileId,
+          user_id: userId,
+          full_name,
+          specialty_type: specialty_type || "other",
+          experience_years: experience_years ? Number(experience_years) : undefined,
+          wilaya,
+          location_address,
+          documents: docUrls,
+          bio,
+          hourly_rate_dzd: hourly_rate_dzd ? Number(hourly_rate_dzd) : undefined,
+          work_type: resolvedWorkType,
+        },
+      }),
+    ];
+
+    // If "avec_magasin", also create the ProfessionalStore
+    if (resolvedWorkType === "avec_magasin") {
+      const storeDocFiles = getFiles(req, "store_documents");
+      const storeImageFiles = getFiles(req, "store_images");
+      const storeDocUrls = storeDocFiles.length ? await uploadFiles(storeDocFiles, "professional-stores") : [];
+      const storeImageUrls = storeImageFiles.length ? await uploadFiles(storeImageFiles, "professional-stores") : [];
+
+      transactionOps.push(
+        prisma.professionalStore.create({
+          data: {
+            professional_id: professionalProfileId,
+            name: store_name,
+            wilaya: store_wilaya,
+            address: store_address,
+            location_coordinates: store_location || undefined,
+            documents: storeDocUrls,
+            images: storeImageUrls,
+            status: "pending",
+          },
+        }),
+      );
+    }
+
+    await prisma.$transaction(transactionOps);
 
     return res.status(201).json({
       message:
@@ -476,7 +507,7 @@ const sendEmailVerification = async (req, res, next) => {
     });
 
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
-    
+
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Verify your email address</h2>
@@ -684,6 +715,7 @@ module.exports = {
   registerCustomer,
   registerStore,
   registerProfessional,
+  registerAdmin,
   refreshToken,
   logout,
   sendEmailVerification,

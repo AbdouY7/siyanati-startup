@@ -19,8 +19,15 @@ const authMiddleware = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded Token:", decoded);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Decoded Token:", decoded);
+    } catch (jwtErr) {
+      console.log("Auth Error (JWT):", jwtErr.message);
+      return res.status(401).json({ message: "Invalid or expired token", error: jwtErr.message });
+    }
+
     const user = await prisma.user.findUnique({ 
       where: { id: decoded.sub },
       include: {
@@ -30,7 +37,7 @@ const authMiddleware = async (req, res, next) => {
     });
 
     if (!user || !user.is_active) {
-      return res.status(401).json({ message: "Invalid or inactive token" });
+      return res.status(401).json({ message: "Invalid or inactive user" });
     }
 
     req.user = { id: user.id, email: user.email, role: user.role };
@@ -60,10 +67,8 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log("Auth Error:", err.message);
-    return res
-      .status(401)
-      .json({ message: "Invalid token", error: err.message });
+    console.error("Auth Middleware Database Error:", err);
+    next(err); // Pass 500 error to global error handler instead of returning 401
   }
 };
 

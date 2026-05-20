@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Store, MapPin, Upload, Calendar, Mail, Lock, Phone, User, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from '../../api/axios';
 import registrationImg from '../../assets/img/registrationImg.png';
 
 const WILAYAS = [
@@ -78,12 +79,13 @@ const StoreRegistration = () => {
       if (formData.images) Array.from(formData.images).forEach(f => data.append('images', f));
       if (formData.logo_url) data.append('logo', formData.logo_url[0]);
 
-      const response = await fetch('/api/auth/register-store', { method: 'POST', body: data });
-      const result = await response.json();
-      if (response.ok) setSubmitSuccess(true);
-      else setErrors({ general: result.message || 'Erreur lors de l\'inscription' });
-    } catch {
-      setErrors({ general: 'Erreur de connexion au serveur' });
+      const response = await axios.post('/auth/register-store', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (response.status === 201) setSubmitSuccess(true);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Erreur de connexion au serveur';
+      setErrors({ general: msg });
     } finally {
       setIsSubmitting(false);
     }

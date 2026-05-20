@@ -38,7 +38,9 @@ const getUser = async (req, res, next) => {
         updated_at: true,
         client_profile: true,
         store_profile: true,
-        professional_profile: true,
+        professional_profile: {
+          include: { ProfessionalStore: true },
+        },
       },
     });
     if (!user) {
@@ -107,7 +109,9 @@ const getAllProfessionals = async (req, res, next) => {
         email_verified: true,
         created_at: true,
         updated_at: true,
-        professional_profile: true,
+        professional_profile: {
+          include: { ProfessionalStore: true },
+        },
       },
     });
     res.status(200).json({ professionals });
@@ -242,18 +246,26 @@ const approveProfessionalRegistration = async (req, res, next) => {
     }
 
     // Update profile and user role
-    await prisma.professionalProfile.update({
-      where: { id: profileId },
-      data: {
-        status: "approved",
-        reviewed_by_admin_id: adminId,
-        reviewed_at: new Date(),
-      },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.professionalProfile.update({
+        where: { id: profileId },
+        data: {
+          status: "approved",
+          reviewed_by_admin_id: adminId,
+          reviewed_at: new Date(),
+        },
+      });
 
-    await prisma.user.update({
-      where: { id: professionalProfile.user_id },
-      data: { role: "professional" },
+      // Also approve the ProfessionalStore if it exists
+      await tx.professionalStore.updateMany({
+        where: { professional_id: profileId },
+        data: { status: "approved" },
+      });
+
+      await tx.user.update({
+        where: { id: professionalProfile.user_id },
+        data: { role: "professional" },
+      });
     });
 
     res
@@ -332,7 +344,10 @@ const getPendingRegistrations = async (req, res, next) => {
 
     const pendingProfessionals = await prisma.professionalProfile.findMany({
       where: { status: "pending" },
-      include: { user: { select: { id: true, email: true } } },
+      include: {
+        user: { select: { id: true, email: true } },
+        ProfessionalStore: true,
+      },
     });
 
     res.status(200).json({
@@ -418,7 +433,9 @@ const updateUserProfile = async (req, res, next) => {
         updated_at: true,
         client_profile: true,
         store_profile: true,
-        professional_profile: true,
+        professional_profile: {
+          include: { ProfessionalStore: true },
+        },
       },
     });
 

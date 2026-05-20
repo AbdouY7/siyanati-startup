@@ -34,6 +34,7 @@ model User {
 
   favorites Favorite[]
 
+  @@index([role, created_at])  // Dashboard: count by role, trend by date
   @@map("users")
 }
 
@@ -94,20 +95,25 @@ model StoreProfile {
   orders               Order[]       @relation("StoreOrders")
   user                 User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([created_at])         // Dashboard: recent stores, trend
+  @@index([status, created_at])  // Dashboard: filter by status
   @@map("store_profiles")
 }
 
 model ProfessionalProfile {
   id                   String                          @id @default(uuid())
   user_id              String                          @unique
-  specialty_type       SpecialtyType
+  specialty_type       String
   experience_years     Int?
   wilaya               String
   location_address     String?
-  shop_images          String[]
   documents            String[]
   bio                  String?
   status               ProfileStatus                   @default(pending)
+  // new professional store table add and there relations 
+  
+work_type   WorkType   @default(individuel)  // new enum
+
   rejection_reason     String?
   reviewed_by_admin_id String?
   reviewed_at          DateTime?
@@ -122,13 +128,37 @@ model ProfessionalProfile {
   full_name            String
   appointments         Appointment[]                   @relation("ProfessionalAppointments")
   user                 User                            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ProfessionalStore               ProfessionalStore?           @relation("ProfessionalStoreRelation")
   schedule_exceptions  ProfessionalScheduleException[]
   schedules            ProfessionalSchedule[]
 
+  @@index([created_at])         // Dashboard: recent pros, trend
+  @@index([status, created_at])  // Dashboard: filter by status
   @@map("professional_profiles")
 }
 
+model ProfessionalStore {
+  id               String          @id @default(uuid())
+  professional_id  String          @unique  // one-to-one: a pro owns one store
+  name             String
+  wilaya           String
+  address          String
+  location_coordinates String?
+  images           String[]
+  documents        String[]
+  logo_url         String?
+  status           ProfileStatus   @default(pending)
+  created_at       DateTime        @default(now())
 
+  professional     ProfessionalProfile @relation("ProfessionalStoreRelation" , fields: [professional_id], references: [id], onDelete: Cascade)
+
+  @@map("stores")
+}
+
+enum WorkType {
+  individuel
+  avec_magasin
+}
 
 model Brand {
   id                   String              @id @default(uuid())
@@ -229,6 +259,7 @@ model Part {
   @@index([category_id])
   @@index([condition, price_dzd])
   @@index([is_verified, is_active])
+  @@index([created_at])           // Dashboard: trend by date
   @@map("parts")
 }
 
@@ -596,13 +627,7 @@ enum ProfileStatus {
   rejected
 }
 
-enum SpecialtyType {
-  mechanic
-  electrician
-  bodywork
-  diagnostic
-  other
-}
+
 
 enum FuelType {
   petrol

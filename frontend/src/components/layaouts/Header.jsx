@@ -1,18 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
-import { NavLink } from "react-router-dom";
-import { FiUser, FiMessageSquare, FiSettings, FiMenu, FiX } from "react-icons/fi";
+import { NavLink, useNavigate } from "react-router-dom";
+import { FiUser, FiMessageSquare, FiSettings, FiMenu, FiX, FiLogOut } from "react-icons/fi";
 import siyanatiLogo from "../../assets/img/siyanati-vertical-logo.png";
 import useAuthStore from "../../store/authStore";
 
 const Header = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, clearAuth } = useAuthStore();
+  const isAuth = isAuthenticated && !!user;
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    clearAuth();
+    navigate("/");
+  };
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState(null);
   const drawerRef = useRef(null);
 
   const menuItems = [
-    { name: "Accueil", href: isAuthenticated ? "/home-user" : "/" },
+    { name: "Accueil", href: isAuth ? "/home-user" : "/" },
     { name: "Catalogues", href: "/catalogues" },
     { name: "Magasins", href: "/magasins" },
     { name: "Professionnels", href: "/professionnels" },
@@ -82,12 +89,13 @@ const Header = () => {
 
         {/* Right side — desktop */}
         <div className="hidden lg:flex items-center gap-2">
-          {isAuthenticated ? (
+          {isAuth ? (
             // ── Authenticated: icon buttons ──────────────────────────────────
-            icons.map((icon) => (
-              <NavLink
-                key={icon.name}
-                onClick={() => setSelectedIcon(icon.name)}
+            <>
+              {icons.map((icon) => (
+                <NavLink
+                  key={icon.name}
+                  onClick={() => setSelectedIcon(icon.name)}
                 aria-label={icon.label}
                 className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
                   selectedIcon === icon.name
@@ -98,7 +106,16 @@ const Header = () => {
                 >
                 {icon.icon}
               </NavLink>
-            ))
+              ))}
+              <button
+                onClick={handleLogout}
+                aria-label="Déconnexion"
+                className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 text-red-400 hover:text-white hover:bg-red-500/20"
+                title="Se déconnecter"
+              >
+                <FiLogOut size={18} />
+              </button>
+            </>
           ) : (
             // ── Guest: Log in + Sign up ──────────────────────────────────────
             <>
@@ -168,7 +185,7 @@ const Header = () => {
 
         <div className="h-px bg-white/[0.07] mx-4 my-3" />
 
-        {isAuthenticated ? (
+        {isAuth ? (
           // ── Authenticated mobile: icon row ─────────────────────────────────
           <div className="px-4 pb-4">
             <p className="text-xs text-white/40 uppercase tracking-wider mb-3 font-semibold">
@@ -201,6 +218,25 @@ const Header = () => {
                   {icon.icon}
                 </NavLink>
               ))}
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setMenuOpen(false);
+                }}
+                aria-label="Déconnexion"
+                style={{
+                  transitionDelay: menuOpen
+                    ? `${menuItems.length * 50 + icons.length * 40}ms`
+                    : "0ms",
+                }}
+                className={`flex-1 h-11 flex items-center justify-center rounded-lg transition-all duration-300 transform ${
+                  menuOpen
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-4 opacity-0"
+                } bg-red-500/10 text-red-400 hover:text-white hover:bg-red-500`}
+              >
+                <FiLogOut size={18} />
+              </button>
             </div>
           </div>
         ) : (

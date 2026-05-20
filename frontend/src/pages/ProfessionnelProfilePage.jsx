@@ -10,12 +10,19 @@ import {
   FiClock,
   FiAward,
   FiDollarSign,
+  FiX,
+  FiCheck,
+  FiLoader,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
 import ProfessionalCard from "../components/uiComponents/ProfessionalCard";
 
 import Footer from "../components/layaouts/Footer";
 import { getProfessionalById, getAllProfessionals } from "../services/professionalService";
+import useAuthStore from "../store/authStore";
+import { createAppointment } from "../services/appointmentService";
+import { getUserVehicles } from "../services/vehicleService";
 
 // ─── Specialty type to label map ──────────────────────────────────────────────
 const specialtyTypeLabels = {
@@ -67,15 +74,17 @@ const specialtyIcons = {
 // ─── Helper: map backend user data to UI-friendly shape ───────────────────────
 function mapProfessional(userData) {
   const profile = userData.professional_profile || {};
+  const store = profile.ProfessionalStore || {};
   return {
     id: userData.id,
+    profile_id: profile.id,
     full_name: profile.full_name || "Professionnel",
     specialty: specialtyTypeLabels[profile.specialty_type] || profile.specialty_type || "Autre",
     specialty_type: profile.specialty_type || "other",
     experience_years: profile.experience_years || 0,
     wilaya: profile.wilaya || "N/A",
     location_address: profile.location_address || "",
-    shop_images: profile.shop_images || [],
+    shop_images: store.images || [],
     is_available: profile.is_available !== false,
     is_frozen: profile.is_frozen || false,
     hourly_rate_dzd: Number(profile.hourly_rate_dzd) || 0,
@@ -83,7 +92,7 @@ function mapProfessional(userData) {
     rating_count: profile.rating_count || 0,
     bio: profile.bio || "",
     created_at: userData.created_at || profile.created_at,
-    avatar: profile.shop_images?.[0] || "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
+    avatar: store.logo_url || "",
   };
 }
 
@@ -98,6 +107,85 @@ export default function ProfessionalProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [wishlist, setWishlist] = useState(false);
+
+  // ─── Booking Modal State ──────────────────────────────────────────────────────
+  const { user } = useAuthStore();
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
+  const [serviceType, setServiceType] = useState("");
+  const [description, setDescription] = useState("");
+  const [locationAddress, setLocationAddress] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const handleOpenBooking = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (user.role !== "customer") {
+      alert("Seuls les clients peuvent prendre rendez-vous avec un professionnel.");
+      return;
+    }
+
+    try {
+      const userVehicles = await getUserVehicles();
+      setVehicles(userVehicles || []);
+      if (userVehicles && userVehicles.length > 0) {
+        const defaultVehicle = userVehicles.find((v) => v.is_default) || userVehicles[0];
+        setSelectedVehicleId(defaultVehicle.id);
+      } else {
+        setSelectedVehicleId("");
+      }
+    } catch (err) {
+      console.error("Failed to load user vehicles", err);
+    }
+
+    setServiceType(pro?.specialty || "");
+    setDescription("");
+    setLocationAddress("");
+    setSubmitSuccess(false);
+    setSubmitError("");
+    setShowBookingModal(true);
+  };
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    if (!serviceType) {
+      setSubmitError("Veuillez choisir un type de service.");
+      return;
+    }
+    if (!description.trim()) {
+      setSubmitError("Veuillez décrire le problème.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      await createAppointment({
+        professional_id: pro.profile_id,
+        vehicle_id: selectedVehicleId || undefined,
+        service_type: serviceType,
+        description,
+        location_address: locationAddress || undefined,
+      });
+      setSubmitSuccess(true);
+    } catch (err) {
+      console.error("Failed to book appointment", err);
+      const msg = err.response?.data?.message || "Erreur lors de la prise de rendez-vous.";
+      if (msg.includes("Duplicate")) {
+        setSubmitError("Vous avez déjà une demande en cours avec ce professionnel.");
+      } else {
+        setSubmitError(msg);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -140,7 +228,7 @@ export default function ProfessionalProfilePage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3 pt-[100px]">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
         <p className="text-gray-400 text-sm">Chargement du profil...</p>
       </div>
@@ -150,7 +238,7 @@ export default function ProfessionalProfilePage() {
   // Error state
   if (error || !pro) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3 pt-[100px]">
         <p className="text-red-400 text-lg font-medium">{error || "Professionnel introuvable"}</p>
         <Link to="/professionnels" className="text-blue-600 hover:underline text-sm">
           ← Retour aux professionnels
@@ -162,7 +250,7 @@ export default function ProfessionalProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* ── Blue hero ── */}
-      <div className="bg-blue-700 px-6 pt-4 pb-20 relative">
+      <div className="bg-blue-700 px-6 pt-[110px] pb-20 relative">
         <button
           onClick={() => navigate(-1)}
           className="text-white/70 hover:text-white flex items-center gap-1 text-sm mb-4 transition-colors w-fit">
@@ -170,13 +258,24 @@ export default function ProfessionalProfilePage() {
         </button>
 
         <div className="max-w-6xl mx-auto flex items-start gap-5">
-          {/* Circular avatar */}
-          <div className="w-[88px] h-[88px] rounded-full overflow-hidden border-4 border-white shadow-xl shrink-0">
-            <img
-              src={pro.avatar}
-              alt={pro.full_name}
-              className="w-full h-full object-cover object-top"
-            />
+          {/* Circular avatar with Initials fallback */}
+          <div className="w-[88px] h-[88px] rounded-full overflow-hidden border-4 border-white shadow-xl shrink-0 bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
+            {pro.avatar ? (
+              <img
+                src={pro.avatar}
+                alt={pro.full_name}
+                className="w-full h-full object-cover object-top"
+              />
+            ) : (
+              <span>
+                {pro.full_name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </span>
+            )}
           </div>
 
           {/* Name / meta */}
@@ -200,7 +299,9 @@ export default function ProfessionalProfilePage() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 shrink-0">
-            <button className="flex items-center gap-1.5 bg-white text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all shadow">
+            <button 
+              onClick={handleOpenBooking}
+              className="flex items-center gap-1.5 bg-white text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all shadow cursor-pointer">
               <FiCalendar size={14} /> Rendez-vous
             </button>
             <button
@@ -359,6 +460,157 @@ export default function ProfessionalProfilePage() {
           </section>
         )}
       </div>
+
+      {/* ── Booking Modal ── */}
+      {showBookingModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-700 to-blue-600 text-white">
+              <div>
+                <h3 className="font-bold text-lg">Prendre rendez-vous</h3>
+                <p className="text-blue-100 text-xs mt-0.5">Demande d'intervention pour {pro.full_name}</p>
+              </div>
+              <button 
+                onClick={() => setShowBookingModal(false)}
+                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all cursor-pointer">
+                <FiX size={18} />
+              </button>
+            </div>
+
+            {submitSuccess ? (
+              <div className="p-8 text-center flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-4 animate-bounce">
+                  <FiCheck />
+                </div>
+                <h4 className="font-bold text-xl text-slate-800">Demande envoyée !</h4>
+                <p className="text-slate-500 text-sm mt-2 max-w-sm">
+                  Votre demande a été transmise avec succès. Le professionnel l'examinera pour fixer la date, l'heure et le prix de départ.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowBookingModal(false);
+                    navigate("/profile/appointments");
+                  }}
+                  className="mt-6 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow cursor-pointer active:scale-95"
+                >
+                  Voir mes rendez-vous
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+                {submitError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2">
+                    <FiAlertTriangle className="shrink-0 text-base" />
+                    <span>{submitError}</span>
+                  </div>
+                )}
+
+                {/* Service Type */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Type de service *
+                  </label>
+                  <select
+                    value={serviceType}
+                    onChange={(e) => setServiceType(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  >
+                    <option value="">Sélectionnez un service</option>
+                    <option value="Mécanique générale">Mécanique générale</option>
+                    <option value="Électricité automobile">Électricité automobile</option>
+                    <option value="Carrosserie et peinture">Carrosserie et peinture</option>
+                    <option value="Diagnostic électronique">Diagnostic électronique</option>
+                    <option value="Vidange et entretien">Vidange et entretien</option>
+                    <option value="Autre / Dépannage">Autre / Dépannage</option>
+                  </select>
+                </div>
+
+                {/* Vehicle Choice */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                    <span>Véhicule</span>
+                    <Link to="/profile/vehicules" className="text-blue-600 hover:underline normal-case font-semibold">
+                      + Ajouter un véhicule
+                    </Link>
+                  </label>
+                  <select
+                    value={selectedVehicleId}
+                    onChange={(e) => setSelectedVehicleId(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  >
+                    {vehicles.length === 0 ? (
+                      <option value="">Aucun véhicule enregistré (continuer sans véhicule)</option>
+                    ) : (
+                      <>
+                        <option value="">Continuer sans véhicule particulier</option>
+                        {vehicles.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.brand?.name} {v.model?.name} ({v.year}) {v.registration_number ? `- ${v.registration_number}` : ""}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Adresse d'intervention (optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={locationAddress}
+                    onChange={(e) => setLocationAddress(e.target.value)}
+                    placeholder="Ex: Bab Ezzouar, Alger"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Description du problème *
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Décrivez en détail les symptômes de la panne ou le service souhaité..."
+                    rows={4}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all resize-none"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowBookingModal(false)}
+                    className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-semibold rounded-xl transition-all cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow shadow-blue-600/20 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <FiLoader className="animate-spin text-base" />
+                        Envoi...
+                      </>
+                    ) : (
+                      "Soumettre la demande"
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

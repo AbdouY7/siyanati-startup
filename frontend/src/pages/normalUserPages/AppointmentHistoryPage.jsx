@@ -16,7 +16,11 @@ import {
   FiCheckCircle,
   FiAlertCircle,
   FiPlayCircle,
+  FiX,
+  FiLoader,
+  FiCheck,
 } from "react-icons/fi";
+import { createReview } from "../../services/reviewService";
 
 const AppointmentHistoryPage = () => {
   const { user } = useAuthStore();
@@ -35,6 +39,63 @@ const AppointmentHistoryPage = () => {
     total: 0,
     total_pages: 0,
   });
+
+  // ─── Review Modal State ──────────────────────────────────────────────────────
+  const [selectedAptForReview, setSelectedAptForReview] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
+  const handleOpenReview = (apt) => {
+    setSelectedAptForReview(apt);
+    setRating(5);
+    setHoverRating(0);
+    setComment("");
+    setReviewSuccess(false);
+    setReviewError("");
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (rating < 1 || rating > 5) {
+      setReviewError("Veuillez donner une note de 1 à 5 étoiles.");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    setReviewError("");
+
+    try {
+      await createReview({
+        target_id: selectedAptForReview.professional_id,
+        target_type: "professional",
+        rating: Number(rating),
+        comment: comment || undefined,
+        appointment_id: selectedAptForReview.id,
+      });
+
+      // Update local appointments state to show Reviewed badge instantly
+      setAppointments((prev) =>
+        prev.map((apt) =>
+          apt.id === selectedAptForReview.id
+            ? { ...apt, reviews: [{ id: "temp-id", rating, comment }] }
+            : apt
+        )
+      );
+      setReviewSuccess(true);
+      setTimeout(() => {
+        setSelectedAptForReview(null);
+      }, 1500);
+    } catch (err) {
+      console.error("Failed to submit review", err);
+      setReviewError(err.response?.data?.message || "Erreur lors de la soumission de l'avis.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   // Fetch appointments from backend
   useEffect(() => {
@@ -156,44 +217,9 @@ const AppointmentHistoryPage = () => {
   return (
     <div className="min-h-screen bg-gray-50/50 pb-12">
       {/* Header */}
-      <div className="bg-[#1e3a8a] text-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-8">
-          <div className="flex items-center gap-6">
-            <div className="relative -mb-20">
-              <img
-                src={user?.avatar || "/default-avatar.png"}
-                alt="Profile"
-                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
-              />
-            </div>
-            <div className="pb-2">
-              <h1 className="text-2xl font-bold">{user?.full_name || "Utilisateur"}</h1>
-              <div className="flex items-center gap-2 text-blue-200 text-sm mt-1">
-                <span>📍 {user?.client_profile?.wilaya || "N/A"}</span>
-              </div>
-              <p className="text-blue-200 text-sm mt-0.5">
-                Membre depuis {new Date(user?.created_at).getFullYear() || "2026"}
-              </p>
-            </div>
-            <div className="ml-auto flex gap-3">
-              <Link
-                to="/profile/edit"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-              >
-                modifier le profil ✏️
-              </Link>
-              <Link
-                to="/profile/settings"
-                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-              >
-                Paramètre ⚙️
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 mt-24">
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 mt-10">
         <div className="flex items-center gap-4 mb-8">
           <Link
             to="/profile"
@@ -312,21 +338,21 @@ const AppointmentHistoryPage = () => {
                         </td>
                         <td className="py-4 px-6">
                           <div className="text-sm text-gray-600">
-                            {apt.scheduled_at 
+                            {apt.scheduled_at
                               ? new Date(apt.scheduled_at).toLocaleDateString("fr-FR", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
                               : new Date(apt.created_at).toLocaleDateString("fr-FR")
                             }
                           </div>
                         </td>
                         <td className="py-4 px-6">
                           <span className="text-sm font-bold text-[#1e3a8a]">
-                            {apt.quoted_price_dzd 
+                            {apt.quoted_price_dzd
                               ? `${apt.quoted_price_dzd.toLocaleString("fr-FR")} DA`
                               : apt.final_price_dzd
                                 ? `${apt.final_price_dzd.toLocaleString("fr-FR")} DA`
@@ -343,11 +369,25 @@ const AppointmentHistoryPage = () => {
                         <td className="py-4 px-6">
                           <div className="flex items-center justify-end gap-2">
                             <Link
-                              to={`/appointments/${apt.id}`}
+                              to={`/profile/appointments/${apt.id}`}
                               className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition"
                             >
                               Voir plus <FiChevronRight size={14} />
                             </Link>
+                            {apt.status === "completed" && (
+                              apt.reviews?.length > 0 ? (
+                                <span className="inline-flex items-center gap-1 px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-medium">
+                                  <FiCheck size={14} /> Noté
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleOpenReview(apt)}
+                                  className="inline-flex items-center gap-1 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-medium transition"
+                                >
+                                  Laisser un avis
+                                </button>
+                              )
+                            )}
                             {canCancel(apt.status) && (
                               <button
                                 onClick={() => handleCancel(apt.id)}
@@ -396,6 +436,131 @@ const AppointmentHistoryPage = () => {
           )}
         </div>
       </div>
+
+      {/* ─── Review Modal ──────────────────────────────────────────────────────── */}
+      {selectedAptForReview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-all duration-300 animate-in fade-in duration-200">
+          <div
+            className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="relative bg-gradient-to-r from-blue-900 to-[#1e3a8a] text-white p-6">
+              <button
+                type="button"
+                onClick={() => setSelectedAptForReview(null)}
+                className="absolute top-4 right-4 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition"
+                aria-label="Close modal"
+              >
+                <FiX size={18} />
+              </button>
+              <h3 className="text-xl font-bold tracking-tight">Laisser un avis</h3>
+              <p className="text-blue-100 text-xs mt-1">
+                Partagez votre expérience avec {selectedAptForReview.professional?.full_name || "le professionnel"}
+              </p>
+            </div>
+
+            {/* Modal Content / Form */}
+            <form onSubmit={handleReviewSubmit} className="p-6 space-y-6">
+              {reviewSuccess ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center animate-bounce">
+                    <FiCheck size={32} />
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900">Avis enregistré !</h4>
+                  <p className="text-gray-500 text-sm">
+                    Merci pour votre retour. Il aide la communauté à faire les meilleurs choix.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {reviewError && (
+                    <div className="p-4 bg-rose-50 text-rose-700 rounded-2xl text-xs flex items-center gap-2 border border-rose-100">
+                      <FiAlertCircle size={16} className="shrink-0" />
+                      <span>{reviewError}</span>
+                    </div>
+                  )}
+
+                  {/* Rating Stars Section */}
+                  <div className="flex flex-col items-center justify-center space-y-2 py-2">
+                    <label className="text-sm font-semibold text-gray-700">Votre évaluation</label>
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const isGold = (hoverRating || rating) >= star;
+                        return (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            className="text-3xl focus:outline-none transition-transform active:scale-95"
+                          >
+                            <FiStar
+                              className={`w-10 h-10 transition-colors duration-150 ${isGold
+                                ? "fill-amber-400 text-amber-400 filter drop-shadow-sm"
+                                : "text-gray-300 hover:text-gray-400"
+                                }`}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <span className="text-xs font-medium text-amber-600 h-4">
+                      {hoverRating === 1 || (!hoverRating && rating === 1) ? "Médiocre 😞" : ""}
+                      {hoverRating === 2 || (!hoverRating && rating === 2) ? "Passable 😕" : ""}
+                      {hoverRating === 3 || (!hoverRating && rating === 3) ? "Satisfaisant 🙂" : ""}
+                      {hoverRating === 4 || (!hoverRating && rating === 4) ? "Très bien 😃" : ""}
+                      {hoverRating === 5 || (!hoverRating && rating === 5) ? "Excellent ! 🤩" : ""}
+                    </span>
+                  </div>
+
+                  {/* Review Text Area */}
+                  <div className="space-y-2">
+                    <label htmlFor="comment" className="text-sm font-semibold text-gray-700 flex justify-between">
+                      <span>Votre commentaire</span>
+                      <span className="text-xs text-gray-400 font-normal">(Facultatif)</span>
+                    </label>
+                    <textarea
+                      id="comment"
+                      rows="4"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Décrivez votre expérience avec ce professionnel, la qualité du travail, le respect des délais..."
+                      className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition resize-none placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  {/* Submit and Cancel Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      disabled={isSubmittingReview}
+                      onClick={() => setSelectedAptForReview(null)}
+                      className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl text-sm font-semibold transition disabled:opacity-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingReview}
+                      className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-sm font-semibold transition shadow-md shadow-blue-500/10 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isSubmittingReview ? (
+                        <>
+                          <FiLoader className="animate-spin" size={16} /> Enregistrement...
+                        </>
+                      ) : (
+                        "Publier l'avis"
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

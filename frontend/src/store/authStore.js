@@ -15,11 +15,11 @@ const useAuthStore = create((set) => ({
     }
 
     // Set accessToken in Zustand right away so axios interceptor can use it
-    set({
-      user: userParam || null,
+    set((state) => ({
+      user: userParam || state.user,
       accessToken: token,
       isAuthenticated: true,
-    });
+    }));
 
     // Then fetch user profile in the background if not provided
     if (!userParam && token) {

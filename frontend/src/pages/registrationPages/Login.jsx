@@ -5,11 +5,12 @@ import Input from "../../components/uiComponents/InputField";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axios";
 import useAuthStore from "../../store/authStore";
+import { decodeJwt } from "../../utils/jwtUtils";
 
 const Login = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
-  
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -73,14 +74,33 @@ const Login = () => {
           password: formData.password,
         });
 
-        const { user, accessToken, refreshToken } = response.data;
-        
-        // Success — store token and user in Zustand
-        await setAuth(user, accessToken, refreshToken);
+        const { accessToken, refreshToken } = response.data;
+
+        // Decode the role from the JWT (token payload: { sub, role })
+        const decoded = decodeJwt(accessToken);
+        const userRole = decoded?.role;
+
+        // Success — store token and user in Zustand (user profile fetched in background by setAuth)
+        await setAuth(null, accessToken, refreshToken);
         setSubmitStatus("success");
-        
+
+        // Redirect based on user role from token
+        const redirectByRole = (role) => {
+          switch (role) {
+            case "professional":
+              return "/pro";
+            case "admin":
+              return "/admin";
+            case "store":
+              return "/store"; // future store dashboard
+            case "customer":
+            default:
+              return "/home-user";
+          }
+        };
+
         setTimeout(() => {
-          navigate("/home-user");
+          navigate(redirectByRole(userRole));
         }, 1000);
       } catch (err) {
         if (err.response && err.response.data && err.response.data.message) {
