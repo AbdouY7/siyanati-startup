@@ -1,8 +1,7 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
-// Determine base URL depending on environment
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const axiosInstance = axios.create({
   baseURL,

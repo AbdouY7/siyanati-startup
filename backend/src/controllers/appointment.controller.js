@@ -172,16 +172,14 @@ const getAppointments = async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
-    const [appointments, total] = await prisma.$transaction([
-      prisma.appointment.findMany({
-        where,
-        include: appointmentListInclude,
-        orderBy: { created_at: "desc" },
-        skip,
-        take,
-      }),
-      prisma.appointment.count({ where }),
-    ]);
+    const appointments = await prisma.appointment.findMany({
+      where,
+      include: appointmentListInclude,
+      orderBy: { created_at: "desc" },
+      skip,
+      take,
+    });
+    const total = await prisma.appointment.count({ where });
 
     res.json({
       success: true,
