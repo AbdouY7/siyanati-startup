@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FiArrowLeft, FiMail, FiPhone, FiMapPin, FiCalendar, FiUser, FiSlash } from "react-icons/fi";
-import { getClientDetailsAdmin, updateUserStatusAdmin } from "../../services/adminService";
+import {
+  FiArrowLeft,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiCalendar,
+  FiUser,
+  FiSlash,
+} from "react-icons/fi";
+import {
+  getClientDetailsAdmin,
+  updateUserStatusAdmin,
+} from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
 
 const AdminClientDetails = () => {
@@ -22,21 +33,23 @@ const AdminClientDetails = () => {
       setClient(data);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch client details. Please try again.");
+      setError(
+        "Impossible de récupérer les détails du client. Veuillez réessayer.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleBlock = async () => {
-    if (!window.confirm("Block this client user?")) return;
+    if (!window.confirm("Bloquer ce client ?")) return;
 
     try {
       setActionLoading(true);
       const updatedUser = await updateUserStatusAdmin(client.id, false);
       setClient(updatedUser);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to block client user.");
+      setError("Impossible de bloquer le client.");
     } finally {
       setActionLoading(false);
     }
@@ -53,8 +66,10 @@ const AdminClientDetails = () => {
   if (error || !client) {
     return (
       <div className="p-6">
-        <Link to="/admin/clients" className="text-primary hover:underline flex items-center gap-2 mb-6">
-          <FiArrowLeft /> Back to Clients
+        <Link
+          to="/admin/clients"
+          className="text-primary hover:underline flex items-center gap-2 mb-6">
+          <FiArrowLeft /> Retour aux clients
         </Link>
         <div className="bg-red-50 text-red-600 p-4 rounded-lg shadow-sm border border-red-100">
           {error || "Client not found"}
@@ -67,8 +82,10 @@ const AdminClientDetails = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <Link to="/admin/clients" className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors">
-        <FiArrowLeft /> Back to Clients
+      <Link
+        to="/admin/clients"
+        className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors">
+        <FiArrowLeft /> Retour aux clients
       </Link>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
@@ -87,10 +104,10 @@ const AdminClientDetails = () => {
           )}
           <div className="text-center md:text-left">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {profile.full_name || "Unknown Client"}
+              {profile.full_name || "Client inconnu"}
             </h1>
             <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-              {client.is_active ? "Active Client" : "Blocked Client"}
+              {client.is_active ? "Client actif" : "Client bloqué"}
             </div>
           </div>
         </div>
@@ -100,8 +117,7 @@ const AdminClientDetails = () => {
             <button
               onClick={handleBlock}
               disabled={actionLoading}
-              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors"
-            >
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors">
               <FiSlash /> Banne / Block user
             </button>
           </div>
@@ -109,7 +125,9 @@ const AdminClientDetails = () => {
 
         {/* Info Grid */}
         <div className="p-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6 border-b pb-2">Client Information</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6 border-b pb-2">
+            Client Information
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-gray-50 rounded-xl text-primary">
@@ -137,7 +155,9 @@ const AdminClientDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Location</p>
-                <p className="font-medium text-gray-900">{profile.wilaya || "Not provided"}</p>
+                <p className="font-medium text-gray-900">
+                  {profile.wilaya || "Not provided"}
+                </p>
                 <p className="text-sm text-gray-600 mt-1">{profile.address}</p>
               </div>
             </div>
@@ -149,7 +169,9 @@ const AdminClientDetails = () => {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Date of Birth</p>
                 <p className="font-medium text-gray-900">
-                  {profile.date_of_birth ? formatDate(profile.date_of_birth) : "Not provided"}
+                  {profile.date_of_birth
+                    ? formatDate(profile.date_of_birth)
+                    : "Not provided"}
                 </p>
               </div>
             </div>
@@ -160,7 +182,9 @@ const AdminClientDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">National ID</p>
-                <p className="font-medium text-gray-900">{profile.national_id_number || "Not provided"}</p>
+                <p className="font-medium text-gray-900">
+                  {profile.national_id_number || "Not provided"}
+                </p>
               </div>
             </div>
 
@@ -170,7 +194,9 @@ const AdminClientDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Account Created</p>
-                <p className="font-medium text-gray-900">{formatDate(client.created_at)}</p>
+                <p className="font-medium text-gray-900">
+                  {formatDate(client.created_at)}
+                </p>
               </div>
             </div>
           </div>
@@ -179,7 +205,9 @@ const AdminClientDetails = () => {
         {/* National ID Documents Section */}
         {profile.national_id_card && profile.national_id_card.length > 0 && (
           <div className="p-8 border-t border-gray-100 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Identity Documents</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Identity Documents
+            </h2>
             <div className="flex flex-wrap gap-4">
               {profile.national_id_card.map((doc, index) => (
                 <a
@@ -187,15 +215,16 @@ const AdminClientDetails = () => {
                   href={doc}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block relative group overflow-hidden rounded-xl border border-gray-200 bg-white"
-                >
+                  className="block relative group overflow-hidden rounded-xl border border-gray-200 bg-white">
                   <img
                     src={doc}
                     alt={`ID Document ${index + 1}`}
                     className="h-32 w-48 object-cover transition-transform duration-300 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="text-white font-medium text-sm">View Document</span>
+                    <span className="text-white font-medium text-sm">
+                      View Document
+                    </span>
                   </div>
                 </a>
               ))}

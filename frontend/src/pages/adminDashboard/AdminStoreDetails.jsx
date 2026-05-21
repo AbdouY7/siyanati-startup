@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { FiArrowLeft, FiMail, FiPhone, FiMapPin, FiCalendar, FiHome, FiFileText, FiImage, FiCheck, FiX, FiSlash, FiPackage } from "react-icons/fi";
-import { approveStore, getStoreDetailsAdmin, rejectStore, updateUserStatusAdmin } from "../../services/adminService";
+import {
+  FiArrowLeft,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiCalendar,
+  FiHome,
+  FiFileText,
+  FiImage,
+  FiCheck,
+  FiX,
+  FiSlash,
+  FiPackage,
+} from "react-icons/fi";
+import {
+  approveStore,
+  getStoreDetailsAdmin,
+  rejectStore,
+  updateUserStatusAdmin,
+} from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
 
 const AdminStoreDetails = () => {
@@ -22,7 +40,9 @@ const AdminStoreDetails = () => {
       setStore(data);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch store details. Please try again.");
+      setError(
+        "Impossible de récupérer les détails du magasin. Veuillez réessayer.",
+      );
     } finally {
       setLoading(false);
     }
@@ -34,36 +54,45 @@ const AdminStoreDetails = () => {
       await approveStore(store.store_profile.id);
       await fetchStoreDetails();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to approve store.");
+      setError(
+        err.response?.data?.message || "Impossible d'approuver le magasin.",
+      );
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleReject = async () => {
-    const reason = window.prompt("Reason for refusing this store:");
+    const reason = window.prompt("Raison du refus de ce magasin:");
     if (reason === null) return;
 
     try {
       setActionLoading(true);
-      await rejectStore(store.store_profile.id, reason.trim() || "Registration refused by admin");
+      await rejectStore(
+        store.store_profile.id,
+        reason.trim() || "Inscription refusée par admin",
+      );
       await fetchStoreDetails();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to refuse store.");
+      setError(
+        err.response?.data?.message || "Impossible de refuser le magasin.",
+      );
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleBlock = async () => {
-    if (!window.confirm("Block this store user?")) return;
+    if (!window.confirm("Bloquer ce magasin ?")) return;
 
     try {
       setActionLoading(true);
       const updatedUser = await updateUserStatusAdmin(store.id, false);
       setStore(updatedUser);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to block store user.");
+      setError(
+        err.response?.data?.message || "Impossible de bloquer le magasin.",
+      );
     } finally {
       setActionLoading(false);
     }
@@ -80,8 +109,10 @@ const AdminStoreDetails = () => {
   if (error || !store) {
     return (
       <div className="p-6">
-        <Link to="/admin/stores" className="text-primary hover:underline flex items-center gap-2 mb-6">
-          <FiArrowLeft /> Back to Stores
+        <Link
+          to="/admin/stores"
+          className="text-primary hover:underline flex items-center gap-2 mb-6">
+          <FiArrowLeft /> Retour aux magasins
         </Link>
         <div className="bg-red-50 text-red-600 p-4 rounded-lg shadow-sm border border-red-100">
           {error || "Store not found"}
@@ -94,8 +125,10 @@ const AdminStoreDetails = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <Link to="/admin/stores" className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors">
-        <FiArrowLeft /> Back to Stores
+      <Link
+        to="/admin/stores"
+        className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors">
+        <FiArrowLeft /> Retour aux magasins
       </Link>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
@@ -116,20 +149,25 @@ const AdminStoreDetails = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {profile.store_name || "Unknown Store"}
+                  {profile.store_name || "Magasin inconnu"}
                 </h1>
-                <p className="text-gray-600 font-medium">Owner: {profile.owner_name}</p>
+                <p className="text-gray-600 font-medium">
+                  Propriétaire: {profile.owner_name}
+                </p>
                 {!store.is_active && (
-                  <p className="text-red-600 text-sm font-semibold mt-1">This user is blocked</p>
+                  <p className="text-red-600 text-sm font-semibold mt-1">
+                    Cet utilisateur est bloqué
+                  </p>
                 )}
               </div>
-              <div className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider inline-block ${
-                profile.status === "approved"
-                  ? "bg-green-100 text-green-800 border border-green-200"
-                  : profile.status === "rejected"
-                  ? "bg-red-100 text-red-800 border border-red-200"
-                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-              }`}>
+              <div
+                className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider inline-block ${
+                  profile.status === "approved"
+                    ? "bg-green-100 text-green-800 border border-green-200"
+                    : profile.status === "rejected"
+                      ? "bg-red-100 text-red-800 border border-red-200"
+                      : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                }`}>
                 {profile.status}
               </div>
             </div>
@@ -139,9 +177,8 @@ const AdminStoreDetails = () => {
         <div className="px-8 py-5 border-b border-gray-100 bg-white flex flex-wrap gap-3">
           <Link
             to={`/admin/stores/${store.id}/parts`}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            <FiPackage /> Voir les pieces de magasin
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+            <FiPackage /> Voir les pièces du magasin
           </Link>
 
           {profile.status === "pending" && (
@@ -149,15 +186,13 @@ const AdminStoreDetails = () => {
               <button
                 onClick={handleApprove}
                 disabled={actionLoading}
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60 transition-colors"
-              >
-                <FiCheck /> Approve store
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60 transition-colors">
+                <FiCheck /> Approuver le magasin
               </button>
               <button
                 onClick={handleReject}
                 disabled={actionLoading}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
-              >
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors">
                 <FiX /> Refuse
               </button>
             </>
@@ -167,8 +202,7 @@ const AdminStoreDetails = () => {
             <button
               onClick={handleBlock}
               disabled={actionLoading}
-              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors"
-            >
+              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors">
               <FiSlash /> Banne / Block user
             </button>
           )}
@@ -176,14 +210,18 @@ const AdminStoreDetails = () => {
 
         {profile.description && (
           <div className="px-8 py-6 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Description</h3>
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Description
+            </h3>
             <p className="text-gray-700">{profile.description}</p>
           </div>
         )}
 
         {/* Info Grid */}
         <div className="p-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6 border-b pb-2">Contact & Location</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6 border-b pb-2">
+            Contact & Location
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-gray-50 rounded-xl text-primary">
@@ -211,7 +249,9 @@ const AdminStoreDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Wilaya</p>
-                <p className="font-medium text-gray-900">{profile.wilaya || "Not provided"}</p>
+                <p className="font-medium text-gray-900">
+                  {profile.wilaya || "Not provided"}
+                </p>
               </div>
             </div>
 
@@ -221,7 +261,9 @@ const AdminStoreDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Address</p>
-                <p className="font-medium text-gray-900">{profile.address || "Not provided"}</p>
+                <p className="font-medium text-gray-900">
+                  {profile.address || "Not provided"}
+                </p>
               </div>
             </div>
 
@@ -230,11 +272,15 @@ const AdminStoreDetails = () => {
                 <FiCalendar size={20} />
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">Registration Submitted</p>
-                <p className="font-medium text-gray-900">{formatDate(profile.submitted_at)}</p>
+                <p className="text-sm text-gray-500 mb-1">
+                  Registration Submitted
+                </p>
+                <p className="font-medium text-gray-900">
+                  {formatDate(profile.submitted_at)}
+                </p>
               </div>
             </div>
-            
+
             {profile.reviewed_at && (
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-gray-50 rounded-xl text-primary">
@@ -242,7 +288,9 @@ const AdminStoreDetails = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Reviewed At</p>
-                  <p className="font-medium text-gray-900">{formatDate(profile.reviewed_at)}</p>
+                  <p className="font-medium text-gray-900">
+                    {formatDate(profile.reviewed_at)}
+                  </p>
                 </div>
               </div>
             )}
@@ -252,7 +300,9 @@ const AdminStoreDetails = () => {
         {/* Rejection Reason */}
         {profile.status === "rejected" && profile.rejection_reason && (
           <div className="px-8 py-6 bg-red-50 border-t border-red-100">
-            <h3 className="text-sm font-semibold text-red-800 uppercase tracking-wider mb-2">Rejection Reason</h3>
+            <h3 className="text-sm font-semibold text-red-800 uppercase tracking-wider mb-2">
+              Rejection Reason
+            </h3>
             <p className="text-red-700">{profile.rejection_reason}</p>
           </div>
         )}
@@ -271,8 +321,7 @@ const AdminStoreDetails = () => {
                     href={doc}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors group"
-                  >
+                    className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors group">
                     <div className="p-2 bg-gray-100 rounded text-gray-500 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                       <FiFileText size={20} />
                     </div>
@@ -299,15 +348,16 @@ const AdminStoreDetails = () => {
                     href={img}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block relative group overflow-hidden rounded-lg border border-gray-200 bg-white aspect-square"
-                  >
+                    className="block relative group overflow-hidden rounded-lg border border-gray-200 bg-white aspect-square">
                     <img
                       src={img}
                       alt={`Store Image ${index + 1}`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-white font-medium text-xs">View</span>
+                      <span className="text-white font-medium text-xs">
+                        View
+                      </span>
                     </div>
                   </a>
                 ))}

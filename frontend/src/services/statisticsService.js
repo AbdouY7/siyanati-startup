@@ -25,6 +25,11 @@ export const toggleProfessionalAvailability = async (isAvailable) => {
     const response = await axiosInstance.patch("/statistics/professional-availability", {
       is_available: isAvailable,
     });
+    window.dispatchEvent(
+      new CustomEvent("professional-availability-change", {
+        detail: { is_available: response.data.data.is_available },
+      }),
+    );
     return response.data.data;
   } catch (error) {
     console.error("Error toggling availability:", error);

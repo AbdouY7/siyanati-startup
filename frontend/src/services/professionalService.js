@@ -25,3 +25,23 @@ export const getProfessionalById = async (id) => {
     throw error;
   }
 };
+
+export const updateMyProfessionalProfile = async (payload) => {
+  try {
+    const response = await axiosInstance.put('/users/me/professional-profile', payload);
+    return response.data.user;
+  } catch (error) {
+    console.error('Error updating professional profile:', error);
+    throw error;
+  }
+};
+
+export const deleteMyAccount = async () => {
+  try {
+    const response = await axiosInstance.delete('/users/me');
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    throw error;
+  }
+};

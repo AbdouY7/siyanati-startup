@@ -413,6 +413,171 @@ const updateUserStatusAdmin = async (req, res, next) => {
   }
 };
 
+const selectSafeUser = {
+  id: true,
+  email: true,
+  phone: true,
+  role: true,
+  is_active: true,
+  email_verified: true,
+  created_at: true,
+  updated_at: true,
+  client_profile: true,
+  store_profile: true,
+  professional_profile: {
+    include: { ProfessionalStore: true },
+  },
+};
+
+// Update professional profile for the authenticated professional.
+const updateMyProfessionalProfile = async (req, res, next) => {
+  try {
+    if (req.user.role !== "professional") {
+      return res.status(403).json({ message: "Only professionals can update this profile" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        professional_profile: {
+          include: { ProfessionalStore: true },
+        },
+      },
+    });
+
+    if (!user?.professional_profile) {
+      return res.status(404).json({ message: "Professional profile not found" });
+    }
+
+    const {
+      phone,
+      full_name,
+      specialty_type,
+      experience_years,
+      wilaya,
+      location_address,
+      bio,
+      hourly_rate_dzd,
+      work_type,
+      is_available,
+      garage_name,
+      garage_wilaya,
+      garage_address,
+      garage_logo_url,
+      garage_images,
+    } = req.body;
+
+    const userUpdateData = {};
+    if (phone !== undefined) userUpdateData.phone = phone;
+
+    const profileUpdateData = {};
+    if (full_name !== undefined) profileUpdateData.full_name = full_name;
+    if (specialty_type !== undefined) profileUpdateData.specialty_type = specialty_type;
+    if (experience_years !== undefined) {
+      profileUpdateData.experience_years = experience_years === "" || experience_years === null ? null : Number(experience_years);
+    }
+    if (wilaya !== undefined) profileUpdateData.wilaya = wilaya;
+    if (location_address !== undefined) profileUpdateData.location_address = location_address;
+    if (bio !== undefined) profileUpdateData.bio = bio;
+    if (hourly_rate_dzd !== undefined) {
+      profileUpdateData.hourly_rate_dzd = hourly_rate_dzd === "" || hourly_rate_dzd === null ? null : Number(hourly_rate_dzd);
+    }
+    if (work_type !== undefined) profileUpdateData.work_type = work_type;
+    if (is_available !== undefined) profileUpdateData.is_available = Boolean(is_available);
+
+    const profileId = user.professional_profile.id;
+
+    await prisma.$transaction(async (tx) => {
+      if (Object.keys(userUpdateData).length > 0) {
+        await tx.user.update({ where: { id: req.user.id }, data: userUpdateData });
+      }
+
+      if (Object.keys(profileUpdateData).length > 0) {
+        await tx.professionalProfile.update({
+          where: { id: profileId },
+          data: profileUpdateData,
+        });
+      }
+
+      const wantsGarageUpdate =
+        garage_name !== undefined ||
+        garage_wilaya !== undefined ||
+        garage_address !== undefined ||
+        garage_logo_url !== undefined ||
+        garage_images !== undefined;
+
+      if (wantsGarageUpdate) {
+        const garageData = {
+          ...(garage_name !== undefined && { name: garage_name }),
+          ...(garage_wilaya !== undefined && { wilaya: garage_wilaya }),
+          ...(garage_address !== undefined && { address: garage_address }),
+          ...(garage_logo_url !== undefined && { logo_url: garage_logo_url }),
+          ...(garage_images !== undefined && {
+            images: Array.isArray(garage_images)
+              ? garage_images
+              : String(garage_images || "")
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean),
+          }),
+        };
+
+        if (user.professional_profile.ProfessionalStore) {
+          await tx.professionalStore.update({
+            where: { professional_id: profileId },
+            data: garageData,
+          });
+        } else if (Object.keys(garageData).length > 0 && (work_type || user.professional_profile.work_type) === "avec_magasin") {
+          await tx.professionalStore.create({
+            data: {
+              professional_id: profileId,
+              name: garageData.name || "Garage",
+              wilaya: garageData.wilaya || wilaya || user.professional_profile.wilaya,
+              address: garageData.address || location_address || user.professional_profile.location_address || "Non renseignee",
+              images: garageData.images || [],
+              documents: [],
+              logo_url: garageData.logo_url,
+              status: "approved",
+            },
+          });
+        }
+      }
+    });
+
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: selectSafeUser,
+    });
+
+    res.status(200).json({ user: updatedUser });
+  } catch (error) {
+    if (error.code === "P2002") {
+      return res.status(409).json({ message: "Phone number already in use" });
+    }
+    next(error);
+  }
+};
+
+// Soft-delete the authenticated account.
+const deleteMyAccount = async (req, res, next) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        is_active: false,
+        refresh_token: null,
+      },
+    });
+
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "User not found" });
+    }
+    next(error);
+  }
+};
+
 // Update user profile (for the authenticated user)
 const updateUserProfile = async (req, res, next) => {
   try {
@@ -514,5 +679,7 @@ module.exports = {
   rejectProfessionalRegistration,
   getPendingRegistrations,
   updateUserStatusAdmin,
+  updateMyProfessionalProfile,
+  deleteMyAccount,
   updateUserProfile,
 };

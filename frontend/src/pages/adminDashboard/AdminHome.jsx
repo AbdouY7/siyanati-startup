@@ -17,13 +17,13 @@ import {
 import useAuthStore from "../../store/authStore";
 
 const navItems = [
-  { label: "Dashboard", icon: RiDashboardLine, path: "/admin" },
+  { label: "Tableau de bord", icon: RiDashboardLine, path: "/admin" },
   { label: "Clients", icon: RiUserLine, path: "/admin/clients" },
   { label: "Professionnels", icon: RiBriefcaseLine, path: "/admin/professionals" },
-  { label: "Stores", icon: RiStoreLine, path: "/admin/stores" },
-  { label: "Parts", icon: RiSettings4Line, path: "/admin/parts" },
-  { label: "Reports", icon: RiFileTextLine, path: "/admin/reports" },
-  { label: "Chat", icon: RiMessage3Line, path: "/admin/chat" },
+  { label: "Magasins", icon: RiStoreLine, path: "/admin/stores" },
+  { label: "Pièces", icon: RiSettings4Line, path: "/admin/parts" },
+  { label: "Rapports", icon: RiFileTextLine, path: "/admin/reports" },
+  { label: "Messages", icon: RiMessage3Line, path: "/admin/chat" },
 ];
 
 export default function AdminHome() {
@@ -144,7 +144,7 @@ export default function AdminHome() {
             <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-base" />
             <input
               type="text"
-              placeholder="Search users, orders, stores..."
+              placeholder="Rechercher utilisateurs, commandes, magasins..."
               className="w-full bg-[#f5f7fa] border border-[#e9effd] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[#1f1f1f] placeholder-[#9ca3af] focus:outline-none focus:border-[#2563eb]/50 focus:bg-white transition-all"
             />
           </div>

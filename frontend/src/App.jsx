@@ -46,6 +46,12 @@ import DashBoardPro from "./pages/ProfessionnelDashboard/DashboardPro";
 import HomePro from "./pages/ProfessionnelDashboard/HomePro";
 import AppointmentPro from "./pages/ProfessionnelDashboard/AppointmentPro";
 import AppointmentDetailsPro from "./pages/ProfessionnelDashboard/AppointmentDetailsPro";
+import SchedulePro from "./pages/ProfessionnelDashboard/SchedulePro";
+import ProfilePro from "./pages/ProfessionnelDashboard/ProfilePro";
+import NotificationsPro from "./pages/ProfessionnelDashboard/NotificationsPro";
+import ReviewsPro from "./pages/ProfessionnelDashboard/ReviewsPro";
+import StoreHome from "./pages/StoreDashboard/StoreHome";
+import StoreDashboard from "./pages/StoreDashboard/StoreDashboard";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -132,7 +138,6 @@ function App() {
           </Route>
 
           {/* Appointment Details Route */}
-
         </Route>
 
         {/* Professional Routes */}
@@ -140,10 +145,25 @@ function App() {
           <Route path="/pro" element={<HomePro />}>
             <Route index element={<DashBoardPro />} />
             <Route path="appointments" element={<AppointmentPro />} />
+            <Route path="schedule" element={<SchedulePro />} />
+            <Route path="profile" element={<ProfilePro />} />
+            <Route path="notifications" element={<NotificationsPro />} />
+            <Route path="reviews" element={<ReviewsPro />} />
             <Route
               path="appointments/:id"
               element={<AppointmentDetailsPro />}
             />
+          </Route>
+        </Route>
+
+        <Route element={<RoleRoute allowedRoles={["store"]} />}>
+          <Route path="/store" element={<StoreHome />}>
+            <Route index element={<StoreDashboard />} />
+            {/* <Route path="appointments" element={<AppointmentPro />} />
+            <Route
+              path="appointments/:id"
+              element={<AppointmentDetailsPro />}
+            /> */}
           </Route>
         </Route>
 

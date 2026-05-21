@@ -42,7 +42,9 @@ const AdminProfessionals = () => {
       setProfessionals(data);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch professionals. Please try again.");
+      setError(
+        "Impossible de récupérer les professionnels. Veuillez réessayer.",
+      );
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ const AdminProfessionals = () => {
       handleCloseModal();
     } catch (err) {
       alert(
-        "Failed to approve professional: " +
+        "Impossible d'approuver le professionnel: " +
           (err.response?.data?.message || err.message),
       );
     } finally {
@@ -80,7 +82,7 @@ const AdminProfessionals = () => {
   const handleReject = async () => {
     if (!selectedPro || !selectedPro.professional_profile) return;
     if (!rejectionReason.trim()) {
-      alert("Please provide a rejection reason.");
+      alert("Veuillez fournir une raison de rejet.");
       return;
     }
     try {
@@ -93,7 +95,7 @@ const AdminProfessionals = () => {
       handleCloseModal();
     } catch (err) {
       alert(
-        "Failed to reject professional: " +
+        "Impossible de rejeter le professionnel: " +
           (err.response?.data?.message || err.message),
       );
     } finally {
@@ -144,7 +146,7 @@ const AdminProfessionals = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">
-          Professionals Management
+          Gestion des professionnels
         </h1>
       </div>
 
@@ -279,7 +281,7 @@ const AdminProfessionals = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {profile?.experience_years
-                          ? `${profile.experience_years} years`
+                          ? `${profile.experience_years} ans`
                           : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -300,7 +302,7 @@ const AdminProfessionals = () => {
                           <button
                             onClick={() => handleOpenModal(pro)}
                             className="text-primary hover:text-secondary bg-primary/10 px-3 py-1 rounded-md transition-colors">
-                            Examine
+                            Examiner
                           </button>
                         ) : (
                           <Link
@@ -395,7 +397,7 @@ const AdminProfessionals = () => {
                                 selectedPro.professional_profile
                                   ?.experience_years
                               }{" "}
-                              years
+                              ans
                             </p>
                           </div>
                         </div>
@@ -415,12 +417,12 @@ const AdminProfessionals = () => {
                             ?.ProfessionalStore?.[0] && (
                             <div className="mt-4 border-t pt-4">
                               <p className="text-sm font-bold text-gray-700 mb-2">
-                                Associated Store Info
+                                Informations sur le magasin associé
                               </p>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <p className="text-xs text-gray-500 uppercase">
-                                    Store Name
+                                    Nom du magasin
                                   </p>
                                   <p className="font-medium">
                                     {
@@ -431,7 +433,7 @@ const AdminProfessionals = () => {
                                 </div>
                                 <div>
                                   <p className="text-xs text-gray-500 uppercase">
-                                    Store Address
+                                    Adresse du magasin
                                   </p>
                                   <p className="font-medium">
                                     {

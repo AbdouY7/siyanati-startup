@@ -32,7 +32,7 @@ const authMiddleware = async (req, res, next) => {
       where: { id: decoded.sub },
       include: {
         store_profile: { select: { is_frozen: true } },
-        professional_profile: { select: { is_frozen: true } }
+        professional_profile: { select: { id: true, is_frozen: true } }
       }
     });
 
@@ -40,7 +40,12 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid or inactive user" });
     }
 
-    req.user = { id: user.id, email: user.email, role: user.role };
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      professional_profile_id: user.professional_profile?.id || null,
+    };
 
     const isFrozen = user.store_profile?.is_frozen || user.professional_profile?.is_frozen;
 

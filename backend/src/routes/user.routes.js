@@ -11,6 +11,10 @@ router.use(authMiddleware);
 // Get all users
 router.get("/users", userController.getAllUsers);
 
+// Authenticated user's professional profile actions
+router.put("/users/me/professional-profile", userController.updateMyProfessionalProfile);
+router.delete("/users/me", userController.deleteMyAccount);
+
 // Get user by ID
 router.get("/users/:id", userController.getUser);
 

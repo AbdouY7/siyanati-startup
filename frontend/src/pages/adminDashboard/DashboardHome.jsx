@@ -139,7 +139,6 @@ export default function AdminDashboard() {
       setRecentClients(dashboardData.recent.recentClients || []);
       setRecentStores(dashboardData.recent.recentStores || []);
       setRecentPros(dashboardData.recent.recentPros || []);
-
     } catch (err) {
       setStatsError("Failed to load dashboard statistics");
       console.error(err);
@@ -164,10 +163,10 @@ export default function AdminDashboard() {
         <h1
           className="text-2xl font-bold tracking-tight text-[#1f1f1f]"
           style={{ fontFamily: "'Montserrat', sans-serif" }}>
-          Dashboard
+          Tableau de bord
         </h1>
         <p className="text-sm text-[#6b7280] mt-0.5">
-          Overview of your platform's performance and key metrics
+          Aperçu des performances de votre plateforme et des métriques clés
         </p>
       </div>
 
@@ -178,7 +177,7 @@ export default function AdminDashboard() {
           <button
             onClick={fetchOverview}
             className="ml-2 underline hover:text-red-800">
-            Retry
+            Réessayer
           </button>
         </div>
       )}
@@ -193,7 +192,7 @@ export default function AdminDashboard() {
           isLoading={statsLoading}
         />
         <StatCard
-          label="Total Stores"
+          label="Total Magasins"
           value={stats?.totalStores || 0}
           trend={stats?.storesTrend || 0}
           icon={Store}
@@ -201,7 +200,7 @@ export default function AdminDashboard() {
           isLoading={statsLoading}
         />
         <StatCard
-          label="Total Professionals"
+          label="Total Professionnels"
           value={stats?.totalProfessionals || 0}
           trend={stats?.prosTrend || 0}
           icon={Briefcase}
@@ -209,7 +208,7 @@ export default function AdminDashboard() {
           isLoading={statsLoading}
         />
         <StatCard
-          label="Total Parts"
+          label="Total Pièces"
           value={stats?.totalParts || 0}
           trend={stats?.partsTrend || 0}
           icon={Package}
@@ -226,10 +225,10 @@ export default function AdminDashboard() {
             <h2
               className="text-base font-bold text-[#1f1f1f]"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              Orders Overview
+              Aperçu des commandes
             </h2>
             <p className="text-xs text-[#6b7280] mt-0.5">
-              Order counts by status — {currentYear}
+              Nombre de commandes par statut — {currentYear}
             </p>
           </div>
           {chartsLoading ? (
@@ -255,9 +254,9 @@ export default function AdminDashboard() {
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ paddingTop: "12px" }} />
-                <Bar dataKey="completed" name="Completed" fill="#10b981" />
-                <Bar dataKey="pending" name="Pending" fill="#f59e0b" />
-                <Bar dataKey="cancelled" name="Cancelled" fill="#ef4444" />
+                <Bar dataKey="completed" name="Completé" fill="#10b981" />
+                <Bar dataKey="pending" name="En attente" fill="#f59e0b" />
+                <Bar dataKey="cancelled" name="Annulé" fill="#ef4444" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -269,10 +268,10 @@ export default function AdminDashboard() {
             <h2
               className="text-base font-bold text-[#1f1f1f]"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              Appointments Overview
+              Aperçu des rendez-vous
             </h2>
             <p className="text-xs text-[#6b7280] mt-0.5">
-              Appointment counts by status — {currentYear}
+              Nombre de rendez-vous par statut — {currentYear}
             </p>
           </div>
           {chartsLoading ? (
@@ -301,7 +300,7 @@ export default function AdminDashboard() {
                 <Line
                   type="monotone"
                   dataKey="completed"
-                  name="Completed"
+                  name="Completé"
                   stroke="#10b981"
                   strokeWidth={2.5}
                   dot={false}
@@ -309,7 +308,7 @@ export default function AdminDashboard() {
                 <Line
                   type="monotone"
                   dataKey="pending"
-                  name="Pending"
+                  name="En attente"
                   stroke="#f59e0b"
                   strokeWidth={2.5}
                   dot={false}
@@ -317,7 +316,7 @@ export default function AdminDashboard() {
                 <Line
                   type="monotone"
                   dataKey="cancelled"
-                  name="Cancelled"
+                  name="Annulé"
                   stroke="#ef4444"
                   strokeWidth={2.5}
                   dot={false}
@@ -337,10 +336,10 @@ export default function AdminDashboard() {
               <h2
                 className="text-base font-bold text-[#1f1f1f]"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                Recent Clients
+                Clients récents
               </h2>
               <p className="text-xs text-[#6b7280] mt-0.5">
-                Latest registrations
+                Dernières inscriptions
               </p>
             </div>
             <button className="text-xs text-[#2563eb] hover:text-[#173c8f] font-medium transition-colors">
@@ -362,7 +361,7 @@ export default function AdminDashboard() {
               ))
             ) : recentClients.length === 0 ? (
               <p className="text-sm text-[#9ca3af] text-center py-8">
-                No recent clients
+                Aucun client récent
               </p>
             ) : (
               recentClients.map((client) => (
@@ -393,9 +392,9 @@ export default function AdminDashboard() {
               <h2
                 className="text-base font-bold text-[#1f1f1f]"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                Recent Stores
+                Magasins récents
               </h2>
-              <p className="text-xs text-[#6b7280] mt-0.5">Latest additions</p>
+              <p className="text-xs text-[#6b7280] mt-0.5">Ajouts récents</p>
             </div>
             <button className="text-xs text-[#2563eb] hover:text-[#173c8f] font-medium transition-colors">
               View all →
@@ -416,7 +415,7 @@ export default function AdminDashboard() {
               ))
             ) : recentStores.length === 0 ? (
               <p className="text-sm text-[#9ca3af] text-center py-8">
-                No recent stores
+                Aucun magasin récent
               </p>
             ) : (
               recentStores.map((store) => (
@@ -428,10 +427,10 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate text-[#1f1f1f]">
-                      {store.store_name || "Unknown Store"}
+                      {store.store_name || "Magasin inconnu"}
                     </p>
                     <p className="text-xs text-[#6b7280] truncate">
-                      {store.location || store.wilaya || "No location"}
+                      {store.location || store.wilaya || "Pas de localisation"}
                     </p>
                   </div>
                 </div>
@@ -447,10 +446,10 @@ export default function AdminDashboard() {
               <h2
                 className="text-base font-bold text-[#1f1f1f]"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                Recent Professionals
+                Professionnels récents
               </h2>
               <p className="text-xs text-[#6b7280] mt-0.5">
-                Latest registrations
+                Dernières inscriptions
               </p>
             </div>
             <button className="text-xs text-[#2563eb] hover:text-[#173c8f] font-medium transition-colors">
@@ -472,7 +471,7 @@ export default function AdminDashboard() {
               ))
             ) : recentPros.length === 0 ? (
               <p className="text-sm text-[#9ca3af] text-center py-8">
-                No recent professionals
+                Aucun professionnel récent
               </p>
             ) : (
               recentPros.map((pro) => (
@@ -484,10 +483,12 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate text-[#1f1f1f]">
-                      {pro.full_name || pro.user?.email || "Unknown Pro"}
+                      {pro.full_name ||
+                        pro.user?.email ||
+                        "Professionnel inconnu"}
                     </p>
                     <p className="text-xs text-[#6b7280] truncate">
-                      {pro.specialty_type || "Specialist"}
+                      {pro.specialty_type || "Spécialiste"}
                     </p>
                   </div>
                 </div>

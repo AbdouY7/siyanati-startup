@@ -15,7 +15,7 @@ const formatCondition = (condition) => {
   const labels = {
     new: "Neuf",
     used: "Occasion",
-    refurbished: "Reconditionne",
+    refurbished: "Reconditionné",
   };
   return labels[condition] || condition || "N/A";
 };
@@ -46,7 +46,7 @@ const AdminStoreParts = () => {
         setParts(partsData || []);
         setError(null);
       } catch (err) {
-        setError("Failed to fetch store parts.");
+        setError("Impossible de récupérer les pièces du magasin.");
       } finally {
         setLoading(false);
       }
@@ -58,9 +58,18 @@ const AdminStoreParts = () => {
   const filterOptions = useMemo(
     () => ({
       categories: uniqueOptions(parts, (part) => part.category?.name),
-      brands: uniqueOptions(parts, (part) => getFirstCompatibility(part).brand?.name),
-      models: uniqueOptions(parts, (part) => getFirstCompatibility(part).model?.name),
-      engines: uniqueOptions(parts, (part) => getFirstCompatibility(part).engine_variant),
+      brands: uniqueOptions(
+        parts,
+        (part) => getFirstCompatibility(part).brand?.name,
+      ),
+      models: uniqueOptions(
+        parts,
+        (part) => getFirstCompatibility(part).model?.name,
+      ),
+      engines: uniqueOptions(
+        parts,
+        (part) => getFirstCompatibility(part).engine_variant,
+      ),
     }),
     [parts],
   );
@@ -77,7 +86,15 @@ const AdminStoreParts = () => {
 
       const matchesSearch =
         !q ||
-        [part.name, part.sku, part.oem_reference, category, brand, model, engine]
+        [
+          part.name,
+          part.sku,
+          part.oem_reference,
+          category,
+          brand,
+          model,
+          engine,
+        ]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(q));
 
@@ -114,19 +131,20 @@ const AdminStoreParts = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <Link
         to={`/admin/stores/${id}`}
-        className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors"
-      >
-        <FiArrowLeft /> Back to store details
+        className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors">
+        <FiArrowLeft /> Retour aux détails du magasin
       </Link>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-6 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <p className="text-sm text-gray-500 font-medium">Pieces de magasin</p>
+            <p className="text-sm text-gray-500 font-medium">
+              Pièces du magasin
+            </p>
             <h1 className="text-2xl font-bold text-gray-900">{storeName}</h1>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 text-blue-700 px-4 py-2 text-sm font-semibold self-start lg:self-auto">
-            <FiBox /> {filteredParts.length} / {parts.length} parts
+            <FiBox /> {filteredParts.length} / {parts.length} pièces
           </div>
         </div>
 
@@ -143,7 +161,7 @@ const AdminStoreParts = () => {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, SKU, category, brand, model..."
+                placeholder="Rechercher par nom, SKU, catégorie, marque, modèle..."
                 className="w-full rounded-lg border border-gray-200 bg-white pl-10 pr-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </div>
@@ -151,52 +169,55 @@ const AdminStoreParts = () => {
             <select
               value={filters.category}
               onChange={(e) => updateFilter("category", e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            >
-              <option value="">All categories</option>
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400">
+              <option value="">Toutes les catégories</option>
               {filterOptions.categories.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
 
             <select
               value={filters.brand}
               onChange={(e) => updateFilter("brand", e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            >
-              <option value="">All brands</option>
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400">
+              <option value="">Toutes les marques</option>
               {filterOptions.brands.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
 
             <select
               value={filters.model}
               onChange={(e) => updateFilter("model", e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            >
-              <option value="">All models</option>
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400">
+              <option value="">Tous les modèles</option>
               {filterOptions.models.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
 
             <select
               value={filters.engine}
               onChange={(e) => updateFilter("engine", e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400"
-            >
-              <option value="">All engines</option>
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-400">
+              <option value="">Tous les moteurs</option>
               {filterOptions.engines.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
 
             <button
               onClick={resetFilters}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-            >
-              <FiFilter /> Reset
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100">
+              <FiFilter /> Réinitialiser
             </button>
           </div>
         </div>
@@ -205,20 +226,36 @@ const AdminStoreParts = () => {
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-white">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Part</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Categorie</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Brand</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Model</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Engine</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Stock</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Action</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Pièce
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Catégorie
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Marque
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Modèle
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Moteur
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Stock
+                </th>
+                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {filteredParts.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-16 text-center text-gray-500">
-                    No parts found for this store.
+                  <td
+                    colSpan="7"
+                    className="px-6 py-16 text-center text-gray-500">
+                    Aucune pièce trouvée pour ce magasin.
                   </td>
                 </tr>
               ) : (
@@ -234,23 +271,35 @@ const AdminStoreParts = () => {
                             className="h-12 w-12 rounded-lg object-cover bg-gray-100 border border-gray-100"
                           />
                           <div>
-                            <p className="font-semibold text-gray-900">{part.name}</p>
+                            <p className="font-semibold text-gray-900">
+                              {part.name}
+                            </p>
                             <p className="text-xs text-gray-500">
-                              {formatCondition(part.condition)} {part.sku ? `- SKU ${part.sku}` : ""}
+                              {formatCondition(part.condition)}{" "}
+                              {part.sku ? `- SKU ${part.sku}` : ""}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{part.category?.name || "N/A"}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{comp.brand?.name || "Universel"}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{comp.model?.name || "N/A"}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{comp.engine_variant || "N/A"}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{part.stock_qty}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {part.category?.name || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {comp.brand?.name || "Universel"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {comp.model?.name || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {comp.engine_variant || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {part.stock_qty}
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <Link
                           to={`/part-details/${part.id}`}
-                          className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
-                        >
+                          className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100">
                           <FiEye /> Details
                         </Link>
                       </td>
