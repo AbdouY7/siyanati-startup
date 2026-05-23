@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   FiArrowLeft,
   FiStar,
@@ -16,6 +16,7 @@ import ShopCards from "../components/uiComponents/ShopCards";
 import Footer from "../components/layaouts/Footer";
 import { getStoreById, getAllStores } from "../services/storeService";
 import { getAllParts } from "../services/partService";
+import { createOrder } from "../services/orderService";
 
 // ─── PartCard (inline, matching the provided component) ──────────────────────
 function EtatBadge({ etat }) {
@@ -45,7 +46,7 @@ function DispoBadge({ disponibilite }) {
   );
 }
 
-function PartCard({ part }) {
+function PartCard({ part, cartQty, onAddToCart }) {
   const { id, name, categorie, vehicule, etat, disponibilite, prix, image } =
     part;
   return (
@@ -79,11 +80,9 @@ function PartCard({ part }) {
         </div>
         <div className="flex gap-1.5 mt-auto pt-1.5">
           <button
-            onClick={() => {
-              window.location.href = `/buy-part/${id}`;
-            }}
-            className="flex-1 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-[11px] font-semibold py-1.5 rounded-xl flex items-center justify-center gap-1 transition-all duration-150">
-            Achetez <span>＋</span>
+            onClick={() => onAddToCart(part)}
+            className="flex-1 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-[11px] font-semibold py-1.5 rounded-xl flex items-center justify-center gap-1 transition-all duration-150 relative">
+            {cartQty > 0 ? `Panier (${cartQty})` : "Ajouter ＋"}
           </button>
           <button
             onClick={() => {
@@ -143,8 +142,40 @@ export default function ShopProfilePage() {
   const [otherStores, setOtherStores] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
   const [partSearch, setPartSearch] = useState("");
   const [wishlist, setWishlist] = useState(false);
+  const [cart, setCart] = useState({});
+
+  const handleAddToCart = (part) => {
+    setCart((prev) => ({
+      ...prev,
+      [part.id]: { part, qty: (prev[part.id]?.qty || 0) + 1 },
+    }));
+  };
+
+  const handleUpdateCartQty = (partId, delta) => {
+    setCart((prev) => {
+      const current = prev[partId]?.qty || 0;
+      const next = current + delta;
+      if (next <= 0) {
+        const { [partId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [partId]: { ...prev[partId], qty: next } };
+    });
+  };
+
+  const goToCheckout = () => {
+    if (Object.keys(cart).length === 0) return;
+    sessionStorage.setItem("checkout_cart", JSON.stringify(cart));
+    sessionStorage.setItem("checkout_store", JSON.stringify(store));
+    navigate("/buy-cart");
+  };
+
+  const cartTotalItems = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
+  const cartTotalPrice = Object.values(cart).reduce((sum, item) => sum + (item.part.prix * item.qty), 0);
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -157,6 +188,7 @@ export default function ShopProfilePage() {
 
         const mappedStore = {
           id: userData.id,
+          store_profile_id: profile.id,
           owner_name: profile.owner_name || "Propriétaire",
           store_name: profile.store_name || "Magasin",
           description: profile.description || "",
@@ -320,8 +352,15 @@ export default function ShopProfilePage() {
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <button className="flex items-center gap-1.5 bg-white text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all shadow">
+            <button 
+              onClick={goToCheckout}
+              className="relative flex items-center gap-1.5 bg-white text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all shadow">
               <FiShoppingCart size={14} /> Pannier de commande
+              {cartTotalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                  {cartTotalItems}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setWishlist(!wishlist)}
@@ -422,8 +461,15 @@ export default function ShopProfilePage() {
             <button className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white transition-all">
               <FiSearch size={16} />
             </button>
-            <button className="p-2 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-600 active:scale-95 transition-all">
+            <button 
+              onClick={goToCheckout}
+              className="relative p-2 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-600 active:scale-95 transition-all">
               <FiShoppingCart size={16} />
+              {cartTotalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                  {cartTotalItems}
+                </span>
+              )}
             </button>
           </div>
 
@@ -465,7 +511,12 @@ export default function ShopProfilePage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {filteredParts.map((part) => (
-                <PartCard key={part.id} part={part} />
+                <PartCard 
+                  key={part.id} 
+                  part={part} 
+                  cartQty={cart[part.id]?.qty || 0}
+                  onAddToCart={handleAddToCart}
+                />
               ))}
             </div>
           )}

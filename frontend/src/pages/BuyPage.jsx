@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -20,8 +20,9 @@ import {
 import { MdOutlineVerified } from "react-icons/md";
 
 import Footer from "../components/layaouts/Footer";
-import parts from "../../data/parts";
-
+import { getPartById } from "../services/partService";
+import { createOrder } from "../services/orderService";
+import { getStoreById } from "../services/storeService";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function EtatBadge({ etat }) {
   return etat === "Neuf" ? (
@@ -216,8 +217,23 @@ export default function BuyPartPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // ✅ FIX: convert id from string to number before comparing
-  const part = parts.find((p) => p.id === Number(id)) ?? parts[0];
+  const [part, setPart] = useState(null);
+  const [loadingPart, setLoadingPart] = useState(true);
+
+  useEffect(() => {
+    const fetchPart = async () => {
+      try {
+        setLoadingPart(true);
+        const data = await getPartById(id);
+        setPart(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingPart(false);
+      }
+    };
+    fetchPart();
+  }, [id]);
 
   const [qty, setQty] = useState(1);
   const [form, setForm] = useState({
@@ -265,16 +281,43 @@ export default function BuyPartPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Fetch store to get store_profile_id instead of user_id
+      const storeData = await getStoreById(part.seller_id);
+      const storeProfileId = storeData?.store_profile?.id;
+      
+      if (!storeProfileId) {
+        throw new Error("Impossible de trouver le profil du magasin");
+      }
+
+      const orderData = {
+        store_id: storeProfileId,
+        items: [{ part_id: part.id, quantity: qty }],
+        delivery_type: "home_delivery",
+        delivery_address: form.address,
+        notes: `Tél: ${form.phone}`,
+      };
+      await createOrder(orderData);
       setSubmitted(true);
-    }, 1800);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Erreur lors de la commande");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const total = part.prix * qty;
+  if (loadingPart) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Chargement...</div>;
+  }
+  if (!part) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Pièce introuvable</div>;
+  }
+
+  const total = Number(part.price_dzd) * qty;
 
   // ── Success screen ──────────────────────────────────────────────────────────
   if (submitted) {
@@ -300,13 +343,13 @@ export default function BuyPartPage() {
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-left mb-8 flex items-center gap-4">
             <img
-              src={part.image}
+              src={part.images?.[0] || ""}
               alt={part.name}
               className="w-16 h-16 object-cover rounded-xl bg-gray-100 shrink-0"
             />
             <div>
               <p className="font-bold text-gray-800">{part.name}</p>
-              <p className="text-gray-400 text-sm">{part.boutique}</p>
+              <p className="text-gray-400 text-sm">Vendeur Partenaire</p>
               <p className="text-blue-700 font-black mt-1">
                 {total.toLocaleString("fr-DZ")} Da
               </p>
@@ -353,16 +396,16 @@ export default function BuyPartPage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="relative h-64 bg-gradient-to-br from-slate-50 to-blue-50">
                 <img
-                  src={part.image}
+                  src={part.images?.[0] || ""}
                   alt={part.name}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
-                  <EtatBadge etat={part.etat} />
-                  <DispoBadge disponibilite={part.disponibilite} />
+                  <EtatBadge etat={part.condition === "new" ? "Neuf" : "Occasion"} />
+                  <DispoBadge disponibilite={part.stock_qty > 0 ? "En stock" : "Stock limité"} />
                 </div>
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-200">
-                  {part.categorie}
+                  {part.category?.name || "Pièce"}
                 </div>
               </div>
 
@@ -372,33 +415,33 @@ export default function BuyPartPage() {
                 </h1>
                 <div className="flex items-center gap-1.5 text-gray-400 text-sm mb-5">
                   <MdOutlineVerified className="text-blue-500" size={14} />
-                  <span>{part.boutique}</span>
+                  <span>Vendeur Partenaire</span>
                 </div>
 
                 <InfoRow
                   icon={<FiTag size={14} />}
                   label="Catégorie"
-                  value={part.categorie}
+                  value={part.category?.name || "Pièce"}
                 />
                 <InfoRow
                   icon={<FiCpu size={14} />}
-                  label="Véhicule"
-                  value={`${part.vehicule.marque} ${part.vehicule.modele}`}
+                  label="Référence OEM"
+                  value={part.oem_reference || "N/A"}
                 />
                 <InfoRow
                   icon={<FiCalendar size={14} />}
-                  label="Année"
-                  value={part.vehicule.annee}
+                  label="SKU"
+                  value={part.sku || "N/A"}
                 />
                 <InfoRow
                   icon={<FiDroplet size={14} />}
-                  label="Carburant"
-                  value={part.vehicule.carburant}
+                  label="Condition"
+                  value={part.condition === "new" ? "Neuf" : "Occasion"}
                 />
                 <InfoRow
                   icon={<FiMapPin size={14} />}
                   label="Disponibilité"
-                  value={part.disponibilite}
+                  value={part.stock_qty > 0 ? "En stock" : "Rupture"}
                 />
               </div>
             </div>
@@ -415,7 +458,7 @@ export default function BuyPartPage() {
               <div className="space-y-2.5 border-t border-gray-100 pt-4">
                 <div className="flex justify-between text-sm text-gray-400">
                   <span>Prix unitaire</span>
-                  <span>{part.prix.toLocaleString("fr-DZ")} Da</span>
+                  <span>{Number(part.price_dzd).toLocaleString("fr-DZ")} Da</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-400">
                   <span>Quantité</span>

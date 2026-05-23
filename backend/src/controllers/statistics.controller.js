@@ -225,6 +225,178 @@ const getProfessionalDashboardStats = async (req, res, next) => {
   }
 };
 
+// ─── Helper: get the StoreProfile id for a user ──────
+const getStoreProfile = (userId) =>
+  prisma.storeProfile.findUnique({
+    where: { user_id: userId },
+    select: { id: true, rating_avg: true, rating_count: true, store_name: true },
+  });
+
+// ─── GET /statistics/store-dashboard ──────────────────
+// Returns all dashboard data for the logged-in store
+
+const getStoreDashboardStats = async (req, res, next) => {
+  try {
+    if (req.user.role !== "store") {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const profile = await getStoreProfile(req.user.id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Store profile not found" });
+    }
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed
+
+    // Start/end of current month
+    const monthStart = new Date(currentYear, currentMonth, 1);
+    const monthEnd = new Date(currentYear, currentMonth + 1, 1);
+
+    // Start/end of previous month
+    const prevMonthStart = new Date(currentYear, currentMonth - 1, 1);
+    const prevMonthEnd = new Date(currentYear, currentMonth, 1);
+
+    // Start/end of current year
+    const yearStart = new Date(currentYear, 0, 1);
+    const yearEnd = new Date(currentYear + 1, 0, 1);
+
+    // Start/end of previous year
+    const prevYearStart = new Date(currentYear - 1, 0, 1);
+    const prevYearEnd = new Date(currentYear, 0, 1);
+
+    // 1. Orders statistics
+    const ordersThisMonth = await prisma.order.count({
+      where: {
+        store_id: profile.id,
+        created_at: { gte: monthStart, lt: monthEnd },
+      },
+    });
+
+    const ordersPrevMonth = await prisma.order.count({
+      where: {
+        store_id: profile.id,
+        created_at: { gte: prevMonthStart, lt: prevMonthEnd },
+      },
+    });
+
+    const ordersThisYear = await prisma.order.count({
+      where: {
+        store_id: profile.id,
+        created_at: { gte: yearStart, lt: yearEnd },
+      },
+    });
+
+    const ordersPrevYear = await prisma.order.count({
+      where: {
+        store_id: profile.id,
+        created_at: { gte: prevYearStart, lt: prevYearEnd },
+      },
+    });
+
+    const completedThisYear = await prisma.order.count({
+      where: {
+        store_id: profile.id,
+        status: "delivered",
+        created_at: { gte: yearStart, lt: yearEnd },
+      },
+    });
+
+    const cancelledThisYear = await prisma.order.count({
+      where: {
+        store_id: profile.id,
+        status: "cancelled",
+        created_at: { gte: yearStart, lt: yearEnd },
+      },
+    });
+
+    // 2. Parts statistics
+    const totalParts = await prisma.part.count({
+      where: {
+        seller_id: req.user.id,
+        seller_type: "store",
+        is_active: true,
+      },
+    });
+
+    // 3. Clients statistics (unique customers who ordered from this store)
+    const clients = await prisma.order.findMany({
+      where: { store_id: profile.id },
+      distinct: ['customer_id'],
+      select: { customer_id: true },
+    });
+    const totalClients = clients.length;
+
+    // 4. Monthly stats for chart (current year, all 12 months)
+    const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+
+    const yearOrders = await prisma.order.findMany({
+      where: {
+        store_id: profile.id,
+        created_at: { gte: yearStart, lt: yearEnd },
+      },
+      select: {
+        created_at: true,
+        status: true,
+        total_dzd: true,
+      },
+    });
+
+    const monthlyStats = monthNames.map((month, index) => {
+      const monthOrders = yearOrders.filter((o) => {
+        const d = new Date(o.created_at);
+        return d.getMonth() === index;
+      });
+
+      const completedOrders = monthOrders.filter((o) => o.status === "delivered");
+      
+      const revenue = completedOrders.reduce((sum, order) => {
+        return sum + Number(order.total_dzd || 0);
+      }, 0);
+
+      return {
+        month,
+        total: monthOrders.length,
+        completed: completedOrders.length,
+        cancelled: monthOrders.filter((o) => o.status === "cancelled").length,
+        revenue: revenue,
+      };
+    });
+
+    // Trends
+    const monthTrend = ordersPrevMonth > 0
+      ? Number((((ordersThisMonth - ordersPrevMonth) / ordersPrevMonth) * 100).toFixed(1))
+      : ordersThisMonth > 0 ? 100 : 0;
+
+    const yearTrend = ordersPrevYear > 0
+      ? Number((((ordersThisYear - ordersPrevYear) / ordersPrevYear) * 100).toFixed(1))
+      : ordersThisYear > 0 ? 100 : 0;
+
+    res.json({
+      success: true,
+      data: {
+        orders_this_month: ordersThisMonth,
+        orders_prev_month: ordersPrevMonth,
+        month_trend: monthTrend,
+        orders_this_year: ordersThisYear,
+        orders_prev_year: ordersPrevYear,
+        year_trend: yearTrend,
+        completed_this_year: completedThisYear,
+        cancelled_this_year: cancelledThisYear,
+        total_clients: totalClients,
+        total_parts: totalParts,
+        rating_avg: Number(profile.rating_avg),
+        rating_count: profile.rating_count,
+        store_name: profile.store_name,
+        monthly_stats: monthlyStats,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── PATCH /statistics/professional-availability ─────────────
 // Toggle the professional's is_available flag
 
@@ -258,5 +430,6 @@ const toggleProfessionalAvailability = async (req, res, next) => {
 module.exports = {
   getUserStatistics,
   getProfessionalDashboardStats,
+  getStoreDashboardStats,
   toggleProfessionalAvailability,
 };

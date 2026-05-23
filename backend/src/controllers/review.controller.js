@@ -87,6 +87,20 @@ const createReview = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Invalid target_type" });
     }
 
+    const existingReview = await prisma.review.findFirst({
+      where: {
+        author_id: req.user.id,
+        target_id,
+        target_type,
+        ...(order_id ? { order_id } : {}),
+        ...(appointment_id ? { appointment_id } : {}),
+      }
+    });
+
+    if (existingReview) {
+      return res.status(409).json({ success: false, message: "Vous avez déjà évalué cette commande ou ce rendez-vous" });
+    }
+
     const review = await prisma.review.create({
       data: {
         author_id: req.user.id,

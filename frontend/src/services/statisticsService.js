@@ -36,3 +36,13 @@ export const toggleProfessionalAvailability = async (isAvailable) => {
     throw error;
   }
 };
+
+export const getStoreDashboardStats = async () => {
+  try {
+    const response = await axiosInstance.get("/statistics/store-dashboard");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching store dashboard stats:", error);
+    throw error;
+  }
+};

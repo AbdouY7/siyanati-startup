@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
-import { getOrderHistory, cancelOrder } from "../../services/orderService";
+import { getOrderHistory, cancelOrder, updateOrderStatus } from "../../services/orderService";
 import {
   FiChevronLeft,
   FiSearch,
@@ -19,6 +19,7 @@ import {
   FiRotateCcw,
   FiAlertCircle,
 } from "react-icons/fi";
+import PopupModal from "../../components/ui/PopupModal";
 
 const OrderHistoryPage = () => {
   const { user } = useAuthStore();
@@ -38,6 +39,18 @@ const OrderHistoryPage = () => {
     total: 0,
     total_pages: 0,
   });
+
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: "", message: "", type: "info", onConfirm: null });
+
+  const showAlert = (title, message, type = "info") => {
+    setModalConfig({ isOpen: true, title, message, type, onConfirm: null });
+  };
+
+  const showConfirm = (title, message, onConfirmCallback) => {
+    setModalConfig({ isOpen: true, title, message, type: "warning", onConfirm: onConfirmCallback });
+  };
+
+  const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -96,22 +109,50 @@ const OrderHistoryPage = () => {
     }
   }, [searchQuery, orders]);
 
-  const handleCancel = async (id) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir annuler cette commande ?"))
-      return;
+  const handleCancel = (id) => {
+    showConfirm(
+      "Annuler la commande",
+      "Êtes-vous sûr de vouloir annuler cette commande ?",
+      async () => {
+        closeModal();
+        try {
+          await cancelOrder(id);
+          const response = await getOrderHistory({
+            page: pagination.page,
+            limit: pagination.limit,
+          });
+          setOrders(response.orders || []);
+          setFilteredOrders(response.orders || []);
+          showAlert("Succès", "La commande a été annulée avec succès.", "success");
+        } catch (error) {
+          console.error("Failed to cancel order", error);
+          showAlert("Erreur", error.response?.data?.message || "Erreur lors de l'annulation", "error");
+        }
+      }
+    );
+  };
 
-    try {
-      await cancelOrder(id);
-      const response = await getOrderHistory({
-        page: pagination.page,
-        limit: pagination.limit,
-      });
-      setOrders(response.orders || []);
-      setFilteredOrders(response.orders || []);
-    } catch (error) {
-      console.error("Failed to cancel order", error);
-      alert(error.response?.data?.message || "Erreur lors de l'annulation");
-    }
+  const handleConfirmDelivery = (id) => {
+    showConfirm(
+      "Confirmer la réception",
+      "Confirmez-vous la réception de cette commande ?",
+      async () => {
+        closeModal();
+        try {
+          await updateOrderStatus(id, { status: "delivered" });
+          const response = await getOrderHistory({
+            page: pagination.page,
+            limit: pagination.limit,
+          });
+          setOrders(response.orders || []);
+          setFilteredOrders(response.orders || []);
+          showAlert("Succès", "Réception de la commande confirmée.", "success");
+        } catch (error) {
+          console.error("Failed to confirm delivery", error);
+          showAlert("Erreur", error.response?.data?.message || "Erreur lors de la confirmation", "error");
+        }
+      }
+    );
   };
 
   const getStatusConfig = (status) => {
@@ -409,10 +450,18 @@ const OrderHistoryPage = () => {
                         <td className="py-4 px-6">
                           <div className="flex items-center justify-end gap-2">
                             <Link
-                              to={`/orders/${order.id}`}
+                              to={`/profile/orders/${order.id}`}
                               className="inline-flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">
                               Voir plus <FiChevronRight size={14} />
                             </Link>
+                            {order.status === "shipped" && (
+                              <button
+                                onClick={() => handleConfirmDelivery(order.id)}
+                                className="inline-flex items-center gap-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition"
+                                title="Confirmer la réception">
+                                <FiCheckCircle size={14} /> Reçu
+                              </button>
+                            )}
                             {canCancel(order.status) && (
                               <button
                                 onClick={() => handleCancel(order.id)}
@@ -466,6 +515,14 @@ const OrderHistoryPage = () => {
           )}
         </div>
       </div>
+      <PopupModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 };

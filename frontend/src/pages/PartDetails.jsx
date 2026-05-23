@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   Check,
@@ -55,6 +55,7 @@ function StatusBadge({ type, value }) {
 
 export default function PartDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [part, setPart] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -90,7 +91,7 @@ export default function PartDetails() {
     return (
       <div className="min-h-screen bg-slate-50 px-6 pt-28">
         <button
-          onClick={() => window.history.back()}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 mb-6"
         >
           <ChevronLeft className="w-5 h-5" /> Retour
@@ -113,12 +114,13 @@ export default function PartDetails() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => window.history.back()}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2"
             >
               <ChevronLeft className="w-6 h-6 text-slate-700" />
+              <span className="font-bold text-slate-700">Retour</span>
             </button>
-            <h1 className="text-xl font-bold text-slate-900">Details du produit</h1>
+            <h1 className="text-xl font-bold text-slate-900 border-l border-slate-200 pl-4">Details du produit</h1>
           </div>
         </div>
       </header>

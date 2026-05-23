@@ -13,6 +13,7 @@ import PartDetails from "./pages/PartDetails";
 import Magasins from "./pages/Magasins";
 import ShopProfilePage from "./pages/ShopProfilePage";
 import BuyPage from "./pages/BuyPage";
+import BuyCartPage from "./pages/BuyCartPage";
 import ProfessionalProfilePage from "./pages/ProfessionnelProfilePage";
 import Professionals from "./pages/Professionals";
 import ProfilePage from "./pages/normalUserPages/ProfilePage";
@@ -52,6 +53,11 @@ import NotificationsPro from "./pages/ProfessionnelDashboard/NotificationsPro";
 import ReviewsPro from "./pages/ProfessionnelDashboard/ReviewsPro";
 import StoreHome from "./pages/StoreDashboard/StoreHome";
 import StoreDashboard from "./pages/StoreDashboard/StoreDashboard";
+import StoreOrdersPage from "./pages/StoreDashboard/StoreOrdersPage";
+import StorePartsPage from "./pages/StoreDashboard/StorePartsPage";
+import StorePartDetailsPage from "./pages/StoreDashboard/StorePartDetailsPage";
+import StoreOrderDetailsPage from "./pages/StoreDashboard/StoreOrderDetailsPage";
+import ClientOrderDetailsPage from "./pages/normalUserPages/ClientOrderDetailsPage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -77,6 +83,7 @@ function App() {
           <Route path="/catalogues" element={<Catalogues />} />
           <Route path="/part-details/:id" element={<PartDetails />} />
           <Route path="/Buy-part/:id" element={<BuyPage />} />
+          <Route path="/buy-cart" element={<BuyCartPage />} />
           <Route path="/magasins" element={<Magasins />} />
           <Route path="/shops/:id" element={<ShopProfilePage />} />
           <Route path="/professionnels" element={<Professionals />} />
@@ -111,6 +118,7 @@ function App() {
               element={<PaymentAccountsPage />}
             />
             <Route path="/profile/orders" element={<OrderHistoryPage />} />
+            <Route path="/profile/orders/:id" element={<ClientOrderDetailsPage />} />
             <Route
               path="/profile/appointments"
               element={<AppointmentHistoryPage />}
@@ -159,11 +167,16 @@ function App() {
         <Route element={<RoleRoute allowedRoles={["store"]} />}>
           <Route path="/store" element={<StoreHome />}>
             <Route index element={<StoreDashboard />} />
+            <Route path="orders" element={<StoreOrdersPage />} />
+            <Route path="orders/:id" element={<StoreOrderDetailsPage />} />
+            <Route path="parts" element={<StorePartsPage />} />
+            <Route path="parts/:id" element={<StorePartDetailsPage />} />
             {/* <Route path="appointments" element={<AppointmentPro />} />
             <Route
               path="appointments/:id"
               element={<AppointmentDetailsPro />}
             /> */}
+
           </Route>
         </Route>
 

@@ -449,7 +449,7 @@ model Review {
   author         User         @relation("AuthoredReviews", fields: [author_id], references: [id], onDelete: Cascade)
   order          Order?       @relation(fields: [order_id], references: [id])
 
-  @@unique([author_id, target_type, target_id])
+  // Constraint removed to allow multiple reviews per store (one per order/appointment)
   @@index([author_id])
   @@index([target_type, target_id])
   @@map("reviews")

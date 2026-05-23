@@ -55,6 +55,7 @@ app.use("/api/payment-accounts", require("./routes/paymentAccount.routes"));
 app.use("/api/professional-stores", require("./routes/professionalStore.routes"));
 
 app.use("/api/admin", require("./routes/admin.routes"));
+app.use("/api/favorites", require("./routes/favorite.routes"));
 
 // error handler
 app.use((err, req, res, next) => {

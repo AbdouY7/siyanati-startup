@@ -3,6 +3,7 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const {
   getUserStatistics,
   getProfessionalDashboardStats,
+  getStoreDashboardStats,
   toggleProfessionalAvailability,
 } = require("../controllers/statistics.controller");
 
@@ -15,6 +16,9 @@ router.get("/user", getUserStatistics);
 
 // GET /api/statistics/professional-dashboard
 router.get("/professional-dashboard", getProfessionalDashboardStats);
+
+// GET /api/statistics/store-dashboard
+router.get("/store-dashboard", getStoreDashboardStats);
 
 // PATCH /api/statistics/professional-availability
 router.patch("/professional-availability", toggleProfessionalAvailability);

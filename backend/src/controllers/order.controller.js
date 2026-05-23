@@ -117,7 +117,6 @@ const createOrder = async (req, res, next) => {
     const store = await prisma.storeProfile.findFirst({
       where: {
         id: store_id,
-        status: "approved",
         is_frozen: false,
       },
       select: {
@@ -315,19 +314,31 @@ const getOrders = async (req, res, next) => {
       });
     }
 
-    const { status, delivery_type, from_date, to_date, page, limit } = req.query;
+    const { status, delivery_type, from_date, to_date, search, wilaya, page, limit } = req.query;
     const where = {
       ...accessWhere,
       ...(status && { status }),
       ...(delivery_type && { delivery_type }),
       ...((from_date || to_date) && {
         created_at: {
-          ...(from_date && { gte: from_date }),
-          ...(to_date && { lte: to_date }),
+          ...(from_date && { gte: new Date(from_date) }),
+          ...(to_date && { lte: new Date(to_date) }),
         },
       }),
+      ...(search && {
+        OR: [
+          { order_number: { contains: search, mode: "insensitive" } },
+          { customer: { phone: { contains: search, mode: "insensitive" } } },
+          { customer: { client_profile: { full_name: { contains: search, mode: "insensitive" } } } }
+        ]
+      }),
+      ...(wilaya && {
+        customer: { client_profile: { wilaya } }
+      }),
     };
-    const skip = (page - 1) * limit;
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    const skip = (pageNum - 1) * limitNum;
 
     const [orders, total] = await prisma.$transaction([
       prisma.order.findMany({
@@ -335,7 +346,7 @@ const getOrders = async (req, res, next) => {
         include: listOrderInclude,
         orderBy: { created_at: "desc" },
         skip,
-        take: limit,
+        take: limitNum,
       }),
       prisma.order.count({ where }),
     ]);
@@ -345,9 +356,9 @@ const getOrders = async (req, res, next) => {
       data: {
         orders,
         total,
-        page,
-        limit,
-        total_pages: Math.ceil(total / limit),
+        page: pageNum,
+        limit: limitNum,
+        total_pages: Math.ceil(total / limitNum),
       },
     });
   } catch (error) {
@@ -395,14 +406,7 @@ const getOrderById = async (req, res, next) => {
  */
 const updateOrderStatus = async (req, res, next) => {
   try {
-    if (isCustomer(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: "Customers cannot update order status",
-      });
-    }
-
-    if (!isAdmin(req.user) && !isStore(req.user)) {
+    if (!isAdmin(req.user) && !isStore(req.user) && !isCustomer(req.user)) {
       return res.status(403).json({
         success: false,
         message: "You are not allowed to update order status",
@@ -442,6 +446,13 @@ const updateOrderStatus = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: `Invalid status transition from ${order.status}. Allowed transitions: ${allowedTransitions.join(", ") || "none"}`,
+      });
+    }
+
+    if (isCustomer(req.user) && status !== "delivered") {
+      return res.status(403).json({
+        success: false,
+        message: "Customers can only confirm delivery of their orders",
       });
     }
 

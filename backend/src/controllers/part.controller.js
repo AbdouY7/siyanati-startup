@@ -146,13 +146,38 @@ const getMyParts = async (req, res, next) => {
       });
     }
 
-    const parts = await prisma.part.findMany({
-      where: { seller_id: req.user.id },
-      include: partInclude,
-      orderBy: { created_at: "desc" },
-    });
+    const { search, category_id, condition, page = 1, limit = 10 } = req.query;
+    const take = Math.min(Number(limit) || 10, 50);
+    const skip = (Math.max(Number(page) || 1, 1) - 1) * take;
 
-    res.json({ success: true, data: parts });
+    const where = {
+      seller_id: req.user.id,
+      ...(search && { name: { contains: search, mode: "insensitive" } }),
+      ...(category_id && { category_id }),
+      ...(condition && { condition }),
+    };
+
+    const [parts, total] = await Promise.all([
+      prisma.part.findMany({
+        where,
+        include: partInclude,
+        orderBy: { created_at: "desc" },
+        skip,
+        take,
+      }),
+      prisma.part.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        parts,
+        total,
+        page: Number(page) || 1,
+        limit: take,
+        total_pages: Math.ceil(total / take),
+      },
+    });
   } catch (error) {
     next(error);
   }

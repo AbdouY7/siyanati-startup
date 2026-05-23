@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { FiUser, FiMessageSquare, FiSettings, FiMenu, FiX, FiLogOut } from "react-icons/fi";
+import {
+  FiUser,
+  FiMessageSquare,
+  FiSettings,
+  FiMenu,
+  FiX,
+  FiLogOut,
+} from "react-icons/fi";
 import siyanatiLogo from "../../assets/img/siyanati-vertical-logo.png";
 import useAuthStore from "../../store/authStore";
 
@@ -27,9 +34,24 @@ const Header = () => {
   ];
 
   const icons = [
-    { name: "User", icon: <FiUser size={18} />, label: "Profil" , link: "/profile" },
-    { name: "Message", icon: <FiMessageSquare size={18} />, label: "Messages", link: "/messages" },
-    { name: "Settings", icon: <FiSettings size={18} />, label: "Paramètres" , link: "/settings" },
+    {
+      name: "User",
+      icon: <FiUser size={18} />,
+      label: "Profil",
+      link: "/profile",
+    },
+    {
+      name: "Message",
+      icon: <FiMessageSquare size={18} />,
+      label: "Messages",
+      link: "/messages",
+    },
+    {
+      name: "Settings",
+      icon: <FiSettings size={18} />,
+      label: "Paramètres",
+      link: "/settings",
+    },
   ];
 
   // Close on outside click
@@ -64,82 +86,84 @@ const Header = () => {
     <>
       <div className="w-full pt-4 px-4 sm:px-6 lg:px-8 fixed top-0 left-0 z-50 flex justify-center pointer-events-none">
         <header className="bg-primary-dark/95 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 lg:px-8 h-[64px] rounded-full shadow-xl border border-white/10 w-full max-w-7xl pointer-events-auto transition-all duration-300">
-        {/* Logo */}
-        <NavLink to="/" className="flex-shrink-0">
-          <img src={siyanatiLogo} alt="Siyanati Logo" className="h-8 w-auto" />
-        </NavLink>
+          {/* Logo */}
+          <NavLink to="/" className="flex-shrink-0">
+            <img
+              src={siyanatiLogo}
+              alt="Siyanati Logo"
+              className="h-8 w-auto"
+            />
+          </NavLink>
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-0.5">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) =>
-                `text-sm font-font-primary px-4 py-1.5 rounded-lg transition-colors duration-150 ${
-                  isActive
-                    ? "bg-white text-secondary font-bold"
-                    : "text-white/60 hover:text-white hover:bg-white/[0.07]"
-                }`
-              }>
-              {item.name}
-            </NavLink>
-          ))}
-        </nav>
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-0.5">
+            {menuItems.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={({ isActive }) =>
+                  `text-sm font-font-primary px-4 py-1.5 rounded-lg transition-colors duration-150 ${
+                    isActive
+                      ? "bg-white text-secondary font-bold"
+                      : "text-white/60 hover:text-white hover:bg-white/[0.07]"
+                  }`
+                }>
+                {item.name}
+              </NavLink>
+            ))}
+          </nav>
 
-        {/* Right side — desktop */}
-        <div className="hidden lg:flex items-center gap-2">
-          {isAuth ? (
-            // ── Authenticated: icon buttons ──────────────────────────────────
-            <>
-              {icons.map((icon) => (
+          {/* Right side — desktop */}
+          <div className="hidden lg:flex items-center gap-2">
+            {isAuth ? (
+              // ── Authenticated: icon buttons ──────────────────────────────────
+              <>
+                {icons.map((icon) => (
+                  <NavLink
+                    key={icon.name}
+                    onClick={() => setSelectedIcon(icon.name)}
+                    aria-label={icon.label}
+                    className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
+                      selectedIcon === icon.name
+                        ? "bg-white text-secondary shadow-md scale-105"
+                        : "text-white/60 hover:text-white hover:bg-white/10"
+                    }`}
+                    to={icon.link}>
+                    {icon.icon}
+                  </NavLink>
+                ))}
+                <button
+                  onClick={handleLogout}
+                  aria-label="Déconnexion"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 text-red-400 hover:text-white hover:bg-red-500/20"
+                  title="Se déconnecter">
+                  <FiLogOut size={18} />
+                </button>
+              </>
+            ) : (
+              // ── Guest: Log in + Sign up ──────────────────────────────────────
+              <>
                 <NavLink
-                  key={icon.name}
-                  onClick={() => setSelectedIcon(icon.name)}
-                aria-label={icon.label}
-                className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
-                  selectedIcon === icon.name
-                    ? "bg-white text-secondary shadow-md scale-105"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
-                to={icon.link}
-                >
-                {icon.icon}
-              </NavLink>
-              ))}
-              <button
-                onClick={handleLogout}
-                aria-label="Déconnexion"
-                className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 text-red-400 hover:text-white hover:bg-red-500/20"
-                title="Se déconnecter"
-              >
-                <FiLogOut size={18} />
-              </button>
-            </>
-          ) : (
-            // ── Guest: Log in + Sign up ──────────────────────────────────────
-            <>
-              <NavLink
-                to="/login"
-                className="text-sm text-white/70 hover:text-white px-4 py-1.5 rounded-lg transition-colors duration-150 hover:bg-white/[0.07]">
-                Se connecter
-              </NavLink>
-              <NavLink
-                to="/register"
-                className="text-sm font-semibold bg-white text-secondary px-4 py-1.5 rounded-lg transition-all duration-150 hover:bg-white/90 hover:shadow-md">
-                S'inscrire
-              </NavLink>
-            </>
-          )}
-        </div>
+                  to="/login"
+                  className="text-sm text-white/70 hover:text-white px-4 py-1.5 rounded-lg transition-colors duration-150 hover:bg-white/[0.07]">
+                  Se connecter
+                </NavLink>
+                <NavLink
+                  to="/register"
+                  className="text-sm font-semibold bg-white text-secondary px-4 py-1.5 rounded-lg transition-all duration-150 hover:bg-white/90 hover:shadow-md">
+                  S'inscrire
+                </NavLink>
+              </>
+            )}
+          </div>
 
-        {/* Hamburger — mobile & tablet */}
-        <button
-          onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label="Toggle menu"
-          className="lg:hidden text-white/60 hover:text-white hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200">
-          {menuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
-        </button>
+          {/* Hamburger — mobile & tablet */}
+          <button
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label="Toggle menu"
+            className="lg:hidden text-white/60 hover:text-white hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200">
+            {menuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          </button>
         </header>
       </div>
 
@@ -233,8 +257,7 @@ const Header = () => {
                   menuOpen
                     ? "translate-y-0 opacity-100"
                     : "translate-y-4 opacity-0"
-                } bg-red-500/10 text-red-400 hover:text-white hover:bg-red-500`}
-              >
+                } bg-red-500/10 text-red-400 hover:text-white hover:bg-red-500`}>
                 <FiLogOut size={18} />
               </button>
             </div>
