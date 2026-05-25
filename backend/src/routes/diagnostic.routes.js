@@ -11,6 +11,7 @@ const {
   deletePost,
   toggleSave,
   toggleReaction,
+  getSavedPosts,
 } = require("../controllers/diagnostic.controller");
 
 const router = express.Router();
@@ -18,12 +19,15 @@ const router = express.Router();
 // Public routes
 router.get("/", getPosts);
 
-// Protected routes
-router.use(authMiddleware);
+// These authenticated GET routes must be declared before the public /:id catch-all
+router.get("/user/me", authMiddleware, getMyPosts);
+router.get("/saved", authMiddleware, getSavedPosts);
 
-// IMPORTANT: /user/me must come BEFORE /:id so "user" isn't treated as an id
-router.get("/user/me", getMyPosts);
+// Public: view a single post by ID (controller handles auth optionally)
 router.get("/:id", getPostById);
+
+// Protected routes (all remaining)
+router.use(authMiddleware);
 
 router.post("/", upload.array("images", 10), createPost);
 router.patch("/:id", upload.array("images", 10), updatePost);

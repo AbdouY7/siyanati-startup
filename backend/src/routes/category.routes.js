@@ -29,16 +29,14 @@ const validateSchema = (schema) => (req, res, next) => {
   next();
 };
 
-// All category APIs require a valid access token.
-router.use(authMiddleware);
-
-// Read category data.
+// Public: Read category data
 router.get("/categories", getAllCategories);
 router.get("/categories/:id", getCategoryById);
 
 // Only admins can manage categories.
 router.post(
   "/categories",
+  authMiddleware,
   requireAdmin,
   upload.single("image"),
   validateSchema(categoryCreateSchema),
@@ -46,11 +44,12 @@ router.post(
 );
 router.patch(
   "/categories/:id",
+  authMiddleware,
   requireAdmin,
   upload.single("image"),
   validateSchema(categoryUpdateSchema),
   updateCategory,
 );
-router.delete("/categories/:id", requireAdmin, deleteCategory);
+router.delete("/categories/:id", authMiddleware, requireAdmin, deleteCategory);
 
 module.exports = router;

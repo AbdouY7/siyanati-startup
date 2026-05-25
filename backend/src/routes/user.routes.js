@@ -5,54 +5,53 @@ const userController = require("../controllers/user.controller");
 
 const router = express.Router();
 
-// Protect routes with auth middleware
-router.use(authMiddleware);
-
-// Get all users
+// ─── Public Routes (no auth required) ────────────────────────────────────────
 router.get("/users", userController.getAllUsers);
+router.get("/clients", userController.getClients);
+router.get("/shops", userController.getAllStores);
+router.get("/professionals", userController.getAllProfessionals);
 
-// Authenticated user's professional profile actions
-router.put("/users/me/professional-profile", userController.updateMyProfessionalProfile);
-router.delete("/users/me", userController.deleteMyAccount);
-
-// Get user by ID
+// Get user by ID – public so guests can view store/professional profiles
 router.get("/users/:id", userController.getUser);
 
+// ─── Protected Routes (auth required) ───
+
+// Authenticated user's own profile actions
+router.put("/users/me/professional-profile", authMiddleware, userController.updateMyProfessionalProfile);
+router.delete("/users/me", authMiddleware, userController.deleteMyAccount);
+
 // Update user profile (with optional profile picture upload)
-router.put("/users/:id", upload.single("profilePicture"), userController.updateUserProfile);
-
-// Get all clients
-router.get("/clients", userController.getClients);
-
-// Get all shops
-router.get("/shops", userController.getAllStores);
-
-// Get all professionals
-router.get("/professionals", userController.getAllProfessionals);
+router.put("/users/:id", authMiddleware, upload.single("profilePicture"), userController.updateUserProfile);
 
 // Admin routes
 router.put(
   "/admin/approve/store-registration/:profileId",
+  authMiddleware,
   userController.approveStoreRegistration,
 );
 router.put(
   "/admin/reject/store-registration/:profileId",
+  authMiddleware,
   userController.rejectStoreRegistration,
 );
 router.put(
   "/admin/approve/professional-registration/:profileId",
+  authMiddleware,
   userController.approveProfessionalRegistration,
 );
 router.put(
   "/admin/reject/professional-registration/:profileId",
+  authMiddleware,
   userController.rejectProfessionalRegistration,
 );
 router.get(
   "/admin/pending-registrations",
+  authMiddleware,
   userController.getPendingRegistrations,
 );
 router.patch(
   "/admin/users/:id/status",
+  authMiddleware,
   userController.updateUserStatusAdmin,
 );
 

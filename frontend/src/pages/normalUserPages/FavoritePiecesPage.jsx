@@ -286,7 +286,7 @@ const FavoritePiecesPage = () => {
                         Achetez <FiPlus size={14} />
                       </button>
                       <Link
-                        to={`/parts/${piece.id}`}
+                        to={`/part-details/${piece.id}`}
                         className="flex-1 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-gray-700 text-xs font-medium py-2.5 rounded-xl flex items-center justify-center transition">
                         Voir plus
                       </Link>

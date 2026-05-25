@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   FiUser,
   FiMessageSquare,
-  FiSettings,
+  FiBell,
   FiMenu,
   FiX,
   FiLogOut,
@@ -47,10 +47,10 @@ const Header = () => {
       link: "/messages",
     },
     {
-      name: "Settings",
-      icon: <FiSettings size={18} />,
-      label: "Paramètres",
-      link: "/settings",
+      name: "Notifications",
+      icon: <FiBell size={18} />,
+      label: "Notifications",
+      link: "/profile/notifications",
     },
   ];
 

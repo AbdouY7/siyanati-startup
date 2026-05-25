@@ -104,28 +104,57 @@ const createPart = async (req, res, next) => {
 // Get visible parts. Admins see everything; sellers also see their own parts.
 const getAllParts = async (req, res, next) => {
   try {
-    const { category_id, condition, seller_type, seller_id, search, is_verified } =
+    const { category_id, condition, seller_type, seller_id, search, is_verified, page, limit } =
       req.query;
 
+    const where = {
+      ...(category_id && { category_id }),
+      ...(condition && { condition }),
+      ...(seller_type && { seller_type }),
+      ...(seller_id && { seller_id }),
+      ...(search && { name: { contains: search, mode: "insensitive" } }),
+      ...(isAdmin(req.user) && is_verified !== undefined
+        ? { is_verified: is_verified === "true" }
+        : {}),
+      ...(!isAdmin(req.user)
+        ? {
+            OR: [
+              ...(req.user ? [{ seller_id: req.user.id }] : []),
+              { is_active: true, is_verified: true },
+            ],
+          }
+        : {}),
+    };
+
+    if (page || limit) {
+      const take = Math.min(Number(limit) || 10, 50);
+      const skip = (Math.max(Number(page) || 1, 1) - 1) * take;
+
+      const [parts, total] = await Promise.all([
+        prisma.part.findMany({
+          where,
+          include: partInclude,
+          orderBy: { created_at: "desc" },
+          skip,
+          take,
+        }),
+        prisma.part.count({ where }),
+      ]);
+
+      return res.json({
+        success: true,
+        data: {
+          parts,
+          total,
+          page: Number(page) || 1,
+          limit: take,
+          total_pages: Math.ceil(total / take),
+        },
+      });
+    }
+
     const parts = await prisma.part.findMany({
-      where: {
-        ...(category_id && { category_id }),
-        ...(condition && { condition }),
-        ...(seller_type && { seller_type }),
-        ...(seller_id && { seller_id }),
-        ...(search && { name: { contains: search, mode: "insensitive" } }),
-        ...(isAdmin(req.user) && is_verified !== undefined
-          ? { is_verified: is_verified === "true" }
-          : {}),
-        ...(!isAdmin(req.user)
-          ? {
-              OR: [
-                { seller_id: req.user.id },
-                { is_active: true, is_verified: true },
-              ],
-            }
-          : {}),
-      },
+      where,
       include: partInclude,
       orderBy: { created_at: "desc" },
     });
@@ -197,7 +226,7 @@ const getPartById = async (req, res, next) => {
         .json({ success: false, message: "Part not found" });
     }
 
-    const ownsPart = part.seller_id === req.user.id;
+    const ownsPart = req.user && part.seller_id === req.user.id;
 
     if (
       !isAdmin(req.user) &&

@@ -27,24 +27,25 @@ const validateSchema = (schema) => (req, res, next) => {
   next();
 };
 
-// All compatibility APIs require a valid access token.
-router.use(authMiddleware);
+// Public: Read compatibility data
+router.get("/compatibilities", getAllCompatibilities);
+router.get("/compatibilities/:id", getCompatibilityById);
 
-// Create and read compatibility rows.
+// Create compatibility rows.
 router.post(
   "/compatibilities",
+  authMiddleware,
   validateSchema(compatibilityCreateSchema),
   createCompatibility,
 );
-router.get("/compatibilities", getAllCompatibilities);
-router.get("/compatibilities/:id", getCompatibilityById);
 
 // Update and delete compatibility rows.
 router.patch(
   "/compatibilities/:id",
+  authMiddleware,
   validateSchema(compatibilityUpdateSchema),
   updateCompatibility,
 );
-router.delete("/compatibilities/:id", deleteCompatibility);
+router.delete("/compatibilities/:id", authMiddleware, deleteCompatibility);
 
 module.exports = router;

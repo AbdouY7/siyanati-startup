@@ -140,6 +140,49 @@ const updateReport = async (req, res, next) => {
       },
     });
 
+    if (status === "actioned" || status === "dismissed") {
+      await prisma.notification.create({
+        data: {
+          user_id: updated.reporter_id,
+          type: "report_reviewed",
+          title: "Signalement traité",
+          message: `Votre signalement a été examiné par un administrateur. Résultat: ${status === "actioned" ? "Action prise" : "Rejeté"}. Note: ${admin_notes || "Aucune note additionnelle."}`,
+          reference_id: updated.id,
+        },
+      });
+
+      if (status === "actioned") {
+        let reportedUserId = null;
+        if (updated.target_type === "user") {
+          reportedUserId = updated.target_id;
+        } else if (updated.target_type === "store") {
+          const store = await prisma.storeProfile.findFirst({ where: { id: updated.target_id } });
+          if (store) reportedUserId = store.user_id;
+        } else if (updated.target_type === "professional") {
+          const pro = await prisma.professionalProfile.findFirst({ where: { id: updated.target_id } });
+          if (pro) reportedUserId = pro.user_id;
+        } else if (updated.target_type === "post") {
+          const post = await prisma.diagnosticPost.findFirst({ where: { id: updated.target_id } });
+          if (post) reportedUserId = post.author_id;
+        } else if (updated.target_type === "comment") {
+          const comment = await prisma.diagnosticComment.findFirst({ where: { id: updated.target_id } });
+          if (comment) reportedUserId = comment.author_id;
+        }
+
+        if (reportedUserId) {
+          await prisma.notification.create({
+            data: {
+              user_id: reportedUserId,
+              type: "report_reviewed",
+              title: "Action de modération",
+              message: `Un signalement vous concernant ou concernant votre contenu a été validé par l'administration. Note: ${admin_notes || "Veuillez respecter les règles de la plateforme."}`,
+              reference_id: updated.id,
+            },
+          });
+        }
+      }
+    }
+
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error.code === "P2025") {

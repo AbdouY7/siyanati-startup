@@ -32,12 +32,14 @@ const validateSchema = (schema) => (req, res, next) => {
   next();
 };
 
-// All part APIs require a valid access token.
-router.use(authMiddleware);
+// Public part reading routes
+router.get("/parts", getAllParts);
+router.get("/parts/:id", getPartById);
 
-// Create and read part listings.
+// Create part listings.
 router.post(
   "/parts",
+  authMiddleware,
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "images", maxCount: 10 },
@@ -45,13 +47,12 @@ router.post(
   validateSchema(partCreateSchema),
   createPart,
 );
-router.get("/parts", getAllParts);
-router.get("/parts/my", getMyParts);
-router.get("/parts/:id", getPartById);
+router.get("/parts/my", authMiddleware, getMyParts);
 
 // Update and delete part listings.
 router.patch(
   "/parts/:id",
+  authMiddleware,
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "images", maxCount: 10 },
@@ -59,11 +60,12 @@ router.patch(
   validateSchema(partUpdateSchema),
   updatePart,
 );
-router.delete("/parts/:id", deletePart);
+router.delete("/parts/:id", authMiddleware, deletePart);
 
 // Admin verifies or unverifies client part listings.
 router.patch(
   "/parts/:id/verify",
+  authMiddleware,
   requireAdmin,
   validateSchema(partVerifySchema),
   verifyPart,

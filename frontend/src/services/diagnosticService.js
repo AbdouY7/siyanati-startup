@@ -68,10 +68,50 @@ export const toggleSavePost = async (postId) => {
 
 export const toggleReaction = async (postId) => {
   try {
-    const response = await axiosInstance.post(`/diagnostic/${postId}/reaction`);
+    const response = await axiosInstance.post(`/diagnostic/${postId}/react`);
     return response.data;
   } catch (error) {
     console.error("Error toggling reaction:", error);
+    throw error;
+  }
+};
+
+export const getSavedDiagnosticPosts = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get("/diagnostic/saved", { params });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching saved diagnostic posts:", error);
+    throw error;
+  }
+};
+
+export const getDiagnosticPostById = async (postId) => {
+  try {
+    const response = await axiosInstance.get(`/diagnostic/${postId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching diagnostic post details:", error);
+    throw error;
+  }
+};
+
+export const getPostComments = async (postId, params = {}) => {
+  try {
+    const response = await axiosInstance.get(`/diagnostic/${postId}/comments`, { params });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    throw error;
+  }
+};
+
+export const createPostComment = async (postId, commentData) => {
+  try {
+    const response = await axiosInstance.post(`/diagnostic/${postId}/comments`, commentData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating comment:", error);
     throw error;
   }
 };

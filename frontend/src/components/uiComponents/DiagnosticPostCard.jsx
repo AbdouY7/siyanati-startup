@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { toggleSavePost } from "../../services/diagnosticService";
 import {
   FiHeart,
   FiMessageCircle,
@@ -9,6 +11,9 @@ import {
 import { FaHeart, FaCar } from "react-icons/fa";
 import { HiLocationMarker } from "react-icons/hi";
 import { MdAccessTime } from "react-icons/md";
+// Auth imports
+import useAuthStore from "../../store/authStore";
+import AuthRequiredModal from "../modals/AuthRequiredModal";
 
 // ─── Image mini-carousel ───────────────────────────────────────────────────────
 function PostImages({ images }) {
@@ -82,57 +87,35 @@ function Comment({ avatar, name, text, time }) {
  * post shape: { id, posted_at, user, title, car, car_images, tags, description }
  */
 export default function DiagnosticPostCard({ post }) {
+  const { user } = useAuthStore();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(
-    Math.floor(Math.random() * 18) + 3,
-  );
-  const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState("");
+  const [likeCount, setLikeCount] = useState(post.saves_count || 0);
   const [expanded, setExpanded] = useState(false);
-  const inputRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Seed some mock comments per post
-  const [comments, setComments] = useState(() => {
-    const seeds = [
-      {
-        avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-        name: "Bilal Hamza",
-        text: "Ça ressemble à un problème de bobine d'allumage, vérifies les codes erreur d'abord.",
-        time: "1h",
-      },
-      {
-        avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-        name: "Sara Ouali",
-        text: "Même problème avec ma Golf, c'était la sonde lambda.",
-        time: "3h",
-      },
-    ];
-    return seeds.slice(0, 1 + (post.id.charCodeAt(post.id.length - 1) % 2));
-  });
-
-  const handleLike = () => {
-    setLiked((p) => !p);
-    setLikeCount((c) => (liked ? c - 1 : c + 1));
-  };
-
-  const handleComment = () => {
-    const text = commentText.trim();
-    if (!text) return;
-    setComments((prev) => [
-      ...prev,
-      {
-        avatar: "https://randomuser.me/api/portraits/men/55.jpg",
-        name: "Moi",
-        text,
-        time: "à l'instant",
-      },
-    ]);
-    setCommentText("");
+  const handleLike = async () => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount((c) => (wasLiked ? c - 1 : c + 1));
+    try {
+      await toggleSavePost(post.id);
+    } catch {
+      setLiked(wasLiked);
+      setLikeCount((c) => (wasLiked ? c + 1 : c - 1));
+    }
   };
 
   const toggleComments = () => {
-    setShowComments((p) => !p);
-    if (!showComments) setTimeout(() => inputRef.current?.focus(), 150);
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+    navigate(`/diagnostic/${post.id}`);
   };
 
   const shortDesc =
@@ -231,57 +214,18 @@ export default function DiagnosticPostCard({ post }) {
           <span>{likeCount}</span>
         </button>
 
+        {/* Auth Modal */}
+        <AuthRequiredModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
         {/* Comment toggle */}
         <button
           onClick={toggleComments}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all duration-150 active:scale-95
-            ${showComments ? "text-blue-600 bg-blue-50 hover:bg-blue-100" : "text-gray-500 hover:bg-gray-100"}`}>
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-gray-500 hover:bg-gray-100 transition-all duration-150 active:scale-95`}>
           <FiMessageCircle size={13} />
           <span>
-            {comments.length} commentaire{comments.length !== 1 ? "s" : ""}
+            {post.comments_count || 0} commentaire{(post.comments_count || 0) !== 1 ? "s" : ""}
           </span>
         </button>
       </div>
-
-      {/* ── Comments section ── */}
-      {showComments && (
-        <div className="px-4 pb-4 border-t border-gray-50">
-          {/* Existing comments */}
-          <div className="mb-3 max-h-[180px] overflow-y-auto">
-            {comments.length === 0 ? (
-              <p className="text-[12px] text-gray-400 text-center py-4">
-                Soyez le premier à commenter
-              </p>
-            ) : (
-              comments.map((c, i) => <Comment key={i} {...c} />)
-            )}
-          </div>
-
-          {/* Input */}
-          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-100 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-50 transition-all">
-            <img
-              src="https://randomuser.me/api/portraits/men/55.jpg"
-              alt="me"
-              className="w-6 h-6 rounded-full object-cover shrink-0"
-            />
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Écrire un commentaire…"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleComment()}
-              className="flex-1 bg-transparent text-[12px] text-gray-700 placeholder-gray-400 outline-none"
-            />
-            <button
-              onClick={handleComment}
-              disabled={!commentText.trim()}
-              className="text-blue-500 disabled:text-gray-300 hover:text-blue-700 transition-colors active:scale-90">
-              <FiSend size={14} />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

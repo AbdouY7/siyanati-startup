@@ -10,6 +10,7 @@ import {
   FiChevronDown,
   FiHeart,
   FiMessageSquare,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
 import ShopCards from "../components/uiComponents/ShopCards";
@@ -17,6 +18,10 @@ import Footer from "../components/layaouts/Footer";
 import { getStoreById, getAllStores } from "../services/storeService";
 import { getAllParts } from "../services/partService";
 import { createOrder } from "../services/orderService";
+import useFavoriteStore from "../store/useFavoriteStore";
+import useAuthStore from "../store/authStore";
+import AuthRequiredModal from "../components/modals/AuthRequiredModal";
+import ReportModal from "../components/modals/ReportModal";
 
 // ─── PartCard (inline, matching the provided component) ──────────────────────
 function EtatBadge({ etat }) {
@@ -109,9 +114,12 @@ function FilterPill({ label }) {
 // ─── Image carousel ───────────────────────────────────────────────────────────
 function ImageCarousel({ images }) {
   const [idx, setIdx] = useState(0);
-  const displayImages = images.length > 0 ? images : [
-    "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=700&q=80",
-  ];
+  const displayImages =
+    images.length > 0
+      ? images
+      : [
+          "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=700&q=80",
+        ];
   return (
     <div className="relative rounded-2xl overflow-hidden h-full min-h-[280px] bg-slate-100">
       <img
@@ -125,7 +133,9 @@ function ImageCarousel({ images }) {
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`w-2 h-2 rounded-full transition-all ${i === idx ? "bg-white scale-125" : "bg-white/50"}`}
+              className={`w-2 h-2 rounded-full transition-all ${
+                i === idx ? "bg-white scale-125" : "bg-white/50"
+              }`}
             />
           ))}
         </div>
@@ -145,10 +155,22 @@ export default function ShopProfilePage() {
   const navigate = useNavigate();
 
   const [partSearch, setPartSearch] = useState("");
-  const [wishlist, setWishlist] = useState(false);
   const [cart, setCart] = useState({});
 
+  const { user } = useAuthStore();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  // ── ADDED: Zustand favorites ───────────────────────────────────────────────
+  const { checkIsFavorited, toggleFavorite, isFavorited, isToggling } =
+    useFavoriteStore();
+  // ──────────────────────────────────────────────────────────────────────────
+
   const handleAddToCart = (part) => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
     setCart((prev) => ({
       ...prev,
       [part.id]: { part, qty: (prev[part.id]?.qty || 0) + 1 },
@@ -168,27 +190,37 @@ export default function ShopProfilePage() {
   };
 
   const goToCheckout = () => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
     if (Object.keys(cart).length === 0) return;
     sessionStorage.setItem("checkout_cart", JSON.stringify(cart));
     sessionStorage.setItem("checkout_store", JSON.stringify(store));
     navigate("/buy-cart");
   };
 
-  const cartTotalItems = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
-  const cartTotalPrice = Object.values(cart).reduce((sum, item) => sum + (item.part.prix * item.qty), 0);
+  const cartTotalItems = Object.values(cart).reduce(
+    (sum, item) => sum + item.qty,
+    0,
+  );
+  const cartTotalPrice = Object.values(cart).reduce(
+    (sum, item) => sum + item.part.prix * item.qty,
+    0,
+  );
 
+  // ── Fetch store data ───────────────────────────────────────────────────────
   useEffect(() => {
     const fetchStoreData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch the store user data (includes store_profile)
         const userData = await getStoreById(id);
         const profile = userData.store_profile || {};
 
         const mappedStore = {
           id: userData.id,
-          store_profile_id: profile.id,
+          store_profile_id: profile.id, // ← target_id for favorites API
           owner_name: profile.owner_name || "Propriétaire",
           store_name: profile.store_name || "Magasin",
           description: profile.description || "",
@@ -203,11 +235,10 @@ export default function ShopProfilePage() {
         };
         setStore(mappedStore);
 
-        // Fetch parts sold by this store
         try {
           const allParts = await getAllParts();
           const storePartsList = (allParts || []).filter(
-            (p) => p.seller_id === id
+            (p) => p.seller_id === id,
           );
           const mappedParts = storePartsList.map((p) => {
             const comp = p.compatibilities?.[0];
@@ -232,7 +263,6 @@ export default function ShopProfilePage() {
           console.error("Failed to fetch store parts", partsErr);
         }
 
-        // Fetch other stores from the same wilaya
         try {
           const allStores = await getAllStores();
           const others = (allStores || [])
@@ -267,6 +297,14 @@ export default function ShopProfilePage() {
     fetchStoreData();
   }, [id]);
 
+  // ── ADDED: Check favorite status once store_profile_id is known ────────────
+  useEffect(() => {
+    if (store?.store_profile_id) {
+      checkIsFavorited(store.store_profile_id, "store");
+    }
+  }, [store?.store_profile_id]);
+  // ──────────────────────────────────────────────────────────────────────────
+
   const filteredParts = storeParts.filter(
     (p) =>
       p.name.toLowerCase().includes(partSearch.toLowerCase()) ||
@@ -287,13 +325,20 @@ export default function ShopProfilePage() {
   if (error || !store) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3 pt-[100px]">
-        <p className="text-red-400 text-lg font-medium">{error || "Magasin introuvable"}</p>
+        <p className="text-red-400 text-lg font-medium">
+          {error || "Magasin introuvable"}
+        </p>
         <Link to="/magasins" className="text-blue-600 hover:underline text-sm">
           ← Retour aux magasins
         </Link>
       </div>
     );
   }
+
+  // ── Derived favorite state for this store ─────────────────────────────────
+  const storeIsFav = isFavorited(store.store_profile_id, "store");
+  const storeToggling = isToggling(store.store_profile_id, "store");
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -306,7 +351,7 @@ export default function ShopProfilePage() {
         </Link>
 
         <div className="max-w-6xl mx-auto flex items-start gap-5">
-          {/* Logo with clean initials fallback if no logo exists */}
+          {/* Logo */}
           <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-lg shrink-0 bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">
             {store.logo_url ? (
               <img
@@ -352,7 +397,7 @@ export default function ShopProfilePage() {
 
           {/* Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <button 
+            <button
               onClick={goToCheckout}
               className="relative flex items-center gap-1.5 bg-white text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all shadow">
               <FiShoppingCart size={14} /> Pannier de commande
@@ -362,12 +407,39 @@ export default function ShopProfilePage() {
                 </span>
               )}
             </button>
+
+            {/* ── MODIFIED: Heart button now uses Zustand store ── */}
             <button
-              onClick={() => setWishlist(!wishlist)}
-              className={`p-2 rounded-xl border-2 transition-all active:scale-95
-                ${wishlist ? "bg-red-500 border-red-500 text-white" : "bg-white border-white text-blue-700 hover:bg-blue-50"}`}>
-              <FiHeart size={16} />
+              onClick={() => {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                toggleFavorite(store.store_profile_id, "store");
+              }}
+              disabled={storeToggling}
+              className={`p-2 rounded-xl border-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed
+                ${
+                  storeIsFav
+                    ? "bg-red-500 border-red-500 text-white"
+                    : "bg-white border-white text-blue-700 hover:bg-blue-50"
+                }`}>
+              <FiHeart size={16} fill={storeIsFav ? "currentColor" : "none"} />
             </button>
+            {/* Report button */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                setReportModalOpen(true);
+              }}
+              className="p-2 rounded-xl border-2 border-white bg-white text-red-500 hover:bg-red-50 transition-all active:scale-95"
+              title="Signaler ce magasin">
+              <FiAlertTriangle size={16} />
+            </button>
+            {/* ─────────────────────────────────────────────────── */}
           </div>
         </div>
       </div>
@@ -425,7 +497,15 @@ export default function ShopProfilePage() {
               {store.description || "Aucune description disponible."}
             </p>
 
-            <button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+            <button 
+              onClick={() => {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                // Handle discussion click
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
               <FiMessageSquare size={15} /> Discussion
             </button>
           </div>
@@ -461,7 +541,7 @@ export default function ShopProfilePage() {
             <button className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white transition-all">
               <FiSearch size={16} />
             </button>
-            <button 
+            <button
               onClick={goToCheckout}
               className="relative p-2 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-600 active:scale-95 transition-all">
               <FiShoppingCart size={16} />
@@ -511,9 +591,9 @@ export default function ShopProfilePage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {filteredParts.map((part) => (
-                <PartCard 
-                  key={part.id} 
-                  part={part} 
+                <PartCard
+                  key={part.id}
+                  part={part}
                   cartQty={cart[part.id]?.qty || 0}
                   onAddToCart={handleAddToCart}
                 />
@@ -534,7 +614,11 @@ export default function ShopProfilePage() {
                   key={s.id}
                   id={s.id}
                   name={s.store_name}
-                  image={s.images[0] || s.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                  image={
+                    s.images[0] ||
+                    s.logo_url ||
+                    "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"
+                  }
                   owner={s.owner_name}
                   wilaya={s.wilaya}
                   rating={s.rating_avg}
@@ -547,6 +631,17 @@ export default function ShopProfilePage() {
       </div>
 
       <Footer />
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
+      <ReportModal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        targetId={store.store_profile_id}
+        targetType="store"
+        targetName={store.store_name}
+      />
     </div>
   );
 }

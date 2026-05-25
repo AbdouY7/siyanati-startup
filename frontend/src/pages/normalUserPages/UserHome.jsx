@@ -188,7 +188,7 @@ export default function UserHome() {
           model: v.model?.name || "",
           year: v.year,
           fuel: v.fuel_type || "N/A",
-          image: v.image_url || "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=300&q=80",
+          image: v.vehicule_picture_url || v.image_url || "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=300&q=80",
         }));
         setUserCars(mapped);
         if (mapped.length > 0) setActiveCar(mapped[0]);
@@ -264,25 +264,34 @@ export default function UserHome() {
     getDiagnosticPosts({ limit: 3 })
       .then((data) => {
         const posts = data?.posts || [];
-        const mapped = posts.map((p) => ({
-          id: p.id,
-          posted_at: new Date(p.created_at).toLocaleDateString("fr-FR"),
-          user: {
-            full_name: "Utilisateur",
-            profile_picture: "https://randomuser.me/api/portraits/men/32.jpg",
-            wilaya: "N/A",
-          },
-          title: p.title,
-          car: {
-            brand: p.brand?.name || p.vehicle?.brand?.name || "N/A",
-            model: p.model?.name || p.vehicle?.model?.name || "",
-            year: p.year || p.vehicle?.year || "",
-            engine: p.fuel_type || p.vehicle?.fuel_type || "",
-          },
-          car_images: p.images || [],
-          tags: [],
-          description: p.description || "",
-        }));
+        const mapped = posts.map((p) => {
+          const a = p.author || {};
+          const name = a.client_profile?.full_name || a.professional_profile?.full_name || a.store_profile?.store_name || a.full_name || a.name || a.username || "Utilisateur";
+          const avatar = a.client_profile?.avatar_url || a.professional_profile?.avatar_url || a.store_profile?.logo_url || a.avatar_url || "/default-avatar.png";
+          const wilaya = a.client_profile?.wilaya || a.professional_profile?.wilaya || a.store_profile?.wilaya || "N/A";
+
+          return {
+            id: p.id,
+            posted_at: new Date(p.created_at).toLocaleDateString("fr-FR"),
+            user: {
+              full_name: name,
+              profile_picture: avatar,
+              wilaya: wilaya,
+            },
+            title: p.title,
+            car: {
+              brand: p.brand?.name || p.vehicle?.brand?.name || "N/A",
+              model: p.model?.name || p.vehicle?.model?.name || "",
+              year: p.year || p.vehicle?.year || "",
+              engine: p.fuel_type || p.vehicle?.fuel_type || "",
+            },
+            car_images: p.images || [],
+            tags: [],
+            description: p.description || "",
+            saves_count: p.saves_count || p._count?.savedBy || 0,
+            comments_count: p.comments_count || p._count?.comments || 0,
+          };
+        });
         setRecentPosts(mapped);
         setStats((prev) => ({ ...prev, questions: data?.total || 0 }));
       })

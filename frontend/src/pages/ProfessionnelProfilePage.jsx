@@ -17,12 +17,17 @@ import {
 } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
 import ProfessionalCard from "../components/uiComponents/ProfessionalCard";
-
 import Footer from "../components/layaouts/Footer";
-import { getProfessionalById, getAllProfessionals } from "../services/professionalService";
+import {
+  getProfessionalById,
+  getAllProfessionals,
+} from "../services/professionalService";
 import useAuthStore from "../store/authStore";
 import { createAppointment } from "../services/appointmentService";
 import { getUserVehicles } from "../services/vehicleService";
+import useFavoriteStore from "../store/useFavoriteStore";
+import AuthRequiredModal from "../components/modals/AuthRequiredModal";
+import ReportModal from "../components/modals/ReportModal";
 
 // ─── Specialty type to label map ──────────────────────────────────────────────
 const specialtyTypeLabels = {
@@ -53,7 +58,9 @@ function ImageCarousel({ images }) {
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`w-2 h-2 rounded-full transition-all ${i === idx ? "bg-white scale-125" : "bg-white/50"}`}
+              className={`w-2 h-2 rounded-full transition-all ${
+                i === idx ? "bg-white scale-125" : "bg-white/50"
+              }`}
             />
           ))}
         </div>
@@ -77,9 +84,12 @@ function mapProfessional(userData) {
   const store = profile.ProfessionalStore || {};
   return {
     id: userData.id,
-    profile_id: profile.id,
+    profile_id: profile.id, // ← target_id for favorites API
     full_name: profile.full_name || "Professionnel",
-    specialty: specialtyTypeLabels[profile.specialty_type] || profile.specialty_type || "Autre",
+    specialty:
+      specialtyTypeLabels[profile.specialty_type] ||
+      profile.specialty_type ||
+      "Autre",
     specialty_type: profile.specialty_type || "other",
     experience_years: profile.experience_years || 0,
     wilaya: profile.wilaya || "N/A",
@@ -106,10 +116,11 @@ export default function ProfessionalProfilePage() {
   const [sameWilaya, setSameWilaya] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [wishlist, setWishlist] = useState(false);
+  // REMOVED: const [wishlist, setWishlist] = useState(false);
 
-  // ─── Booking Modal State ──────────────────────────────────────────────────────
+  // ─── Booking Modal State ───────────────────────────────────────────────────
   const { user } = useAuthStore();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
@@ -119,14 +130,22 @@ export default function ProfessionalProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  // ── ADDED: Zustand favorites ───────────────────────────────────────────────
+  const { checkIsFavorited, toggleFavorite, isFavorited, isToggling } =
+    useFavoriteStore();
+  // ──────────────────────────────────────────────────────────────────────────
 
   const handleOpenBooking = async () => {
     if (!user) {
-      navigate("/login");
+      setAuthModalOpen(true);
       return;
     }
     if (user.role !== "customer") {
-      alert("Seuls les clients peuvent prendre rendez-vous avec un professionnel.");
+      alert(
+        "Seuls les clients peuvent prendre rendez-vous avec un professionnel.",
+      );
       return;
     }
 
@@ -134,7 +153,8 @@ export default function ProfessionalProfilePage() {
       const userVehicles = await getUserVehicles();
       setVehicles(userVehicles || []);
       if (userVehicles && userVehicles.length > 0) {
-        const defaultVehicle = userVehicles.find((v) => v.is_default) || userVehicles[0];
+        const defaultVehicle =
+          userVehicles.find((v) => v.is_default) || userVehicles[0];
         setSelectedVehicleId(defaultVehicle.id);
       } else {
         setSelectedVehicleId("");
@@ -176,9 +196,13 @@ export default function ProfessionalProfilePage() {
       setSubmitSuccess(true);
     } catch (err) {
       console.error("Failed to book appointment", err);
-      const msg = err.response?.data?.message || "Erreur lors de la prise de rendez-vous.";
+      const msg =
+        err.response?.data?.message ||
+        "Erreur lors de la prise de rendez-vous.";
       if (msg.includes("Duplicate")) {
-        setSubmitError("Vous avez déjà une demande en cours avec ce professionnel.");
+        setSubmitError(
+          "Vous avez déjà une demande en cours avec ce professionnel.",
+        );
       } else {
         setSubmitError(msg);
       }
@@ -187,28 +211,27 @@ export default function ProfessionalProfilePage() {
     }
   };
 
+  // ── Fetch professional data ────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch the individual professional
         const userData = await getProfessionalById(id);
         const mappedPro = mapProfessional(userData);
         setPro(mappedPro);
 
-        // Fetch all professionals for related sections
         try {
           const allData = await getAllProfessionals();
           const allMapped = (allData || [])
             .filter((p) => p.id !== id)
             .map(mapProfessional);
 
-          // Top rated (sorted by rating)
-          const sorted = [...allMapped].sort((a, b) => b.rating_avg - a.rating_avg).slice(0, 5);
+          const sorted = [...allMapped]
+            .sort((a, b) => b.rating_avg - a.rating_avg)
+            .slice(0, 5);
           setTopRated(sorted);
 
-          // Same wilaya
           const sameW = allMapped.filter((p) => p.wilaya === mappedPro.wilaya);
           setSameWilaya(sameW);
         } catch (othersErr) {
@@ -225,6 +248,14 @@ export default function ProfessionalProfilePage() {
     fetchData();
   }, [id]);
 
+  // ── ADDED: Check favorite status once profile_id is known ─────────────────
+  useEffect(() => {
+    if (pro?.profile_id) {
+      checkIsFavorited(pro.profile_id, "professional");
+    }
+  }, [pro?.profile_id]);
+  // ──────────────────────────────────────────────────────────────────────────
+
   // Loading state
   if (isLoading) {
     return (
@@ -239,13 +270,22 @@ export default function ProfessionalProfilePage() {
   if (error || !pro) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-3 pt-[100px]">
-        <p className="text-red-400 text-lg font-medium">{error || "Professionnel introuvable"}</p>
-        <Link to="/professionnels" className="text-blue-600 hover:underline text-sm">
+        <p className="text-red-400 text-lg font-medium">
+          {error || "Professionnel introuvable"}
+        </p>
+        <Link
+          to="/professionnels"
+          className="text-blue-600 hover:underline text-sm">
           ← Retour aux professionnels
         </Link>
       </div>
     );
   }
+
+  // ── ADDED: Derived favorite state for this professional ───────────────────
+  const proIsFav = isFavorited(pro.profile_id, "professional");
+  const proToggling = isToggling(pro.profile_id, "professional");
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -287,7 +327,8 @@ export default function ProfessionalProfilePage() {
               {specialtyIcons[pro.specialty_type]} {pro.specialty}
             </p>
             <div className="flex items-center gap-1 text-blue-200 text-sm mb-0.5">
-              <FiMapPin size={12} /> <span>{pro.location_address || pro.wilaya}</span>
+              <FiMapPin size={12} />{" "}
+              <span>{pro.location_address || pro.wilaya}</span>
             </div>
             <div className="flex items-center gap-1 text-blue-200 text-sm">
               <FiCalendar size={12} />
@@ -299,17 +340,44 @@ export default function ProfessionalProfilePage() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 shrink-0">
-            <button 
+            <button
               onClick={handleOpenBooking}
               className="flex items-center gap-1.5 bg-white text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all shadow cursor-pointer">
               <FiCalendar size={14} /> Rendez-vous
             </button>
+
+            {/* ── MODIFIED: Heart button now uses Zustand store ── */}
             <button
-              onClick={() => setWishlist((p) => !p)}
-              className={`p-2 rounded-xl border-2 transition-all active:scale-95
-                ${wishlist ? "bg-red-500 border-red-500 text-white" : "bg-white border-white text-blue-700 hover:bg-blue-50"}`}>
-              <FiHeart size={16} />
+              onClick={() => {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                toggleFavorite(pro.profile_id, "professional");
+              }}
+              disabled={proToggling}
+              className={`p-2 rounded-xl border-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed
+                ${
+                  proIsFav
+                    ? "bg-red-500 border-red-500 text-white"
+                    : "bg-white border-white text-blue-700 hover:bg-blue-50"
+                }`}>
+              <FiHeart size={16} fill={proIsFav ? "currentColor" : "none"} />
             </button>
+            {/* Report button */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                setReportModalOpen(true);
+              }}
+              className="p-2 rounded-xl border-2 border-white bg-white text-red-500 hover:bg-red-50 transition-all active:scale-95"
+              title="Signaler ce professionnel">
+              <FiAlertTriangle size={16} />
+            </button>
+            {/* ─────────────────────────────────────────────────── */}
           </div>
         </div>
       </div>
@@ -347,9 +415,7 @@ export default function ProfessionalProfilePage() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-400 font-medium">
-                  Localisation :
-                </p>
+                <p className="text-gray-400 font-medium">Localisation :</p>
                 <p className="text-gray-700 font-semibold mt-0.5 text-[11px]">
                   {pro.location_address || "Non renseignée"}
                 </p>
@@ -374,7 +440,9 @@ export default function ProfessionalProfilePage() {
                   Professionnel disponibilité
                 </p>
                 <span
-                  className={`font-semibold text-sm ${pro.is_available ? "text-emerald-600" : "text-red-400"}`}>
+                  className={`font-semibold text-sm ${
+                    pro.is_available ? "text-emerald-600" : "text-red-400"
+                  }`}>
                   {pro.is_available ? "Disponible" : "Indisponible"}
                 </span>
               </div>
@@ -403,7 +471,15 @@ export default function ProfessionalProfilePage() {
               {pro.bio || "Aucune description disponible."}
             </p>
 
-            <button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
+            <button 
+              onClick={() => {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                // Handle discussion click
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
               <FiMessageSquare size={15} /> Discussion
             </button>
           </div>
@@ -469,9 +545,11 @@ export default function ProfessionalProfilePage() {
             <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-700 to-blue-600 text-white">
               <div>
                 <h3 className="font-bold text-lg">Prendre rendez-vous</h3>
-                <p className="text-blue-100 text-xs mt-0.5">Demande d'intervention pour {pro.full_name}</p>
+                <p className="text-blue-100 text-xs mt-0.5">
+                  Demande d'intervention pour {pro.full_name}
+                </p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowBookingModal(false)}
                 className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all cursor-pointer">
                 <FiX size={18} />
@@ -483,17 +561,19 @@ export default function ProfessionalProfilePage() {
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-4 animate-bounce">
                   <FiCheck />
                 </div>
-                <h4 className="font-bold text-xl text-slate-800">Demande envoyée !</h4>
+                <h4 className="font-bold text-xl text-slate-800">
+                  Demande envoyée !
+                </h4>
                 <p className="text-slate-500 text-sm mt-2 max-w-sm">
-                  Votre demande a été transmise avec succès. Le professionnel l'examinera pour fixer la date, l'heure et le prix de départ.
+                  Votre demande a été transmise avec succès. Le professionnel
+                  l'examinera pour fixer la date, l'heure et le prix de départ.
                 </p>
                 <button
                   onClick={() => {
                     setShowBookingModal(false);
                     navigate("/profile/appointments");
                   }}
-                  className="mt-6 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow cursor-pointer active:scale-95"
-                >
+                  className="mt-6 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow cursor-pointer active:scale-95">
                   Voir mes rendez-vous
                 </button>
               </div>
@@ -514,14 +594,23 @@ export default function ProfessionalProfilePage() {
                   <select
                     value={serviceType}
                     onChange={(e) => setServiceType(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
-                  >
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all">
                     <option value="">Sélectionnez un service</option>
-                    <option value="Mécanique générale">Mécanique générale</option>
-                    <option value="Électricité automobile">Électricité automobile</option>
-                    <option value="Carrosserie et peinture">Carrosserie et peinture</option>
-                    <option value="Diagnostic électronique">Diagnostic électronique</option>
-                    <option value="Vidange et entretien">Vidange et entretien</option>
+                    <option value="Mécanique générale">
+                      Mécanique générale
+                    </option>
+                    <option value="Électricité automobile">
+                      Électricité automobile
+                    </option>
+                    <option value="Carrosserie et peinture">
+                      Carrosserie et peinture
+                    </option>
+                    <option value="Diagnostic électronique">
+                      Diagnostic électronique
+                    </option>
+                    <option value="Vidange et entretien">
+                      Vidange et entretien
+                    </option>
                     <option value="Autre / Dépannage">Autre / Dépannage</option>
                   </select>
                 </div>
@@ -530,23 +619,31 @@ export default function ProfessionalProfilePage() {
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                     <span>Véhicule</span>
-                    <Link to="/profile/vehicules" className="text-blue-600 hover:underline normal-case font-semibold">
+                    <Link
+                      to="/profile/vehicules"
+                      className="text-blue-600 hover:underline normal-case font-semibold">
                       + Ajouter un véhicule
                     </Link>
                   </label>
                   <select
                     value={selectedVehicleId}
                     onChange={(e) => setSelectedVehicleId(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
-                  >
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-all">
                     {vehicles.length === 0 ? (
-                      <option value="">Aucun véhicule enregistré (continuer sans véhicule)</option>
+                      <option value="">
+                        Aucun véhicule enregistré (continuer sans véhicule)
+                      </option>
                     ) : (
                       <>
-                        <option value="">Continuer sans véhicule particulier</option>
+                        <option value="">
+                          Continuer sans véhicule particulier
+                        </option>
                         {vehicles.map((v) => (
                           <option key={v.id} value={v.id}>
-                            {v.brand?.name} {v.model?.name} ({v.year}) {v.registration_number ? `- ${v.registration_number}` : ""}
+                            {v.brand?.name} {v.model?.name} ({v.year}){" "}
+                            {v.registration_number
+                              ? `- ${v.registration_number}`
+                              : ""}
                           </option>
                         ))}
                       </>
@@ -587,15 +684,13 @@ export default function ProfessionalProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowBookingModal(false)}
-                    className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-semibold rounded-xl transition-all cursor-pointer"
-                  >
+                    className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-semibold rounded-xl transition-all cursor-pointer">
                     Annuler
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow shadow-blue-600/20 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                  >
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow shadow-blue-600/20 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2">
                     {isSubmitting ? (
                       <>
                         <FiLoader className="animate-spin text-base" />
@@ -613,6 +708,17 @@ export default function ProfessionalProfilePage() {
       )}
 
       <Footer />
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
+      <ReportModal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        targetId={pro.profile_id}
+        targetType="professional"
+        targetName={pro.full_name}
+      />
     </div>
   );
 }

@@ -13,10 +13,8 @@ const router = express.Router();
 router.get("/subscription-plans", getSubscriptionPlans);
 router.get("/subscription-plans/:id", getSubscriptionPlanById);
 
-router.use(authMiddleware);
-
-router.post("/subscription-plans", createSubscriptionPlan);
-router.patch("/subscription-plans/:id", updateSubscriptionPlan);
-router.delete("/subscription-plans/:id", deleteSubscriptionPlan);
+router.post("/subscription-plans", authMiddleware, createSubscriptionPlan);
+router.patch("/subscription-plans/:id", authMiddleware, updateSubscriptionPlan);
+router.delete("/subscription-plans/:id", authMiddleware, deleteSubscriptionPlan);
 
 module.exports = router;

@@ -19,7 +19,6 @@ import useAuthStore from "../../store/authStore";
 const navItems = [
   { label: "Tableau de bord", icon: RiDashboardLine, path: "/store" },
   { label: "Commandes", icon: RiCalendarLine, path: "/store/orders" },
-  { label: "Clients", icon: RiUserLine, path: "/store/clients" },
   { label: "Pièces", icon: RiTimeLine, path: "/store/parts" },
   {
     label: "Messages",
@@ -27,6 +26,7 @@ const navItems = [
     path: "/store/messages",
     badge: 3,
   },
+  { label: "Diagnostic", icon: RiCarLine, path: "/store/diagnostic" },
 ];
 
 export default function StoreHome() {
@@ -89,10 +89,9 @@ export default function StoreHome() {
                 to={item.path}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative no-underline
-                  ${
-                    isActive
-                      ? "bg-gradient-to-r from-[#2563eb]/10 to-[#2563eb]/5 text-[#2563eb]"
-                      : "text-[#6b7280] hover:text-[#1f1f1f] hover:bg-[#e9effd]/50"
+                  ${isActive
+                    ? "bg-gradient-to-r from-[#2563eb]/10 to-[#2563eb]/5 text-[#2563eb]"
+                    : "text-[#6b7280] hover:text-[#1f1f1f] hover:bg-[#e9effd]/50"
                   }`
                 }>
                 {isActive && (

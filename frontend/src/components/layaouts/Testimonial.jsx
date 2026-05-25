@@ -1,32 +1,115 @@
 import { useState, useRef } from "react";
 import testimonialImage from "../../assets/img/testimonialPic.png";
-import { BiSolidQuoteLeft, BiSolidQuoteRight } from "react-icons/bi";
 import ListDots from "../uiComponents/ListDots";
 import { GlassIconButton } from "../uiComponents/GlassIconButton";
 import { FaAngleRight, FaAngleLeft } from "react-icons/fa6";
+import { FiMapPin } from "react-icons/fi";
+
+const testimonials = [
+  {
+    name: "John Doe",
+    place: "Alger",
+    initials: "JD",
+    feedback:
+      "Siyanati a transformé la façon dont j'entretiens ma voiture. Le diagnostic en ligne m'a permis d'identifier rapidement une panne, et j'ai pu trouver les pièces nécessaires facilement. Je recommande vivement !",
+  },
+  {
+    name: "Jane Smith",
+    place: "Oran",
+    initials: "JS",
+    feedback:
+      "En tant que professionnel de l'automobile, Siyanati m'a permis d'élargir ma clientèle et de gérer mes rendez-vous plus efficacement. La plateforme est intuitive et le support est excellent.",
+  },
+  {
+    name: "Karim Mekki",
+    place: "Constantine",
+    initials: "KM",
+    feedback:
+      "Grâce à Siyanati, j'ai trouvé un mécanicien de confiance près de chez moi en quelques minutes. Le processus est simple et les avis des autres clients m'ont vraiment aidé à choisir.",
+  },
+];
+
+/* Avatar cluster — decorative floating circles with initials */
+const avatarData = [
+  {
+    initials: "JD",
+    bg: "#E1F5EE",
+    color: "#0F6E56",
+    size: 64,
+    top: 0,
+    left: "50%",
+    transform: "translateX(-50%)",
+  },
+  {
+    initials: "KM",
+    bg: "#EEEDFE",
+    color: "#534AB7",
+    size: 50,
+    top: 60,
+    left: 12,
+  },
+  {
+    initials: "JS",
+    bg: "#FAECE7",
+    color: "#993C1D",
+    size: 70,
+    top: 68,
+    left: "50%",
+    transform: "translateX(-38%)",
+  },
+  {
+    initials: "LB",
+    bg: "#FBEAF0",
+    color: "#993556",
+    size: 50,
+    top: 60,
+    right: 0,
+  },
+  {
+    initials: "AR",
+    bg: "#FAEEDA",
+    color: "#854F0B",
+    size: 54,
+    top: 156,
+    left: 18,
+  },
+  {
+    initials: "MN",
+    bg: "#E6F1FB",
+    color: "#185FA5",
+    size: 50,
+    top: 162,
+    right: 14,
+  },
+];
+
+const AvatarCluster = () => (
+  <div
+    className="relative flex-shrink-0"
+    style={{ width: 200, height: 230 }}
+    aria-hidden="true">
+    {avatarData.map((av, i) => (
+      <div
+        key={i}
+        className="absolute rounded-full border-2 border-white flex items-center justify-center font-semibold"
+        style={{
+          width: av.size,
+          height: av.size,
+          top: av.top,
+          left: av.left ?? "auto",
+          right: av.right ?? "auto",
+          transform: av.transform ?? "none",
+          background: av.bg,
+          color: av.color,
+          fontSize: av.size * 0.28,
+        }}>
+        {av.initials}
+      </div>
+    ))}
+  </div>
+);
 
 const Testimonial = () => {
-  const testimonials = [
-    {
-      name: "John Doe",
-      place: "Alger",
-      feedback:
-        "Siyanati a transformé la façon dont j'entretiens ma voiture. Le diagnostic en ligne m'a permis d'identifier rapidement une panne, et j'ai pu trouver les pièces nécessaires facilement. Je recommande vivement !",
-    },
-    {
-      name: "Jane Smith",
-      place: "Oran",
-      feedback:
-        "En tant que professionnel de l'automobile, Siyanati m'a permis d'élargir ma clientèle et de gérer mes rendez-vous plus efficacement. La plateforme est intuitive et le support est excellent.",
-    },
-    {
-      name: "Jane Smith",
-      place: "Oran",
-      feedback:
-        "En tant que professionnel de l'automobile, Siyanati m'a permis d'élargir ma clientèle et de gérer mes rendez-vous plus efficacement. La plateforme est intuitive et le support est excellent.",
-    },
-  ];
-
   const [isSelected, setIsSelected] = useState(0);
   const touchStartX = useRef(0);
 
@@ -37,138 +120,154 @@ const Testimonial = () => {
   const handleTouchEnd = (e) => {
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) {
-      if (diff > 0) {
-        // swipe left → next
-        setIsSelected((prev) =>
-          prev === testimonials.length - 1 ? 0 : prev + 1,
-        );
-      } else {
-        // swipe right → prev
-        setIsSelected((prev) =>
-          prev === 0 ? testimonials.length - 1 : prev - 1,
-        );
-      }
+      setIsSelected((prev) =>
+        diff > 0
+          ? (prev + 1) % testimonials.length
+          : (prev - 1 + testimonials.length) % testimonials.length,
+      );
     }
   };
 
-  const testimonial = testimonials[isSelected];
+  const prev = () =>
+    setIsSelected((p) => (p === 0 ? testimonials.length - 1 : p - 1));
+  const next = () =>
+    setIsSelected((p) => (p === testimonials.length - 1 ? 0 : p + 1));
+
+  const t = testimonials[isSelected];
 
   return (
-    <div className="relative w-full overflow-hidden bg-black">
-      {/* Background gradients */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-blue-900/80 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-blue-900 via-blue-950/60 to-transparent" />
+    <section className="relative w-full overflow-hidden bg-black py-16 px-6">
+      {/* Subtle top/bottom gradients */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-blue-900/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-blue-950/80 to-transparent" />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col gap-2 px-6 py-8">
-        {/* Title — centered on mobile, left on desktop */}
-        <h1 className="text-white font-bold font-secondary text-center md:text-left text-2xl md:text-3xl mt-4 md:mt-10 md:mx-6">
-          LES AVIS DE SIYANATI CLIENTS
-        </h1>
+      <div className="relative z-10 max-w-5xl mx-auto">
+        {/* ── Section header ── */}
+        <div className="text-center mb-12">
+          <h2 className="text-white font-bold font-secondary text-2xl md:text-3xl tracking-tight">
+            LES AVIS DE NOS CLIENTS
+          </h2>
+          <p className="text-slate-400 text-sm mt-2 font-primary">
+            Des automobilistes qui font confiance à Siyanati chaque jour
+          </p>
+        </div>
 
-        {/* MOBILE LAYOUT */}
-        <div className="flex flex-col items-center md:hidden mt-4">
-          {/* Opening quote */}
-          <BiSolidQuoteLeft size={80} className="text-primary self-end mr-4" />
+        {/* ── DESKTOP layout ── */}
+        <div className="hidden md:grid md:grid-cols-[1fr_auto] gap-12 items-center">
+          {/* Left: quote card + controls */}
+          <div className="flex flex-col gap-6">
+            {/* Card */}
+            <div className="relative bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
+              {/* Large opening quote mark */}
+              <span
+                className="absolute -top-5 left-6 text-7xl leading-none text-emerald-500 font-serif select-none"
+                aria-hidden="true">
+                "
+              </span>
 
-          {/* Swipeable testimonial area */}
-          <div
-            className="w-full overflow-hidden"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}>
-            <div
-              key={isSelected}
-              className="flex flex-col items-center gap-3 px-4 text-center font-primary">
-              <p className="text-gray-300 leading-relaxed">
-                "{testimonial.feedback}"
+              <p
+                key={isSelected}
+                className="text-slate-300 text-base leading-relaxed italic font-primary mt-4 mb-6">
+                {t.feedback}
               </p>
-              <hr className="border-white rounded-full w-1/2 border-[2px]" />
-              <p className="font-semibold text-white">{testimonial.name}</p>
-              <p className="text-gray-400 text-sm">{testimonial.place}</p>
+
+              {/* Divider */}
+              <div className="w-10 h-0.5 bg-emerald-500 rounded-full mb-4" />
+
+              {/* Author */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                  style={{
+                    background: avatarData[isSelected % avatarData.length].bg,
+                    color: avatarData[isSelected % avatarData.length].color,
+                  }}>
+                  {t.initials}
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">{t.name}</p>
+                  <p className="text-slate-400 text-xs flex items-center gap-1 mt-0.5">
+                    <FiMapPin size={11} />
+                    {t.place}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Controls: dots + arrows */}
+            <div className="flex items-center gap-4">
+              <ListDots
+                count={testimonials.length}
+                selectedIndex={isSelected}
+                variant="primary"
+              />
+              <GlassIconButton icon={<FaAngleLeft />} onClick={prev} />
+              <GlassIconButton icon={<FaAngleRight />} onClick={next} />
             </div>
           </div>
 
-          {/* Dots — centered, no arrows on mobile */}
-          <div className="mt-4">
-            <ListDots
-              count={testimonials.length}
-              selectedIndex={isSelected}
-              variant="primary"
-            />
+          {/* Right: avatar cluster */}
+          <AvatarCluster />
+        </div>
+
+        {/* ── MOBILE layout ── */}
+        <div
+          className="flex flex-col items-center gap-6 md:hidden"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}>
+          <div className="relative w-full bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+            <span
+              className="absolute -top-5 left-5 text-7xl leading-none text-emerald-500 font-serif select-none"
+              aria-hidden="true">
+              "
+            </span>
+            <p
+              key={isSelected}
+              className="text-slate-300 text-sm leading-relaxed italic font-primary mt-4 mb-5 text-center">
+              {t.feedback}
+            </p>
+            <div className="w-8 h-0.5 bg-emerald-500 rounded-full mb-3 mx-auto" />
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-white font-semibold text-sm">{t.name}</p>
+              <p className="text-slate-400 text-xs flex items-center gap-1">
+                <FiMapPin size={11} /> {t.place}
+              </p>
+            </div>
           </div>
 
-          {/* Closing quote */}
-          <BiSolidQuoteRight
-            size={80}
-            className="text-primary self-start ml-4 mt-2"
+          <ListDots
+            count={testimonials.length}
+            selectedIndex={isSelected}
+            variant="primary"
           />
 
+          {/* Car image on mobile */}
+          <img
+            src={testimonialImage}
+            alt="Voiture Siyanati"
+            className="w-full rounded-2xl opacity-80 mt-2"
+          />
+        </div>
+
+        {/* ── Car strip — desktop only ── */}
+        <div className="hidden md:flex items-center gap-4 mt-14 pt-8 border-t border-white/10">
+          <span className="text-slate-500 text-xs uppercase tracking-widest whitespace-nowrap font-primary">
+            Siyanati
+          </span>
+          <div className="flex-1 h-px bg-white/10" />
           {/* Car image */}
           <img
             src={testimonialImage}
-            alt="Testimonial"
-            className="w-full mt-4 rounded-full"
+            alt="Voiture Siyanati"
+            className="w-2/5 rounded-2xl opacity-70"
           />
-        </div>
-
-        {/* DESKTOP LAYOUT — original design */}
-        <div className="hidden md:block">
-          <div className="flex items-start justify-between gap-4 mx-6">
-            <div className="flex flex-col gap-4 text-white text-left flex-1">
-              <div
-                key={isSelected}
-                className="flex flex-col gap-3 w-2/3 h-[160px] font-primary">
-                <p className="text-gray-300 leading-relaxed">
-                  "{testimonial.feedback}"
-                </p>
-                <hr className="border-white rounded-full w-3/4 border-[2px]" />
-                <p className="font-semibold">{testimonial.name}</p>
-                <p className="text-gray-400 text-sm">{testimonial.place}</p>
-              </div>
-
-              {/* Dots + arrows on desktop */}
-              <div className="flex flex-row items-center gap-4 mt-2">
-                <ListDots
-                  count={testimonials.length}
-                  selectedIndex={isSelected}
-                  variant="primary"
-                />
-                <GlassIconButton
-                  icon={<FaAngleLeft />}
-                  onClick={() =>
-                    setIsSelected((prev) =>
-                      prev === 0 ? testimonials.length - 1 : prev - 1,
-                    )
-                  }
-                />
-                <GlassIconButton
-                  icon={<FaAngleRight />}
-                  onClick={() =>
-                    setIsSelected((prev) =>
-                      prev === testimonials.length - 1 ? 0 : prev + 1,
-                    )
-                  }
-                />
-              </div>
-            </div>
-
-            <BiSolidQuoteLeft
-              size={250}
-              className="text-primary flex-shrink-0 mt-2 mr-20"
-            />
-          </div>
-
-          <div className="flex items-center justify-between px-4 w-full">
-            <BiSolidQuoteRight size={200} className="text-primary" />
-            <img
-              src={testimonialImage}
-              alt="Testimonial"
-              className="w-2/3 rounded-full"
-            />
-          </div>
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-slate-500 text-xs uppercase tracking-widest whitespace-nowrap font-primary">
+            Vos avis comptent
+          </span>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

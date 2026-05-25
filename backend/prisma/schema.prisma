@@ -31,6 +31,7 @@ model User {
   authored_reviews      Review[]             @relation("AuthoredReviews")
   store_profile         StoreProfile?
   vehicles              Vehicle[]
+  notifications         Notification[]       @relation("UserNotifications")
 
   favorites Favorite[]
 
@@ -473,6 +474,22 @@ model Report {
   @@index([target_type, target_id])
   @@index([status, created_at])
   @@map("reports")
+}
+
+model Notification {
+  id           String           @id @default(uuid())
+  user_id      String
+  type         NotificationType
+  title        String
+  message      String
+  reference_id String?
+  is_read      Boolean          @default(false)
+  created_at   DateTime         @default(now())
+  user         User             @relation("UserNotifications", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, is_read])
+  @@index([created_at])
+  @@map("notifications")
 }
 
 model DiagnosticPost {

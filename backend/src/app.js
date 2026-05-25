@@ -41,6 +41,7 @@ app.use("/api/professionals", require("./routes/schedule.routes"));
 app.use("/api/appointments", require("./routes/appointment.routes"));
 app.use("/api/reviews", require("./routes/review.routes"));
 app.use("/api/reports", require("./routes/report.routes"));
+app.use("/api", require("./routes/notification.routes"));
 app.use("/api/diagnostic", require("./routes/diagnostic.routes"));
 app.use(
   "/api/diagnostic/:postId/comments",

@@ -11,6 +11,7 @@ import {
   FiMapPin,
   FiSettings,
   FiTrash2,
+  FiInfo,
 } from "react-icons/fi";
 
 const SavedProfessionalsPage = () => {
@@ -158,7 +159,7 @@ const SavedProfessionalsPage = () => {
                   className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-300">
                   <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
                     <img
-                      src={pro.shop_images?.[0] || "/placeholder-pro.png"}
+                      src={pro.ProfessionalStore?.images?.[0] || pro.ProfessionalStore?.logo_url || "/placeholder-pro.png"}
                       alt={pro.full_name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -221,7 +222,7 @@ const SavedProfessionalsPage = () => {
                         <FiHeart size={16} className="fill-current" />
                       </button>
                       <Link
-                        to={`/professionals/${pro.id}`}
+                        to={`/professionnels/${pro.user_id}`}
                         className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition">
                         <FiInfo size={16} />
                       </Link>

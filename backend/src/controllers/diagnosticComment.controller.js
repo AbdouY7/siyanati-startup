@@ -1,10 +1,28 @@
 const prisma = require("../prisma/client");
 
 const commentInclude = {
-  author: { select: { id: true, email: true } },
+  author: {
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      client_profile: true,
+      professional_profile: true,
+      store_profile: true,
+    },
+  },
   replies: {
     include: {
-      author: { select: { id: true, email: true } },
+      author: {
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          client_profile: true,
+          professional_profile: true,
+          store_profile: true,
+        },
+      },
     },
     orderBy: { created_at: "asc" },
   },

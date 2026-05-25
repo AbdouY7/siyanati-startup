@@ -30,6 +30,7 @@ const navItems = [
     badge: 2,
   },
   { label: "Messages", icon: RiMessage3Line, path: "/pro/messages", badge: 3 },
+  { label: "Diagnostic", icon: RiCarLine, path: "/pro/diagnostic" },
 ];
 
 export default function HomePro() {

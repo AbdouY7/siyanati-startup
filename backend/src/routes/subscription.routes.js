@@ -15,22 +15,20 @@ const {
 
 const router = express.Router();
 
-router.use(authMiddleware);
-
 // Platform Settings (Admin)
-router.get("/platform-settings", getPlatformSettings);
-router.patch("/platform-settings/:key", updatePlatformSetting);
+router.get("/platform-settings", authMiddleware, getPlatformSettings);
+router.patch("/platform-settings/:key", authMiddleware, updatePlatformSetting);
 
 // My Subscriptions
-router.get("/subscriptions/my", getMySubscriptions);
-router.get("/subscriptions/my/active", getMyActiveSubscription);
-router.patch("/subscriptions/my/cancel", cancelSubscription);
+router.get("/subscriptions/my", authMiddleware, getMySubscriptions);
+router.get("/subscriptions/my/active", authMiddleware, getMyActiveSubscription);
+router.patch("/subscriptions/my/cancel", authMiddleware, cancelSubscription);
 
 // General Subscriptions
-router.post("/subscriptions", createSubscription);
-router.get("/subscriptions", getAllSubscriptions);
-router.get("/subscriptions/:id", getSubscriptionById);
-router.patch("/subscriptions/:id/suspend", suspendSubscription);
-router.patch("/subscriptions/:id/reactivate", reactivateSubscription);
+router.post("/subscriptions", authMiddleware, createSubscription);
+router.get("/subscriptions", authMiddleware, getAllSubscriptions);
+router.get("/subscriptions/:id", authMiddleware, getSubscriptionById);
+router.patch("/subscriptions/:id/suspend", authMiddleware, suspendSubscription);
+router.patch("/subscriptions/:id/reactivate", authMiddleware, reactivateSubscription);
 
 module.exports = router;

@@ -2,7 +2,15 @@ const prisma = require("../prisma/client");
 const jwt = require("jsonwebtoken");
 
 const postListInclude = {
-  author: { select: { id: true, role: true } },
+  author: {
+    select: {
+      id: true,
+      role: true,
+      client_profile: true,
+      professional_profile: true,
+      store_profile: true,
+    },
+  },
   vehicle: { include: { brand: true, model: true } },
   brand: true,
   model: true,
@@ -482,6 +490,47 @@ const getMyPosts = async (req, res, next) => {
   }
 };
 
+const getSavedPosts = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+
+    const where = { user_id: req.user.id };
+
+    const [savedPosts, total] = await prisma.$transaction([
+      prisma.diagnosticSave.findMany({
+        where,
+        include: {
+          post: {
+            include: postListInclude,
+          },
+        },
+        orderBy: { created_at: "desc" },
+        skip,
+        take,
+      }),
+      prisma.diagnosticSave.count({ where }),
+    ]);
+
+    // Extract the post object from the savedPost relation
+    const posts = savedPosts.map((save) => save.post).filter(Boolean);
+
+    res.json({
+      success: true,
+      data: {
+        posts,
+        total,
+        page: Number(page),
+        limit: take,
+        total_pages: Math.ceil(total / take),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getPosts,
   getPostById,
@@ -492,4 +541,5 @@ module.exports = {
   deletePost,
   toggleSave,
   toggleReaction,
+  getSavedPosts,
 };

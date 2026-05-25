@@ -52,6 +52,7 @@ const getFavorites = async (req, res, next) => {
             where: { id: fav.target_id },
             select: {
               id: true,
+              user_id: true,
               full_name: true,
               specialty_type: true,
               wilaya: true,
@@ -61,8 +62,14 @@ const getFavorites = async (req, res, next) => {
               rating_count: true,
               is_available: true,
               is_frozen: true,
-              shop_images: true,
+              work_type: true,
               status: true,
+              ProfessionalStore: {
+                select: {
+                  images: true,
+                  logo_url: true,
+                },
+              },
             },
           });
         } else if (fav.target_type === "part") {

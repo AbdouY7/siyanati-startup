@@ -2,102 +2,29 @@ import React, { useRef, useState, useEffect } from "react";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import PartCard from "../uiComponents/PartCard";
 import { FiArrowRight, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { getAllParts } from "../../services/partService";
 
 const BestParts = () => {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const parts = [
-    {
-      id: 1,
-      title: "Filtre à huile",
-      details: "Bosch • Réf. F026407006",
-      description:
-        "Filtre à huile moteur haute performance compatible avec la majorité des véhicules européens et asiatiques.",
-      price: 850,
-      status: 4.5,
-      image:
-        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
-    },
-    {
-      id: 2,
-      title: "Plaquettes de frein avant",
-      details: "Brembo • Réf. P85020",
-      description:
-        "Plaquettes de frein avant en céramique offrant une performance de freinage optimale et une faible usure.",
-      price: 2400,
-      status: 4.8,
-      image:
-        "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=300&fit=crop",
-    },
-    {
-      id: 3,
-      title: "Batterie 12V 70Ah",
-      details: "Varta • Réf. E11",
-      description:
-        "Batterie voiture 12V 70Ah 640A, idéale pour les véhicules à démarrage fréquent et les climats froids.",
-      price: 8500,
-      status: 4.3,
-      image:
-        "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=400&h=300&fit=crop",
-    },
-    {
-      id: 4,
-      title: "Amortisseur avant droit",
-      details: "Monroe • Réf. G8070",
-      description:
-        "Amortisseur à gaz avant droit pour une tenue de route précise et un confort de conduite amélioré.",
-      price: 5200,
-      status: 4.1,
-      image:
-        "https://images.unsplash.com/photo-1635273051293-fb89adda59e4?w=400&h=300&fit=crop",
-    },
-    {
-      id: 5,
-      title: "Courroie de distribution",
-      details: "Gates • Réf. T43157",
-      description:
-        "Kit courroie de distribution complet avec tendeur et pompe à eau, pour une révision fiable et durable.",
-      price: 6800,
-      status: 4.6,
-      image:
-        "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=400&h=300&fit=crop",
-    },
-    {
-      id: 6,
-      title: "Radiateur de refroidissement",
-      details: "Valeo • Réf. 732632",
-      description:
-        "Radiateur aluminium haute efficacité pour moteur essence et diesel, montage direct sans modification.",
-      price: 12000,
-      status: 4.2,
-      image:
-        "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=400&h=300&fit=crop",
-    },
-    {
-      id: 7,
-      title: "Bougie d'allumage",
-      details: "NGK • Réf. BKR6EK (x4)",
-      description:
-        "Bougies iridium longue durée pour une combustion optimale, moins de consommation et démarrage facile.",
-      price: 1800,
-      status: 4.7,
-      image:
-        "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400&h=300&fit=crop",
-    },
-    {
-      id: 8,
-      title: "Alternateur 90A",
-      details: "Valeo • Réf. 436610",
-      description:
-        "Alternateur reconditionné 90A compatible Peugeot, Citroën et Renault. Garanti 12 mois.",
-      price: 14500,
-      status: 3.9,
-      image:
-        "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop",
-    },
-  ];
+  const [dbParts, setDbParts] = useState([]);
+
+  useEffect(() => {
+    const fetchParts = async () => {
+      try {
+        const data = await getAllParts();
+        if (data && data.length > 0) {
+          // Take up to 8 parts
+          setDbParts(data.slice(0, 8));
+        }
+      } catch (err) {
+        console.error("Failed to fetch featured parts", err);
+      }
+    };
+    fetchParts();
+  }, []);
 
   // Update button visibility based on scroll position
   const updateScrollState = () => {
@@ -180,20 +107,27 @@ const BestParts = () => {
           <div
             ref={scrollRef}
             className="flex flex-row gap-4 overflow-x-auto no-scrollbar scroll-smooth  py-2">
-            {parts.map((part) => (
-              <div key={part.id}>
-                <PartCard
-                  title={part.title}
-                  details={part.details}
-                  description={part.description}
-                  price={part.price}
-                  status={part.status}
-                  image={part.image}
-                  isConnected={false}
-                  onVoirPlus={() => alert(`Voir plus sur ${part.title}`)}
-                />
-              </div>
-            ))}
+            {dbParts.map((part) => {
+              const comp = part.compatibilities?.[0];
+              const brand = comp?.brand?.name || "Universel";
+              const cat = part.category?.name || "Pièce";
+              
+              return (
+                <div key={part.id}>
+                  <PartCard
+                    title={part.name}
+                    details={`${brand} • ${cat}`}
+                    description={part.description || "Aucune description."}
+                    price={Number(part.price_dzd)}
+                    status={4.5} // default rating
+                    image={part.images?.[0]}
+                    isConnected={true}
+                    onVoirPlus={() => window.location.href = `/part-details/${part.id}`}
+                    onAchetez={() => window.location.href = `/part-details/${part.id}`}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           {/* Right arrow */}

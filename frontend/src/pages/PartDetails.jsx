@@ -10,6 +10,9 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { getPartById } from "../services/partService";
+import useFavoriteStore from "../store/useFavoriteStore";
+import useAuthStore from "../store/authStore";
+import AuthRequiredModal from "../components/modals/AuthRequiredModal";
 
 const formatCondition = (condition) => {
   const labels = {
@@ -58,9 +61,13 @@ export default function PartDetails() {
   const navigate = useNavigate();
   const [part, setPart] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { user } = useAuthStore();
+  const { checkIsFavorited, toggleFavorite, isFavorited, isToggling } = useFavoriteStore();
+  const isFavorite = isFavorited(id, "part");
+  const toggling = isToggling(id, "part");
 
   useEffect(() => {
     const fetchPart = async () => {
@@ -78,6 +85,21 @@ export default function PartDetails() {
 
     fetchPart();
   }, [id]);
+
+  // Check if this part is already favorited when user is logged in
+  useEffect(() => {
+    if (user && id) {
+      checkIsFavorited(id, "part");
+    }
+  }, [user, id, checkIsFavorited]);
+
+  const handleToggleFavorite = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    toggleFavorite(id, "part");
+  };
 
   if (loading) {
     return (
@@ -246,20 +268,27 @@ export default function PartDetails() {
                 </div>
 
                 <div className="flex-1 flex gap-3">
-                  <Link
-                    to={`/Buy-part/${id}`}
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        setAuthModalOpen(true);
+                      } else {
+                        navigate(`/Buy-part/${id}`);
+                      }
+                    }}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
                   >
                     <ShoppingCart className="w-5 h-5" />
                     Achetez
-                  </Link>
+                  </button>
                   <button
-                    onClick={() => setIsFavorite(!isFavorite)}
+                    onClick={handleToggleFavorite}
+                    disabled={toggling}
                     className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
                       isFavorite
                         ? "bg-red-100 border-red-300 text-red-600"
                         : "border-slate-300 text-slate-600 hover:border-red-300"
-                    }`}
+                    } ${toggling ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
                   </button>
@@ -272,6 +301,11 @@ export default function PartDetails() {
           </div>
         </div>
       </main>
+
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

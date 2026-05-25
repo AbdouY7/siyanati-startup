@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { FiArrowRight, FiShoppingCart, FiStar } from "react-icons/fi";
+import useAuthStore from "../../store/authStore";
+import AuthRequiredModal from "../../components/modals/AuthRequiredModal";
 
 const PartCard = ({
   title,
@@ -13,6 +15,8 @@ const PartCard = ({
   onAchetez,
 }) => {
   const [pressed, setPressed] = useState(null); // "voir" | "achetez"
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { user } = useAuthStore();
 
   const handlePress = (key, cb) => {
     setPressed(key);
@@ -116,7 +120,13 @@ const PartCard = ({
           {/* Achetez — only when connected */}
           {isConnected && (
             <button
-              onClick={() => handlePress("achetez", onAchetez)}
+              onClick={() => {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                handlePress("achetez", onAchetez);
+              }}
               className={`
                 flex items-center justify-center gap-1.5
                 px-4 py-2.5 rounded-xl text-[13px] font-semibold font-primary
@@ -131,6 +141,10 @@ const PartCard = ({
           )}
         </div>
       </div>
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 };

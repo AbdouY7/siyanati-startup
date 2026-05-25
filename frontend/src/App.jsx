@@ -29,20 +29,27 @@ import AdminClientDetails from "./pages/adminDashboard/AdminClientDetails";
 import AdminStores from "./pages/adminDashboard/AdminStores";
 import AdminStoreDetails from "./pages/adminDashboard/AdminStoreDetails";
 import AdminStoreParts from "./pages/adminDashboard/AdminStoreParts";
+import AdminAllParts from "./pages/adminDashboard/AdminAllParts";
+import AdminPartDetails from "./pages/adminDashboard/AdminPartDetails";
+import AdminReports from "./pages/adminDashboard/AdminReports";
 import ProfileInfoPage from "./pages/normalUserPages/ProfileInfosPage";
 import PaymentAccountsPage from "./pages/normalUserPages/PaymentAcountsPage";
 import OrderHistoryPage from "./pages/normalUserPages/OrderHistoryPage";
 import AppointmentHistoryPage from "./pages/normalUserPages/AppointmentHistoryPage";
 import AppointmentDetailsPage from "./pages/normalUserPages/AppointmentDetailsPage";
 import FavoritePiecesPage from "./pages/normalUserPages/FavoritePiecesPage";
+import NotificationsPage from "./pages/normalUserPages/NotificationsPage";
 import FollowedStoresPage from "./pages/normalUserPages/FolowedStoresPage";
 import SavedProfessionalsPage from "./pages/normalUserPages/SavedProfessionalsPage";
 import PublicationsProblemsPage from "./pages/normalUserPages/PublicationsProblemsPage";
+import SavedDiagnosticPostsPage from "./pages/normalUserPages/SavedDiagnosticPostsPage";
 import SelectionScreen from "./pages/registrationPages/SelectionScreen";
 import ProfessionalRegistration from "./pages/registrationPages/ProfessionalRegistration";
 import StoreRegistration from "./pages/registrationPages/StoreRegistration";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RoleRoute from "./components/auth/RoleRoute";
+import Diagnostics from "./pages/Diagnostics";
+import DiagnosticPostDetails from "./pages/DiagnosticPostDetails";
 import DashBoardPro from "./pages/ProfessionnelDashboard/DashboardPro";
 import HomePro from "./pages/ProfessionnelDashboard/HomePro";
 import AppointmentPro from "./pages/ProfessionnelDashboard/AppointmentPro";
@@ -91,7 +98,8 @@ function App() {
             path="/professionnels/:id"
             element={<ProfessionalProfilePage />}
           />
-          <Route path="/diagnostic" element={<div>Diagnostic</div>} />
+          <Route path="/diagnostic" element={<Diagnostics />} />
+          <Route path="/diagnostic/:id" element={<DiagnosticPostDetails />} />
 
           {/* Protected Routes inside Landing Layout — Customer only */}
           <Route element={<RoleRoute allowedRoles={["customer"]} />}>
@@ -132,12 +140,24 @@ function App() {
               element={<FollowedStoresPage />}
             />
             <Route
+              path="/profile/notifications"
+              element={<NotificationsPage />}
+            />
+            <Route
               path="/profile/saved-professionals"
               element={<SavedProfessionalsPage />}
             />
+            {/* <Route
+              path="/profile/professionals/:id"
+              element={<ProfessionalProfilePage />}
+            /> */}
             <Route
               path="/profile/publications"
               element={<PublicationsProblemsPage />}
+            />
+            <Route
+              path="/profile/saved-diagnostic-posts"
+              element={<SavedDiagnosticPostsPage />}
             />
             <Route
               path="/profile/appointments/:id"
@@ -157,6 +177,8 @@ function App() {
             <Route path="profile" element={<ProfilePro />} />
             <Route path="notifications" element={<NotificationsPro />} />
             <Route path="reviews" element={<ReviewsPro />} />
+            <Route path="diagnostic" element={<Diagnostics />} />
+            <Route path="diagnostic/:id" element={<DiagnosticPostDetails />} />
             <Route
               path="appointments/:id"
               element={<AppointmentDetailsPro />}
@@ -171,6 +193,8 @@ function App() {
             <Route path="orders/:id" element={<StoreOrderDetailsPage />} />
             <Route path="parts" element={<StorePartsPage />} />
             <Route path="parts/:id" element={<StorePartDetailsPage />} />
+            <Route path="diagnostic" element={<Diagnostics />} />
+            <Route path="diagnostic/:id" element={<DiagnosticPostDetails />} />
             {/* <Route path="appointments" element={<AppointmentPro />} />
             <Route
               path="appointments/:id"
@@ -194,8 +218,9 @@ function App() {
             <Route path="stores" element={<AdminStores />} />
             <Route path="stores/:id" element={<AdminStoreDetails />} />
             <Route path="stores/:id/parts" element={<AdminStoreParts />} />
-            <Route path="parts" element={<div>Parts Page</div>} />
-            <Route path="reports" element={<div>Reports Page</div>} />
+            <Route path="parts" element={<AdminAllParts />} />
+            <Route path="parts/:id" element={<AdminPartDetails />} />
+            <Route path="reports" element={<AdminReports />} />
             <Route path="chat" element={<div>Chat Page</div>} />
           </Route>
         </Route>

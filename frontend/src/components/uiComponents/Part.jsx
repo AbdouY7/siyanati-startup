@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
+import useAuthStore from "../../store/authStore";
+import AuthRequiredModal from "../modals/AuthRequiredModal";
 
 // PartCard.jsx
 // Usage: import PartCard from './PartCard'
@@ -73,6 +75,9 @@ export default function Part({ part }) {
     image,
   } = part;
 
+  const { user } = useAuthStore();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
   return (
     <div className=" bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl hover:shadow-blue-100">
       {/* Image area */}
@@ -124,6 +129,10 @@ export default function Part({ part }) {
         <div className="flex gap-2 mt-auto pt-2">
           <button
             onClick={() => {
+              if (!user) {
+                setAuthModalOpen(true);
+                return;
+              }
               window.location.href = `/buy-part/${id}`;
             }}
             className="flex-1 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-sm font-semibold py-2 rounded-xl flex items-center justify-center gap-1 transition-all duration-150">
@@ -138,6 +147,10 @@ export default function Part({ part }) {
           </button>
         </div>
       </div>
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }
