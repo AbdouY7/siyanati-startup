@@ -28,7 +28,16 @@ export const getProfessionalById = async (id) => {
 
 export const updateMyProfessionalProfile = async (payload) => {
   try {
-    const response = await axiosInstance.put('/users/me/professional-profile', payload);
+    let response;
+    if (payload instanceof FormData) {
+      response = await axiosInstance.put('/users/me/professional-profile', payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    } else {
+      response = await axiosInstance.put('/users/me/professional-profile', payload);
+    }
     return response.data.user;
   } catch (error) {
     console.error('Error updating professional profile:', error);

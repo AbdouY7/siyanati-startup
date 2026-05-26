@@ -427,9 +427,81 @@ const toggleProfessionalAvailability = async (req, res, next) => {
   }
 };
 
+// ─── GET /statistics/admin-subscriptions ──────────────────────
+// Returns subscription statistics for the admin dashboard
+
+const getAdminSubscriptionStats = async (req, res, next) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const totalActive = await prisma.subscription.count({
+      where: { status: "active" },
+    });
+
+    const totalExpired = await prisma.subscription.count({
+      where: { status: "expired" },
+    });
+
+    const totalCancelled = await prisma.subscription.count({
+      where: { status: "cancelled" },
+    });
+
+    // Sum revenue from successful subscription payments
+    const successfulPayments = await prisma.payment.aggregate({
+      where: {
+        status: "success",
+        subscription_id: { not: null },
+      },
+      _sum: {
+        amount_dzd: true,
+      },
+    });
+
+    const totalRevenue = successfulPayments._sum.amount_dzd || 0;
+
+    const subscriptionsByPlan = await prisma.subscription.groupBy({
+      by: ["plan_id"],
+      _count: {
+        id: true,
+      },
+      where: { status: "active" },
+    });
+
+    // We can also fetch the plans to get names
+    const planIds = subscriptionsByPlan.map(s => s.plan_id);
+    const plans = await prisma.subscriptionPlan.findMany({
+      where: { id: { in: planIds } },
+    });
+
+    const planStats = subscriptionsByPlan.map(stat => {
+      const plan = plans.find(p => p.id === stat.plan_id);
+      return {
+        planName: plan ? plan.name : "Unknown Plan",
+        count: stat._count.id,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalActive,
+        totalExpired,
+        totalCancelled,
+        totalRevenue,
+        planStats,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUserStatistics,
   getProfessionalDashboardStats,
   getStoreDashboardStats,
   toggleProfessionalAvailability,
+  getAdminSubscriptionStats,
 };

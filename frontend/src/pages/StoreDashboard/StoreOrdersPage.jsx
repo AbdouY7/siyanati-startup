@@ -19,6 +19,7 @@ import {
   FiMapPin,
 } from "react-icons/fi";
 import { RiFileList3Line } from "react-icons/ri";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function StoreOrdersPage() {
   const { user } = useAuthStore();
@@ -141,6 +142,10 @@ export default function StoreOrdersPage() {
     return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  const getClientAvatar = (order) =>
+    getImageUrl(order.customer?.client_profile?.avatar_url || order.customer?.client_profile?.profilePicUrl || order.customer?.avatar_url || order.customer?.profile_picture);
+
+
   const algWilayas = [
     "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar", "Blida", "Bouira", "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Alger", "Djelfa", "Jijel", "Sétif", "Saïda", "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara", "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arreridj", "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt", "El Oued", "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent", "Ghardaïa", "Relizane",
   ];
@@ -248,9 +253,13 @@ export default function StoreOrdersPage() {
                       </td>
                       <td className="py-4 px-6 align-top">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2563eb]/20 to-[#0b3c5d]/20 flex items-center justify-center text-xs font-bold text-[#2563eb] flex-shrink-0">
-                            {getInitials(clientName)}
-                          </div>
+                          {getClientAvatar(order) ? (
+                            <img src={getClientAvatar(order)} alt={clientName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2563eb]/20 to-[#0b3c5d]/20 flex items-center justify-center text-xs font-bold text-[#2563eb] flex-shrink-0">
+                              {getInitials(clientName)}
+                            </div>
+                          )}
                           <div>
                             <p className="text-sm font-semibold text-gray-900">{clientName}</p>
                             <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">

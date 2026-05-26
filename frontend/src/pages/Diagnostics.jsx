@@ -10,6 +10,7 @@ import {
 } from "../services/diagnosticService";
 import AuthRequiredModal from "../components/modals/AuthRequiredModal";
 import { getUserVehicles } from "../services/vehicleService";
+import { getImageUrl } from "../utils/imageUtils";
 import {
   FiPlus,
   FiMessageSquare,
@@ -53,16 +54,17 @@ const resolveAuthor = (post) => {
     post?.user_name ||
     "Utilisateur";
 
-  const avatar =
+  const avatar = getImageUrl(
     a?.client_profile?.avatar_url ||
+    a?.client_profile?.profilePicUrl ||
     a?.professional_profile?.avatar_url ||
     a?.store_profile?.logo_url ||
     a?.avatar_url ||
     a?.avatar ||
     a?.profile_picture ||
     a?.photo ||
-    post?.author_avatar ||
-    null;
+    post?.author_avatar
+  );
 
   return { name, avatar };
 };
@@ -80,14 +82,15 @@ const resolveCommentAuthor = (comment) => {
     a?.email?.split("@")[0] ||
     "Utilisateur";
 
-  const avatar =
+  const avatar = getImageUrl(
     a?.client_profile?.avatar_url ||
+    a?.client_profile?.profilePicUrl ||
     a?.professional_profile?.avatar_url ||
     a?.store_profile?.logo_url ||
     a?.avatar_url ||
     a?.avatar ||
-    a?.profile_picture ||
-    null;
+    a?.profile_picture
+  );
 
   const role = a?.role || comment?.author_role || null;
 
@@ -129,7 +132,7 @@ const CommentsPanel = ({ postId, user, navigate }) => {
 
     setIsSubmitting(true);
     try {
-      const res = await createPostComment(postId, { content: newComment });
+      const res = await createPostComment(postId, { body: newComment });
       if (res?.success && res?.data) {
         setComments((prev) => [...prev, res.data]);
         setNewComment("");
@@ -176,6 +179,7 @@ const CommentsPanel = ({ postId, user, navigate }) => {
                 <img
                   src={avatar}
                   alt={name}
+                  onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                   className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-100"
                 />
                 <div className="flex-1">
@@ -189,7 +193,7 @@ const CommentsPanel = ({ postId, user, navigate }) => {
                       )}
                     </div>
                     <p className="text-sm text-slate-700 whitespace-pre-line leading-relaxed">
-                      {c.content}
+                      {c.body}
                     </p>
                   </div>
                   <span className="text-[10px] text-slate-400 ml-2 mt-0.5 block">
@@ -210,8 +214,9 @@ const CommentsPanel = ({ postId, user, navigate }) => {
         {user ? (
           <div className="flex gap-3 items-end">
             <img
-              src={user.avatar || "/default-avatar.png"}
+              src={getImageUrl(user.avatar || user.profile_picture || user.client_profile?.avatar_url || user.store_profile?.logo_url) || "/default-avatar.png"}
               alt="Me"
+              onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
               className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-100"
             />
             <div className="flex-1 relative">

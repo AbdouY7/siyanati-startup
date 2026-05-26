@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiSearch, FiFilter, FiPlus, FiChevronDown } from "react-icons/fi";
 import ShopCards from "../components/uiComponents/ShopCards";
 import { getAllStores } from "../services/storeService";
+import { getImageUrl } from "../utils/imageUtils";
 
 const wilayas = ["Toutes", "Sétif", "Alger", "Annaba", "Oran"];
 const ratings = ["Toutes", "4.5+", "4.0+", "3.5+"];
@@ -71,8 +72,8 @@ export default function Magasins() {
             description: profile.description || "",
             address: profile.address || "",
             wilaya: profile.wilaya || "N/A",
-            images: profile.images || [],
-            logo_url: profile.logo_url || "",
+            images: profile.images?.map(getImageUrl) || [],
+            logo_url: getImageUrl(profile.logo_url) || "",
             verified: profile.status === "approved",
             rating_avg: Number(profile.rating_avg) || 0,
             rating_count: profile.rating_count || 0,
@@ -212,7 +213,7 @@ export default function Magasins() {
                   key={store.id}
                   id={store.id}
                   name={store.store_name}
-                  image={store.images[0] || store.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                  image={getImageUrl(store.images[0] || store.logo_url) || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
                   owner={store.owner_name}
                   wilaya={store.wilaya}
                   rating={store.rating_avg}

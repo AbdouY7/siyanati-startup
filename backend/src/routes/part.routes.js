@@ -34,6 +34,7 @@ const validateSchema = (schema) => (req, res, next) => {
 
 // Public part reading routes
 router.get("/parts", getAllParts);
+router.get("/parts/my", authMiddleware, getMyParts);
 router.get("/parts/:id", getPartById);
 
 // Create part listings.
@@ -47,7 +48,7 @@ router.post(
   validateSchema(partCreateSchema),
   createPart,
 );
-router.get("/parts/my", authMiddleware, getMyParts);
+
 
 // Update and delete part listings.
 router.patch(

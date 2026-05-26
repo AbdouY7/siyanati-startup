@@ -14,11 +14,13 @@ import {
   RiLogoutBoxRLine,
   RiHome5Line,
   RiCarLine,
+  RiMoneyDollarCircleLine,
 } from "react-icons/ri";
 import useAuthStore from "../../store/authStore";
 
 const navItems = [
   { label: "Tableau de bord", icon: RiDashboardLine, path: "/pro" },
+  { label: "Mon Abonnement", icon: RiMoneyDollarCircleLine, path: "/pro/subscription" },
   { label: "Rendez-vous", icon: RiCalendarLine, path: "/pro/appointments" },
   { label: "Planification", icon: RiTimeLine, path: "/pro/schedule" },
   { label: "Avis", icon: RiStarLine, path: "/pro/reviews" },

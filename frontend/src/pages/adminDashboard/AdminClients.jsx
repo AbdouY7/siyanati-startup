@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiSearch, FiFilter, FiInfo } from "react-icons/fi";
 import { getAllClientsAdmin } from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const AdminClients = () => {
   const [clients, setClients] = useState([]);
@@ -145,10 +146,11 @@ const AdminClients = () => {
                       className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          {profile.avatar_url ? (
+                          {getImageUrl(profile.avatar_url || profile.profilePicUrl) ? (
                             <img
-                              src={profile.avatar_url}
+                              src={getImageUrl(profile.avatar_url || profile.profilePicUrl)}
                               alt={profile.full_name}
+                              onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                               className="w-10 h-10 rounded-full object-cover mr-3 border border-gray-200"
                             />
                           ) : (

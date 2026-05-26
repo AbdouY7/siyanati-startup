@@ -22,6 +22,7 @@ import useFavoriteStore from "../store/useFavoriteStore";
 import useAuthStore from "../store/authStore";
 import AuthRequiredModal from "../components/modals/AuthRequiredModal";
 import ReportModal from "../components/modals/ReportModal";
+import { getImageUrl } from "../utils/imageUtils";
 
 // ─── PartCard (inline, matching the provided component) ──────────────────────
 function EtatBadge({ etat }) {
@@ -51,7 +52,7 @@ function DispoBadge({ disponibilite }) {
   );
 }
 
-function PartCard({ part, cartQty, onAddToCart }) {
+function PartCard({ part, cartQty, onAddToCart, onUpdateQty }) {
   const { id, name, categorie, vehicule, etat, disponibilite, prix, image } =
     part;
   return (
@@ -84,11 +85,29 @@ function PartCard({ part, cartQty, onAddToCart }) {
           <DispoBadge disponibilite={disponibilite} />
         </div>
         <div className="flex gap-1.5 mt-auto pt-1.5">
-          <button
-            onClick={() => onAddToCart(part)}
-            className="flex-1 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-[11px] font-semibold py-1.5 rounded-xl flex items-center justify-center gap-1 transition-all duration-150 relative">
-            {cartQty > 0 ? `Panier (${cartQty})` : "Ajouter ＋"}
-          </button>
+          {cartQty > 0 ? (
+            <div className="flex-1 flex items-center justify-center gap-0 bg-blue-50 rounded-xl border border-blue-200 overflow-hidden">
+              <button
+                onClick={() => onUpdateQty(id, -1)}
+                className="px-2.5 py-1.5 text-blue-700 font-bold text-sm hover:bg-blue-100 active:scale-90 transition-all">
+                −
+              </button>
+              <span className="px-2 text-[13px] font-bold text-blue-800 min-w-[28px] text-center">
+                {cartQty}
+              </span>
+              <button
+                onClick={() => onUpdateQty(id, +1)}
+                className="px-2.5 py-1.5 text-blue-700 font-bold text-sm hover:bg-blue-100 active:scale-90 transition-all">
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onAddToCart(part)}
+              className="flex-1 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-[11px] font-semibold py-1.5 rounded-xl flex items-center justify-center gap-1 transition-all duration-150 relative">
+              Ajouter ＋
+            </button>
+          )}
           <button
             onClick={() => {
               window.location.href = `/part-details/${id}`;
@@ -226,8 +245,8 @@ export default function ShopProfilePage() {
           description: profile.description || "",
           address: profile.address || "",
           wilaya: profile.wilaya || "N/A",
-          images: profile.images || [],
-          logo_url: profile.logo_url || "",
+          images: profile.images?.map(getImageUrl) || [],
+          logo_url: getImageUrl(profile.logo_url) || "",
           verified: profile.status === "approved",
           rating_avg: Number(profile.rating_avg) || 0,
           rating_count: profile.rating_count || 0,
@@ -357,6 +376,7 @@ export default function ShopProfilePage() {
               <img
                 src={store.logo_url}
                 alt={store.store_name}
+                onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -596,6 +616,7 @@ export default function ShopProfilePage() {
                   part={part}
                   cartQty={cart[part.id]?.qty || 0}
                   onAddToCart={handleAddToCart}
+                  onUpdateQty={handleUpdateCartQty}
                 />
               ))}
             </div>

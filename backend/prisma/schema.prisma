@@ -127,6 +127,7 @@ work_type   WorkType   @default(individuel)  // new enum
   subscription_id      String?
   created_at           DateTime                        @default(now())
   full_name            String
+  avatar_url           String?
   appointments         Appointment[]                   @relation("ProfessionalAppointments")
   user                 User                            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   ProfessionalStore               ProfessionalStore?           @relation("ProfessionalStoreRelation")
@@ -219,13 +220,14 @@ model Vehicle {
 model Category {
   id        String     @id @default(uuid())
   parent_id String?
-  name      String     @unique
+  name      String     
   slug      String
   icon_url  String?
   parent    Category?  @relation("CategoryTree", fields: [parent_id], references: [id])
   children  Category[] @relation("CategoryTree")
   parts     Part[]
 
+@@unique([name, parent_id])
   @@map("categories")
 }
 

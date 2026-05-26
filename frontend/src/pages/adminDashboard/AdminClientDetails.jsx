@@ -14,6 +14,7 @@ import {
   updateUserStatusAdmin,
 } from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const AdminClientDetails = () => {
   const { id } = useParams();
@@ -91,10 +92,11 @@ const AdminClientDetails = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-primary/10 to-transparent px-8 py-10 border-b border-gray-100 flex flex-col md:flex-row items-center gap-6">
-          {profile.avatar_url ? (
+          {getImageUrl(profile.avatar_url || profile.profilePicUrl) ? (
             <img
-              src={profile.avatar_url}
+              src={getImageUrl(profile.avatar_url || profile.profilePicUrl)}
               alt={profile.full_name}
+              onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
               className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
             />
           ) : (

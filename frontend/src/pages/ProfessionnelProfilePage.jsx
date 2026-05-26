@@ -28,6 +28,7 @@ import { getUserVehicles } from "../services/vehicleService";
 import useFavoriteStore from "../store/useFavoriteStore";
 import AuthRequiredModal from "../components/modals/AuthRequiredModal";
 import ReportModal from "../components/modals/ReportModal";
+import { getImageUrl } from "../utils/imageUtils";
 
 // ─── Specialty type to label map ──────────────────────────────────────────────
 const specialtyTypeLabels = {
@@ -102,7 +103,7 @@ function mapProfessional(userData) {
     rating_count: profile.rating_count || 0,
     bio: profile.bio || "",
     created_at: userData.created_at || profile.created_at,
-    avatar: store.logo_url || "",
+    avatar: getImageUrl(profile.avatar_url || profile.profilePicUrl || store.logo_url) || "",
   };
 }
 
@@ -304,6 +305,7 @@ export default function ProfessionalProfilePage() {
               <img
                 src={pro.avatar}
                 alt={pro.full_name}
+                onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                 className="w-full h-full object-cover object-top"
               />
             ) : (

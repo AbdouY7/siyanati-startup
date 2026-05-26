@@ -14,6 +14,7 @@ import {
   rejectStore,
 } from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const AdminStores = () => {
   const [stores, setStores] = useState([]);
@@ -229,10 +230,11 @@ const AdminStores = () => {
                       className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          {profile.logo_url ? (
+                          {getImageUrl(profile.logo_url) ? (
                             <img
-                              src={profile.logo_url}
+                              src={getImageUrl(profile.logo_url)}
                               alt={profile.store_name}
+                              onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                               className="w-10 h-10 rounded-full object-cover mr-3 border border-gray-200"
                             />
                           ) : (

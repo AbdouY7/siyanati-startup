@@ -13,13 +13,26 @@ import {
   RiLogoutBoxRLine,
   RiHome5Line,
   RiCarLine,
+  RiStarLine,
+  RiMoneyDollarCircleLine,
 } from "react-icons/ri";
 import useAuthStore from "../../store/authStore";
 
 const navItems = [
   { label: "Tableau de bord", icon: RiDashboardLine, path: "/store" },
+  {
+    label: "Mon Abonnement",
+    icon: RiMoneyDollarCircleLine,
+    path: "/store/subscription",
+  },
   { label: "Commandes", icon: RiCalendarLine, path: "/store/orders" },
   { label: "Pièces", icon: RiTimeLine, path: "/store/parts" },
+  { label: "Avis", icon: RiStarLine, path: "/store/reviews" },
+  {
+    label: "Notifications",
+    icon: RiNotification3Line,
+    path: "/store/notifications",
+  },
   {
     label: "Messages",
     icon: RiMessage3Line,
@@ -89,9 +102,10 @@ export default function StoreHome() {
                 to={item.path}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative no-underline
-                  ${isActive
-                    ? "bg-gradient-to-r from-[#2563eb]/10 to-[#2563eb]/5 text-[#2563eb]"
-                    : "text-[#6b7280] hover:text-[#1f1f1f] hover:bg-[#e9effd]/50"
+                  ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#2563eb]/10 to-[#2563eb]/5 text-[#2563eb]"
+                      : "text-[#6b7280] hover:text-[#1f1f1f] hover:bg-[#e9effd]/50"
                   }`
                 }>
                 {isActive && (
@@ -162,7 +176,9 @@ export default function StoreHome() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <button className="relative w-10 h-10 rounded-xl bg-[#f5f7fa] border border-[#e9effd] flex items-center justify-center text-[#6b7280] hover:text-[#1f1f1f] hover:border-[#2563eb]/30 transition-all">
+            <button
+              onClick={() => navigate("/store/notifications")}
+              className="relative w-10 h-10 rounded-xl bg-[#f5f7fa] border border-[#e9effd] flex items-center justify-center text-[#6b7280] hover:text-[#1f1f1f] hover:border-[#2563eb]/30 transition-all">
               <RiNotification3Line className="text-lg" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-[#2563eb] rounded-full" />
             </button>
@@ -171,7 +187,9 @@ export default function StoreHome() {
               <RiSettings4Line className="text-lg" />
             </button>
 
-            <button className="flex items-center gap-2.5 ml-2 bg-[#f5f7fa] border border-[#e9effd] rounded-xl px-3 py-2 hover:border-[#2563eb]/30 transition-all">
+            <button
+              onClick={() => navigate("/store/profile")}
+              className="flex items-center gap-2.5 ml-2 bg-[#f5f7fa] border border-[#e9effd] rounded-xl px-3 py-2 hover:border-[#2563eb]/30 transition-all">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#2563eb] to-[#0b3c5d] flex items-center justify-center text-xs font-bold text-white">
                 {initials}
               </div>

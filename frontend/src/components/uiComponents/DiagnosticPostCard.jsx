@@ -14,6 +14,7 @@ import { MdAccessTime } from "react-icons/md";
 // Auth imports
 import useAuthStore from "../../store/authStore";
 import AuthRequiredModal from "../modals/AuthRequiredModal";
+import { getImageUrl } from "../../utils/imageUtils";
 
 // ─── Image mini-carousel ───────────────────────────────────────────────────────
 function PostImages({ images }) {
@@ -128,8 +129,9 @@ export default function DiagnosticPostCard({ post }) {
       {/* ── Header ── */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         <img
-          src={post.user.profile_picture}
+          src={getImageUrl(post.user.profile_picture) || "/default-avatar.png"}
           alt={post.user.full_name}
+          onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
           className="w-10 h-10 rounded-full object-cover border-2 border-blue-100 shrink-0"
         />
         <div className="flex-1 min-w-0">

@@ -21,6 +21,7 @@ import {
   updateUserStatusAdmin,
 } from "../../services/adminService";
 import { formatDate } from "../../utils/dateUtils";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const AdminStoreDetails = () => {
   const { id } = useParams();
@@ -134,10 +135,11 @@ const AdminStoreDetails = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-primary/10 to-transparent px-8 py-10 border-b border-gray-100 flex flex-col md:flex-row items-center gap-6">
-          {profile.logo_url ? (
+          {getImageUrl(profile.logo_url) ? (
             <img
-              src={profile.logo_url}
+              src={getImageUrl(profile.logo_url)}
               alt={profile.store_name}
+              onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
               className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
             />
           ) : (
@@ -350,8 +352,9 @@ const AdminStoreDetails = () => {
                     rel="noopener noreferrer"
                     className="block relative group overflow-hidden rounded-lg border border-gray-200 bg-white aspect-square">
                     <img
-                      src={img}
+                      src={getImageUrl(img)}
                       alt={`Store Image ${index + 1}`}
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

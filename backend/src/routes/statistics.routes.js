@@ -5,6 +5,7 @@ const {
   getProfessionalDashboardStats,
   getStoreDashboardStats,
   toggleProfessionalAvailability,
+  getAdminSubscriptionStats,
 } = require("../controllers/statistics.controller");
 
 const router = express.Router();
@@ -22,5 +23,8 @@ router.get("/store-dashboard", getStoreDashboardStats);
 
 // PATCH /api/statistics/professional-availability
 router.patch("/professional-availability", toggleProfessionalAvailability);
+
+// GET /api/statistics/admin-subscriptions
+router.get("/admin-subscriptions", getAdminSubscriptionStats);
 
 module.exports = router;

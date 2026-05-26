@@ -32,6 +32,8 @@ import AdminStoreParts from "./pages/adminDashboard/AdminStoreParts";
 import AdminAllParts from "./pages/adminDashboard/AdminAllParts";
 import AdminPartDetails from "./pages/adminDashboard/AdminPartDetails";
 import AdminReports from "./pages/adminDashboard/AdminReports";
+import AdminSubscriptionPlans from "./pages/adminDashboard/AdminSubscriptionPlans";
+import AdminSubscriptions from "./pages/adminDashboard/AdminSubscriptions";
 import ProfileInfoPage from "./pages/normalUserPages/ProfileInfosPage";
 import PaymentAccountsPage from "./pages/normalUserPages/PaymentAcountsPage";
 import OrderHistoryPage from "./pages/normalUserPages/OrderHistoryPage";
@@ -58,13 +60,19 @@ import SchedulePro from "./pages/ProfessionnelDashboard/SchedulePro";
 import ProfilePro from "./pages/ProfessionnelDashboard/ProfilePro";
 import NotificationsPro from "./pages/ProfessionnelDashboard/NotificationsPro";
 import ReviewsPro from "./pages/ProfessionnelDashboard/ReviewsPro";
+import ProSubscription from "./pages/ProfessionnelDashboard/ProSubscription";
 import StoreHome from "./pages/StoreDashboard/StoreHome";
 import StoreDashboard from "./pages/StoreDashboard/StoreDashboard";
+import StoreSubscription from "./pages/StoreDashboard/StoreSubscription";
 import StoreOrdersPage from "./pages/StoreDashboard/StoreOrdersPage";
 import StorePartsPage from "./pages/StoreDashboard/StorePartsPage";
 import StorePartDetailsPage from "./pages/StoreDashboard/StorePartDetailsPage";
 import StoreOrderDetailsPage from "./pages/StoreDashboard/StoreOrderDetailsPage";
 import ClientOrderDetailsPage from "./pages/normalUserPages/ClientOrderDetailsPage";
+import StoreReviews from "./pages/StoreDashboard/ReviewsStore";
+import StoreNotifications from "./pages/StoreDashboard/StoreNotifications";
+import StoreProfile from "./pages/StoreDashboard/StoreProfile";
+import SubscriptionPaymentPage from "./pages/SubscriptionPaymentPage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -126,7 +134,10 @@ function App() {
               element={<PaymentAccountsPage />}
             />
             <Route path="/profile/orders" element={<OrderHistoryPage />} />
-            <Route path="/profile/orders/:id" element={<ClientOrderDetailsPage />} />
+            <Route
+              path="/profile/orders/:id"
+              element={<ClientOrderDetailsPage />}
+            />
             <Route
               path="/profile/appointments"
               element={<AppointmentHistoryPage />}
@@ -172,6 +183,7 @@ function App() {
         <Route element={<RoleRoute allowedRoles={["professional"]} />}>
           <Route path="/pro" element={<HomePro />}>
             <Route index element={<DashBoardPro />} />
+            <Route path="subscription" element={<ProSubscription />} />
             <Route path="appointments" element={<AppointmentPro />} />
             <Route path="schedule" element={<SchedulePro />} />
             <Route path="profile" element={<ProfilePro />} />
@@ -189,25 +201,35 @@ function App() {
         <Route element={<RoleRoute allowedRoles={["store"]} />}>
           <Route path="/store" element={<StoreHome />}>
             <Route index element={<StoreDashboard />} />
+            <Route path="subscription" element={<StoreSubscription />} />
             <Route path="orders" element={<StoreOrdersPage />} />
             <Route path="orders/:id" element={<StoreOrderDetailsPage />} />
             <Route path="parts" element={<StorePartsPage />} />
             <Route path="parts/:id" element={<StorePartDetailsPage />} />
             <Route path="diagnostic" element={<Diagnostics />} />
             <Route path="diagnostic/:id" element={<DiagnosticPostDetails />} />
+            <Route path="notifications" element={<StoreNotifications />} />
+            <Route path="reviews" element={<StoreReviews />} />
+            <Route path="profile" element={<StoreProfile />} />
             {/* <Route path="appointments" element={<AppointmentPro />} />
             <Route
               path="appointments/:id"
               element={<AppointmentDetailsPro />}
             /> */}
-
           </Route>
         </Route>
+
+        <Route path="/subscription-payment/:ref" element={<SubscriptionPaymentPage />} />
 
         {/* Admin Routes */}
         <Route element={<RoleRoute allowedRoles={["admin"]} />}>
           <Route path="/admin" element={<AdminHome />}>
             <Route index element={<DashboardHome />} />
+            <Route
+              path="subscription-plans"
+              element={<AdminSubscriptionPlans />}
+            />
+            <Route path="subscriptions" element={<AdminSubscriptions />} />
             <Route path="clients" element={<AdminClients />} />
             <Route path="clients/:id" element={<AdminClientDetails />} />
             <Route path="professionals" element={<AdminProfessionals />} />

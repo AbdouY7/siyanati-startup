@@ -4,6 +4,10 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  
+  // Initialize cron jobs
+  const { initCronJobs } = require("./services/cron.service");
+  initCronJobs();
 });
 
 const shutdown = async (signal) => {

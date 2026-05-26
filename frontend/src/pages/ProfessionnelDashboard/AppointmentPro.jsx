@@ -21,6 +21,7 @@ import {
   confirmAppointment,
   cancelAppointment,
 } from "../../services/appointmentService";
+import { getImageUrl } from "../../utils/imageUtils";
 
 /* ─── Status config ────────────────────────────────────────────────────── */
 
@@ -48,6 +49,9 @@ const StatusBadge = ({ status }) => {
 
 const getClientName = (apt) =>
   apt.customer?.client_profile?.full_name || apt.customer?.phone || "Client";
+
+const getClientAvatar = (apt) =>
+  getImageUrl(apt.customer?.client_profile?.avatar_url || apt.customer?.client_profile?.profilePicUrl || apt.customer?.avatar_url || apt.customer?.profile_picture);
 
 const getInitials = (name) =>
   name
@@ -286,9 +290,13 @@ export default function AppointmentPro() {
                 className="grid grid-cols-[2fr_1.2fr_1.2fr_1.2fr_1fr_auto] gap-4 px-6 py-4 border-b border-[#e9effd]/60 hover:bg-[#f8fafc] transition-colors items-center">
                 {/* Client */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2563eb]/20 to-[#0b3c5d]/20 flex items-center justify-center text-xs font-bold text-[#2563eb] flex-shrink-0">
-                    {initials}
-                  </div>
+                  {getClientAvatar(apt) ? (
+                    <img src={getClientAvatar(apt)} alt={clientName} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2563eb]/20 to-[#0b3c5d]/20 flex items-center justify-center text-xs font-bold text-[#2563eb] flex-shrink-0">
+                      {initials}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate text-[#1f1f1f]">
                       {clientName}
@@ -398,9 +406,13 @@ export default function AppointmentPro() {
                   </h3>
                   <div className="bg-[#f8fafc] border border-[#e9effd]/60 rounded-xl p-4 space-y-2.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563eb]/20 to-[#0b3c5d]/20 flex items-center justify-center text-sm font-bold text-[#2563eb]">
-                        {getInitials(getClientName(selectedApt))}
-                      </div>
+                      {getClientAvatar(selectedApt) ? (
+                        <img src={getClientAvatar(selectedApt)} alt={getClientName(selectedApt)} className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563eb]/20 to-[#0b3c5d]/20 flex items-center justify-center text-sm font-bold text-[#2563eb]">
+                          {getInitials(getClientName(selectedApt))}
+                        </div>
+                      )}
                       <div>
                         <p className="text-sm font-semibold text-[#1f1f1f]">
                           {getClientName(selectedApt)}

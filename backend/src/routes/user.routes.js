@@ -17,11 +17,25 @@ router.get("/users/:id", userController.getUser);
 // ─── Protected Routes (auth required) ───
 
 // Authenticated user's own profile actions
-router.put("/users/me/professional-profile", authMiddleware, userController.updateMyProfessionalProfile);
+router.put(
+  "/users/me/professional-profile",
+  authMiddleware,
+  upload.fields([
+    { name: "profilePicture", maxCount: 1 },
+    { name: "garageLogo", maxCount: 1 },
+    { name: "garageImages", maxCount: 10 },
+  ]),
+  userController.updateMyProfessionalProfile,
+);
 router.delete("/users/me", authMiddleware, userController.deleteMyAccount);
 
 // Update user profile (with optional profile picture upload)
-router.put("/users/:id", authMiddleware, upload.single("profilePicture"), userController.updateUserProfile);
+router.put(
+  "/users/:id",
+  authMiddleware,
+  upload.single("profilePicture"),
+  userController.updateUserProfile,
+);
 
 // Admin routes
 router.put(
@@ -53,6 +67,16 @@ router.patch(
   "/admin/users/:id/status",
   authMiddleware,
   userController.updateUserStatusAdmin,
+);
+
+router.put(
+  "/stores/me",
+  authMiddleware,
+  upload.fields([
+    { name: "logo", maxCount: 1 },
+    { name: "images", maxCount: 10 },
+  ]),
+  userController.updateMyStoreProfile,
 );
 
 module.exports = router;

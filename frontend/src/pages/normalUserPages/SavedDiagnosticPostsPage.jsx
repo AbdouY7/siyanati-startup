@@ -7,6 +7,7 @@ import {
   FiBookmark,
   FiChevronRight,
 } from "react-icons/fi";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const SavedDiagnosticPostsPage = () => {
   const [posts, setPosts] = useState([]);
@@ -103,8 +104,9 @@ const SavedDiagnosticPostsPage = () => {
                 >
                   <div className="flex items-center gap-3 p-4 pb-2">
                     <img
-                      src={post.author?.client_profile?.avatar_url || "/default-avatar.png"}
+                      src={getImageUrl(post.author?.client_profile?.avatar_url || post.author?.client_profile?.profilePicUrl) || "/default-avatar.png"}
                       alt="User"
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                       className="w-10 h-10 rounded-full object-cover border border-slate-100"
                     />
                     <div className="flex-1">

@@ -27,6 +27,7 @@ import { getAllProfessionals } from "../../services/professionalService";
 import { getAllParts } from "../../services/partService";
 import { getUserVehicles } from "../../services/vehicleService";
 import { getDiagnosticPosts } from "../../services/diagnosticService";
+import { getImageUrl } from "../../utils/imageUtils";
 
 import heroBg from "../../assets/img/home-user-hero.png";
 
@@ -160,8 +161,16 @@ export default function UserHome() {
   const { user } = useAuthStore();
 
   // Derive user info from auth store
-  const userProfile = user?.client_profile || user?.store_profile || user?.professional_profile || {};
-  const userName = userProfile.full_name || userProfile.owner_name || userProfile.store_name || "Utilisateur";
+  const userProfile =
+    user?.client_profile ||
+    user?.store_profile ||
+    user?.professional_profile ||
+    {};
+  const userName =
+    userProfile.full_name ||
+    userProfile.owner_name ||
+    userProfile.store_name ||
+    "Utilisateur";
   const userWilaya = userProfile.wilaya || "N/A";
 
   // State for data from APIs
@@ -176,7 +185,11 @@ export default function UserHome() {
   const [recentPosts, setRecentPosts] = useState([]);
   const [regionShops, setRegionShops] = useState([]);
   const [regionPros, setRegionPros] = useState([]);
-  const [stats, setStats] = useState({ questions: 0, responses: 0, prosCount: 0 });
+  const [stats, setStats] = useState({
+    questions: 0,
+    responses: 0,
+    prosCount: 0,
+  });
 
   useEffect(() => {
     // Fetch user vehicles
@@ -188,7 +201,10 @@ export default function UserHome() {
           model: v.model?.name || "",
           year: v.year,
           fuel: v.fuel_type || "N/A",
-          image: v.vehicule_picture_url || v.image_url || "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=300&q=80",
+          image: getImageUrl(
+            v.vehicule_picture_url ||
+            v.image_url
+          ) || "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=300&q=80",
         }));
         setUserCars(mapped);
         if (mapped.length > 0) setActiveCar(mapped[0]);
@@ -205,8 +221,8 @@ export default function UserHome() {
             store_name: sp.store_name || "Magasin",
             owner_name: sp.owner_name || "Propriétaire",
             wilaya: sp.wilaya || "N/A",
-            images: sp.images || [],
-            logo_url: sp.logo_url || "",
+            images: (sp.images || []).map(getImageUrl),
+            logo_url: getImageUrl(sp.logo_url) || "",
             rating_avg: Number(sp.rating_avg) || 0,
             verified: sp.status === "approved",
             is_frozen: sp.is_frozen || false,
@@ -214,7 +230,9 @@ export default function UserHome() {
         });
         const sorted = [...mapped].sort((a, b) => b.rating_avg - a.rating_avg);
         setTopShops(sorted.slice(0, 5));
-        setRegionShops(sorted.filter((s) => s.wilaya === userWilaya).slice(0, 5));
+        setRegionShops(
+          sorted.filter((s) => s.wilaya === userWilaya).slice(0, 5),
+        );
       })
       .catch(() => {});
 
@@ -226,16 +244,22 @@ export default function UserHome() {
           return {
             id: p.id,
             full_name: pp.full_name || "Professionnel",
-            specialty: specialtyLabels[pp.specialty_type] || pp.specialty_type || "Autre",
+            specialty:
+              specialtyLabels[pp.specialty_type] ||
+              pp.specialty_type ||
+              "Autre",
             wilaya: pp.wilaya || "N/A",
             rating_avg: Number(pp.rating_avg) || 0,
             is_available: pp.is_available !== false,
-            avatar: pp.shop_images?.[0] || "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
+            avatar: getImageUrl(pp.shop_images?.[0]) ||
+              "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
           };
         });
         const sorted = [...mapped].sort((a, b) => b.rating_avg - a.rating_avg);
         setTopPros(sorted.slice(0, 5));
-        const regional = sorted.filter((p) => p.wilaya === userWilaya).slice(0, 5);
+        const regional = sorted
+          .filter((p) => p.wilaya === userWilaya)
+          .slice(0, 5);
         setRegionPros(regional);
         setStats((prev) => ({ ...prev, prosCount: regional.length }));
       })
@@ -253,7 +277,7 @@ export default function UserHome() {
             description: p.description || "",
             price: Number(p.price_dzd),
             status: 4,
-            image: p.images?.[0] || null,
+            image: getImageUrl(p.images?.[0]) || null,
           };
         });
         setFeaturedParts(mapped);
@@ -266,9 +290,26 @@ export default function UserHome() {
         const posts = data?.posts || [];
         const mapped = posts.map((p) => {
           const a = p.author || {};
-          const name = a.client_profile?.full_name || a.professional_profile?.full_name || a.store_profile?.store_name || a.full_name || a.name || a.username || "Utilisateur";
-          const avatar = a.client_profile?.avatar_url || a.professional_profile?.avatar_url || a.store_profile?.logo_url || a.avatar_url || "/default-avatar.png";
-          const wilaya = a.client_profile?.wilaya || a.professional_profile?.wilaya || a.store_profile?.wilaya || "N/A";
+          const name =
+            a.client_profile?.full_name ||
+            a.professional_profile?.full_name ||
+            a.store_profile?.store_name ||
+            a.full_name ||
+            a.name ||
+            a.username ||
+            "Utilisateur";
+          const avatar = getImageUrl(
+            a.client_profile?.avatar_url ||
+            a.client_profile?.profilePicUrl ||
+            a.professional_profile?.avatar_url ||
+            a.store_profile?.logo_url ||
+            a.avatar_url
+          ) || "/default-avatar.png";
+          const wilaya =
+            a.client_profile?.wilaya ||
+            a.professional_profile?.wilaya ||
+            a.store_profile?.wilaya ||
+            "N/A";
 
           return {
             id: p.id,
@@ -285,7 +326,7 @@ export default function UserHome() {
               year: p.year || p.vehicle?.year || "",
               engine: p.fuel_type || p.vehicle?.fuel_type || "",
             },
-            car_images: p.images || [],
+            car_images: (p.images || []).map(getImageUrl),
             tags: [],
             description: p.description || "",
             saves_count: p.saves_count || p._count?.savedBy || 0,
@@ -326,52 +367,52 @@ export default function UserHome() {
     <div className="min-h-screen bg-[#f5f6fa] font-sans">
       {/* ══════════════════════════════ HERO ══════════════════════════════════ */}
       <div
-        className="relative overflow-hidden px-6 pt-[100px] pb-28"
+        className="relative overflow-hidden px-6 pt-[120px] pb-32"
         style={{
-          backgroundImage: `linear-gradient(to right, rgba(10,20,80,0.93) 30%, rgba(10,20,80,0.65) 60%, rgba(10,20,80,0.35) 100%), url(${heroBg})`,
+          backgroundImage: `linear-gradient(to right, rgba(5,15,60,0.97) 25%, rgba(8,18,70,0.80) 55%, rgba(10,20,80,0.30) 100%), url(${heroBg})`,
           backgroundSize: "cover",
-          backgroundPosition: "center right",
+          backgroundPosition: "bottom right",
         }}>
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
             {/* Left: greeting + search */}
             <div className="flex-1">
-              <p className="text-blue-200 text-sm font-medium mb-1 tracking-wide uppercase">
+              <p className="text-blue-300 text-xs font-semibold mb-2 tracking-[0.2em] uppercase">
                 Bienvenue de retour
               </p>
-              <h1 className="text-white font-black text-3xl md:text-4xl leading-tight mb-1 tracking-tight">
+              <h1 className="text-white font-black text-4xl md:text-5xl leading-tight mb-2 tracking-tight drop-shadow-lg">
                 {userName.split(" ")[0]}{" "}
-                <span className="text-blue-200">
+                <span className="text-blue-300">
                   {userName.split(" ").slice(1).join(" ")}
                 </span>
               </h1>
-              <div className="flex items-center gap-1 text-blue-300 text-sm mb-5">
-                <FiMapPin size={12} />
-                <span>{userWilaya}</span>
+              <div className="flex items-center gap-1.5 text-blue-300/80 text-sm mb-7">
+                <FiMapPin size={13} />
+                <span className="font-medium">{userWilaya}</span>
               </div>
 
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 max-w-md focus-within:bg-white/15 transition-colors">
-                <FiSearch className="text-white/60 shrink-0" size={16} />
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-3.5 max-w-md focus-within:bg-white/15 focus-within:border-white/35 transition-all duration-200 shadow-lg">
+                <FiSearch className="text-white/50 shrink-0" size={17} />
                 <input
                   type="text"
                   placeholder="Rechercher pièces, magasins, professionnels..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder-white/50"
+                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder-white/40 font-medium"
                 />
               </div>
             </div>
 
             {/* Right: car card */}
             <div className="shrink-0">
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 min-w-[240px]">
-                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-5 min-w-[260px] shadow-xl shadow-black/20">
+                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-[0.18em] mb-3 flex items-center gap-1.5">
                   <FaCar size={10} /> Mon véhicule
                 </p>
                 {activeCar ? (
                   <>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-16 h-11 rounded-lg overflow-hidden bg-white/10 shrink-0">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-20 h-13 rounded-xl overflow-hidden bg-white/10 shrink-0 shadow-md">
                         <img
                           src={activeCar.image}
                           alt={activeCar.model}
@@ -379,26 +420,28 @@ export default function UserHome() {
                         />
                       </div>
                       <div>
-                        <p className="text-white font-black text-lg leading-tight">
+                        <p className="text-white font-black text-xl leading-tight tracking-tight">
                           {activeCar.brand} {activeCar.model}
                         </p>
-                        <p className="text-blue-200 text-[11px]">
+                        <p className="text-blue-300/80 text-xs mt-0.5 font-medium">
                           {activeCar.year} · {activeCar.fuel}
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={() => setShowCarModal(true)}
-                      className="w-full flex items-center justify-center gap-1.5 bg-white text-blue-700 text-[12px] font-bold py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
+                      className="w-full flex items-center justify-center gap-2 bg-white text-blue-700 text-xs font-bold py-2.5 rounded-2xl hover:bg-blue-50 active:scale-95 transition-all duration-150 shadow-sm">
                       <FiRepeat size={12} /> Changer véhicule
                     </button>
                   </>
                 ) : (
-                  <div className="text-center py-2">
-                    <p className="text-blue-200 text-xs mb-2">Aucun véhicule enregistré</p>
+                  <div className="text-center py-3">
+                    <p className="text-blue-200/70 text-xs mb-3">
+                      Aucun véhicule enregistré
+                    </p>
                     <Link
                       to="/add-car"
-                      className="text-white text-xs font-semibold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors">
+                      className="text-white text-xs font-semibold bg-white/20 px-4 py-2 rounded-xl hover:bg-white/30 transition-colors border border-white/10">
                       + Ajouter un véhicule
                     </Link>
                   </div>
@@ -441,14 +484,19 @@ export default function UserHome() {
           viewAllTo="/magasins"
           viewAllLabel="Voir tous les magasins">
           {topShops.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8">Aucun magasin disponible.</p>
+            <p className="text-sm text-gray-400 py-8">
+              Aucun magasin disponible.
+            </p>
           ) : (
             topShops.map((store) => (
               <div key={store.id} className="shrink-0 w-[200px]">
                 <ShopCards
                   id={store.id}
                   name={store.store_name}
-                  image={store.images?.[0] || store.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                  image={getImageUrl(
+                    store.images?.[0] ||
+                    store.logo_url
+                  ) || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
                   owner={store.owner_name}
                   wilaya={store.wilaya}
                   rating={store.rating_avg}
@@ -465,7 +513,9 @@ export default function UserHome() {
           viewAllTo="/professionnels"
           viewAllLabel="Voir tous les professionnels">
           {topPros.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8">Aucun professionnel disponible.</p>
+            <p className="text-sm text-gray-400 py-8">
+              Aucun professionnel disponible.
+            </p>
           ) : (
             topPros.map((p) => (
               <div key={p.id} className="shrink-0 w-[180px]">
@@ -489,7 +539,9 @@ export default function UserHome() {
           viewAllTo="/catalogues"
           viewAllLabel="Voir plus de pièces">
           {featuredParts.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8">Aucune pièce disponible.</p>
+            <p className="text-sm text-gray-400 py-8">
+              Aucune pièce disponible.
+            </p>
           ) : (
             featuredParts.map((part) => (
               <div key={part.id} className="shrink-0 w-[210px]">
@@ -560,7 +612,10 @@ export default function UserHome() {
                     key={store.id}
                     id={store.id}
                     name={store.store_name}
-                    image={store.images?.[0] || store.logo_url || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                    image={getImageUrl(
+                      store.images?.[0] ||
+                      store.logo_url
+                    ) || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
                     owner={store.owner_name}
                     wilaya={store.wilaya}
                     rating={store.rating_avg}

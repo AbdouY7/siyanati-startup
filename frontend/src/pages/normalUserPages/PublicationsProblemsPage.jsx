@@ -255,7 +255,10 @@ const PublicationsProblemsPage = () => {
           formPayload.append("images", file);
         });
 
-        const response = await updateDiagnosticPost(editingPost.id, formPayload);
+        const response = await updateDiagnosticPost(
+          editingPost.id,
+          formPayload,
+        );
 
         if (response?.success && response?.data) {
           setPosts((prev) =>
@@ -461,10 +464,11 @@ const PublicationsProblemsPage = () => {
                       <div className="flex items-center gap-3">
                         <button className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition text-xs">
                           <FiMessageSquare size={14} />
-                          <span>{post.comments_count || "0"}</span>
+                          <span>{post.comments || "0"}</span>
                         </button>
                         <button className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition text-xs">
                           <FiBookmark size={14} />
+                          <span>{post.saves_count || "0"}</span>
                         </button>
                         <button className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition text-xs">
                           <FiShare2 size={14} />
@@ -655,11 +659,7 @@ const PublicationsProblemsPage = () => {
                 ) : (
                   <>
                     <span>{editingPost ? "Modifier" : "Ajoutez"}</span>
-                    {editingPost ? (
-                      <FiEdit3 size={16} />
-                    ) : (
-                      <FiPlus size={16} />
-                    )}
+                    {editingPost ? <FiEdit3 size={16} /> : <FiPlus size={16} />}
                   </>
                 )}
               </button>
@@ -683,7 +683,8 @@ const PublicationsProblemsPage = () => {
               Supprimer ce post ?
             </h3>
             <p className="text-sm text-gray-500 mb-6">
-              Cette action est irréversible. Le post sera définitivement supprimé.
+              Cette action est irréversible. Le post sera définitivement
+              supprimé.
             </p>
             <div className="flex items-center gap-3">
               <button

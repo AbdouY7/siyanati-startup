@@ -13,11 +13,15 @@ import {
   RiCarLine,
   RiMessage3Line,
   RiFileTextLine,
+  RiMoneyDollarCircleLine,
+  RiFilePaper2Line,
 } from "react-icons/ri";
 import useAuthStore from "../../store/authStore";
 
 const navItems = [
   { label: "Tableau de bord", icon: RiDashboardLine, path: "/admin" },
+  { label: "Plans d'abonnement", icon: RiFilePaper2Line, path: "/admin/subscription-plans" },
+  { label: "Abonnements", icon: RiMoneyDollarCircleLine, path: "/admin/subscriptions" },
   { label: "Clients", icon: RiUserLine, path: "/admin/clients" },
   { label: "Professionnels", icon: RiBriefcaseLine, path: "/admin/professionals" },
   { label: "Magasins", icon: RiStoreLine, path: "/admin/stores" },

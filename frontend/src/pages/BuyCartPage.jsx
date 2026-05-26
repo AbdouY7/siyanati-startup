@@ -143,6 +143,29 @@ export default function BuyCartPage() {
     0
   );
 
+  const handleCartQtyChange = (partId, delta) => {
+    setCart((prev) => {
+      const current = prev[partId]?.qty || 0;
+      const next = current + delta;
+      let updated;
+      if (next <= 0) {
+        const { [partId]: _, ...rest } = prev;
+        updated = rest;
+      } else {
+        updated = { ...prev, [partId]: { ...prev[partId], qty: next } };
+      }
+      // Sync back to sessionStorage
+      sessionStorage.setItem("checkout_cart", JSON.stringify(updated));
+      // If cart is now empty, redirect back
+      if (Object.keys(updated).length === 0) {
+        sessionStorage.removeItem("checkout_cart");
+        sessionStorage.removeItem("checkout_store");
+        navigate(-1);
+      }
+      return updated;
+    });
+  };
+
   const [form, setForm] = useState({
     fullName: "",
     cardNumber: "",
@@ -314,12 +337,29 @@ export default function BuyCartPage() {
                           {item.part.name}
                         </h3>
                         <p className="text-gray-400 text-xs mt-0.5">
-                          Quantité : {item.qty}
+                          {Number(item.part.price_dzd || item.part.prix || 0).toLocaleString("fr-DZ")} Da / unité
                         </p>
                       </div>
-                      <p className="font-black text-blue-700">
-                        {(Number(item.part.price_dzd || item.part.prix) * item.qty).toLocaleString("fr-DZ")} Da
-                      </p>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <div className="flex items-center gap-0 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                          <button
+                            onClick={() => handleCartQtyChange(item.part.id, -1)}
+                            className="px-2.5 py-1 text-gray-600 font-bold text-sm hover:bg-gray-100 active:scale-90 transition-all">
+                            −
+                          </button>
+                          <span className="px-2.5 text-sm font-bold text-gray-800 min-w-[32px] text-center">
+                            {item.qty}
+                          </span>
+                          <button
+                            onClick={() => handleCartQtyChange(item.part.id, +1)}
+                            className="px-2.5 py-1 text-gray-600 font-bold text-sm hover:bg-gray-100 active:scale-90 transition-all">
+                            +
+                          </button>
+                        </div>
+                        <p className="font-black text-blue-700">
+                          {(Number(item.part.price_dzd || item.part.prix) * item.qty).toLocaleString("fr-DZ")} Da
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}

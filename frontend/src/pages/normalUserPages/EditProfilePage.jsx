@@ -4,6 +4,7 @@ import useAuthStore from "../../store/authStore";
 import { updateUserProfile } from "../../services/userService";
 import { FiArrowLeft, FiSave } from "react-icons/fi";
 import Input from "../../components/uiComponents/InputField";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const EditProfilePage = () => {
   const { user, setAuth } = useAuthStore();
@@ -24,7 +25,7 @@ const EditProfilePage = () => {
 
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [profilePicPreview, setProfilePicPreview] = useState(
-    profile.profilePicUrl || profile.avatar_url || null,
+    getImageUrl(profile.profilePicUrl || profile.avatar_url) || null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);

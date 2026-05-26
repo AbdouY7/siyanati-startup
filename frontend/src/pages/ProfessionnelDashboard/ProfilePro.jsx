@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
+import { getImageUrl } from "../../utils/imageUtils";
 import { useNavigate } from "react-router-dom";
 import {
   RiBuilding2Line,
@@ -59,8 +60,17 @@ export default function ProfilePro() {
       .slice(0, 2);
   }, [profile.full_name]);
 
-  const heroImage = garage?.logo_url || garage?.images?.[0] || "";
-  const garageImages = garage?.images || [];
+  const heroImage = getImageUrl(garage?.logo_url || garage?.images?.[0] || "");
+  const garageImages = garage?.images?.map(getImageUrl) || [];
+  const avatarImage = getImageUrl(profile.avatar_url || user?.avatar_url || "");
+
+  const [profilePicFile, setProfilePicFile] = useState(null);
+  const [garageLogoFile, setGarageLogoFile] = useState(null);
+  const [garageImageFiles, setGarageImageFiles] = useState([]);
+
+  const profilePicRef = useRef(null);
+  const garageLogoRef = useRef(null);
+  const garageImagesRef = useRef(null);
 
   const updateField = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -71,7 +81,19 @@ export default function ProfilePro() {
     try {
       setSaving(true);
       setError(null);
-      const updatedUser = await updateMyProfessionalProfile(form);
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+      if (profilePicFile) formData.append("profilePicture", profilePicFile);
+      if (garageLogoFile) formData.append("garageLogo", garageLogoFile);
+      if (garageImageFiles.length > 0) {
+        garageImageFiles.forEach((file) => {
+          formData.append("garageImages", file);
+        });
+      }
+
+      const updatedUser = await updateMyProfessionalProfile(formData);
       await setAuth(updatedUser, accessToken);
       setEditing(false);
     } catch (err) {
@@ -116,11 +138,17 @@ export default function ProfilePro() {
             />
           )}
         </div>
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 ">
           <div className="-mt-12 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex items-end gap-4">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-[#2563eb] text-2xl font-bold text-white shadow-lg">
-                {heroImage ? (
+            <div className="flex items-end gap-4 z-10">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-[#2563eb] text-2xl font-bold text-white shadow-lg ">
+                {avatarImage ? (
+                  <img
+                    src={avatarImage}
+                    alt={profile.full_name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : heroImage ? (
                   <img
                     src={heroImage}
                     alt={profile.full_name}
@@ -267,6 +295,26 @@ export default function ProfilePro() {
               value={form.full_name}
               onChange={(value) => updateField("full_name", value)}
             />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-[#6b7280]">Photo de profil</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={profilePicRef}
+                  onChange={(e) => setProfilePicFile(e.target.files[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => profilePicRef.current.click()}
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  Choisir une image
+                </button>
+                {profilePicFile && <span className="text-xs text-gray-500">{profilePicFile.name}</span>}
+              </div>
+            </div>
             <Field
               label="Telephone"
               value={form.phone}
@@ -345,17 +393,46 @@ export default function ProfilePro() {
                   value={form.garage_address}
                   onChange={(value) => updateField("garage_address", value)}
                 />
-                <Field
-                  label="Logo / photo URL"
-                  value={form.garage_logo_url}
-                  onChange={(value) => updateField("garage_logo_url", value)}
-                />
-                <div className="md:col-span-2">
-                  <Field
-                    label="Images du garage (URLs separees par virgule)"
-                    value={form.garage_images}
-                    onChange={(value) => updateField("garage_images", value)}
-                  />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-[#6b7280]">Logo du garage</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={garageLogoRef}
+                      onChange={(e) => setGarageLogoFile(e.target.files[0])}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => garageLogoRef.current.click()}
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                    >
+                      Choisir le logo
+                    </button>
+                    {garageLogoFile && <span className="text-xs text-gray-500 truncate max-w-[120px]">{garageLogoFile.name}</span>}
+                  </div>
+                </div>
+                <div className="md:col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-[#6b7280]">Images du garage</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      ref={garageImagesRef}
+                      onChange={(e) => setGarageImageFiles(Array.from(e.target.files))}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => garageImagesRef.current.click()}
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                    >
+                      Choisir des images
+                    </button>
+                    {garageImageFiles.length > 0 && <span className="text-xs text-gray-500">{garageImageFiles.length} fichier(s) selectionne(s)</span>}
+                  </div>
                 </div>
               </div>
             </div>

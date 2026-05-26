@@ -19,6 +19,7 @@ import {
   FiSend,
   FiImage,
 } from "react-icons/fi";
+import { getImageUrl } from "../utils/imageUtils";
 
 const resolveAuthor = (entity) => {
   const a = entity?.author || entity?.user || {};
@@ -36,15 +37,16 @@ const resolveAuthor = (entity) => {
     "Utilisateur inconnu";
 
   const avatar =
-    a?.client_profile?.avatar_url ||
-    a?.professional_profile?.avatar_url ||
-    a?.store_profile?.logo_url ||
-    a?.avatar_url ||
-    a?.avatar ||
-    a?.profile_picture ||
-    a?.photo ||
-    entity?.author_avatar ||
-    "/default-avatar.png";
+    getImageUrl(
+      a?.client_profile?.avatar_url ||
+      a?.professional_profile?.avatar_url ||
+      a?.store_profile?.logo_url ||
+      a?.avatar_url ||
+      a?.avatar ||
+      a?.profile_picture ||
+      a?.photo ||
+      entity?.author_avatar
+    ) || "/default-avatar.png";
 
   return { name, avatar };
 };
@@ -106,7 +108,7 @@ const DiagnosticPostDetails = () => {
     
     setIsSubmitting(true);
     try {
-      const response = await createPostComment(id, { content: newComment });
+      const response = await createPostComment(id, { body: newComment });
       if (response?.success && response?.data) {
         setComments(prev => [...prev, response.data]);
         setNewComment("");
@@ -359,7 +361,7 @@ const DiagnosticPostDetails = () => {
                         </span>
                       </div>
                       <p className="text-slate-700 text-sm whitespace-pre-line">
-                        {comment.content}
+                        {comment.body}
                       </p>
                     </div>
                   </div>

@@ -4,6 +4,7 @@ import useAuthStore from "../../store/authStore";
 import { getYear } from "../../utils/dateUtils";
 import Header from "../../components/layaouts/Header";
 import { FiEdit2, FiSettings, FiLogOut, FiMapPin } from "react-icons/fi";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const ProfilePage = () => {
   const { user, clearAuth } = useAuthStore();
@@ -31,14 +32,15 @@ const ProfilePage = () => {
         <Header />
 
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-end justify-between gap-6">
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 w-full">
+          <div className="flex flex-col md:flex-row items-center  gap-6 w-full">
             {/* Avatar */}
-            <div className="relative group">
+            <div className="relative ">
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white overflow-hidden shadow-lg bg-white flex items-center justify-center">
-                {profile.profilePicUrl || profile.avatar_url ? (
+                {getImageUrl(profile.profilePicUrl || profile.avatar_url) ? (
                   <img
-                    src={profile.profilePicUrl || profile.avatar_url}
+                    src={getImageUrl(profile.profilePicUrl || profile.avatar_url)}
                     alt="Profile"
+                    onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -50,7 +52,7 @@ const ProfilePage = () => {
             </div>
 
             {/* User Info */}
-            <div className="flex flex-col items-center md:items-start text-white mb-2">
+            <div className="flex flex-col items-center md:items-start justify-center text-white ">
               <h1 className="text-2xl md:text-3xl font-bold font-font-secondary">
                 {profile.full_name || "Utilisateur"}
               </h1>

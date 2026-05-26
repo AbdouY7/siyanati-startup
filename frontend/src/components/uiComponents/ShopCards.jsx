@@ -16,6 +16,7 @@ const ShopCards = ({ id, name, image, owner, wilaya, rating, available }) => {
         <img
           src={image}
           alt={`${name} storefront`}
+          onError={(e) => { e.target.onerror = null; e.target.src = "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"; }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[350ms] ease-out"
         />
       </div>

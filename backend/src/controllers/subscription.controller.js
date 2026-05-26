@@ -88,7 +88,7 @@ const createSubscription = async (req, res, next) => {
             subscriber_id: subscriber.subscriber_id,
             subscriber_type: subscriber.subscriber_type,
             plan_id: plan.id,
-            status: "pending",
+            status: "suspended",
             is_trial: false,
             started_at: now,
             expires_at: expiresAt

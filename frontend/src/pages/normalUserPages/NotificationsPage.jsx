@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { FiBell, FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
-import { getMyNotifications, markNotificationAsRead } from "../../services/notificationService";
+import {
+  getMyNotifications,
+  markNotificationAsRead,
+} from "../../services/notificationService";
+import { Link } from "react-router-dom";
+import { FiChevronLeft } from "react-icons/fi";
 
 const typeIcons = {
   report_reviewed: FiAlertTriangle,
@@ -56,7 +61,7 @@ export default function NotificationsPage() {
     try {
       await markNotificationAsRead(id);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
       );
     } catch (err) {
       console.error(err);
@@ -65,13 +70,22 @@ export default function NotificationsPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FiBell className="text-blue-600" size={24} /> Mes notifications
-      </h2>
+      <div className="flex items-center gap-10 mb-10">
+        <Link
+          to="/profile"
+          className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition shadow-sm">
+          <FiChevronLeft size={20} />
+        </Link>
+        <h2 className="text-2xl font-bold  flex items-center gap-4">
+          <FiBell className="text-blue-600" size={24} /> Mes notifications
+        </h2>
+      </div>
       {loading && notifications.length === 0 ? (
         <div className="text-center py-8">Chargement...</div>
       ) : notifications.length === 0 ? (
-        <div className="text-center text-gray-400 py-8">Aucune notification</div>
+        <div className="text-center text-gray-400 py-8">
+          Aucune notification
+        </div>
       ) : (
         <div className="space-y-2">
           {notifications.map((notif) => {
@@ -83,15 +97,22 @@ export default function NotificationsPage() {
                 onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
                 className={`p-4 rounded-xl border border-gray-100 flex gap-4 cursor-pointer transition-colors hover:bg-gray-50 ${
                   !notif.is_read ? "bg-blue-50/30" : ""
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                }`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
                   <Icon size={20} />
                 </div>
                 <div className="flex-1">
-                  <p className={`font-medium ${!notif.is_read ? "text-gray-900" : "text-gray-700"}`}>{notif.title}</p>
-                  <p className="text-sm text-gray-500 line-clamp-2 mt-1">{notif.message}</p>
-                  <p className="text-xs text-gray-400 mt-1">{timeAgo(notif.created_at)}</p>
+                  <p
+                    className={`font-medium ${!notif.is_read ? "text-gray-900" : "text-gray-700"}`}>
+                    {notif.title}
+                  </p>
+                  <p className="text-sm text-gray-500 line-clamp-2 mt-1">
+                    {notif.message}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {timeAgo(notif.created_at)}
+                  </p>
                 </div>
               </div>
             );
