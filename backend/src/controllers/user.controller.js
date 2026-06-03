@@ -1,3 +1,4 @@
+// Trigger nodemon restart
 const bcrypt = require("bcrypt");
 const prisma = require("../prisma/client");
 const uploadImage = require("../utils/uploadImage");

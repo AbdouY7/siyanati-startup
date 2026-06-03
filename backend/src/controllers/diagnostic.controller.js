@@ -14,6 +14,12 @@ const postListInclude = {
   vehicle: { include: { brand: true, model: true } },
   brand: true,
   model: true,
+  _count: {
+    select: {
+      comments: true,
+      reactions: true,
+    },
+  },
 };
 
 const postDetailInclude = { ...postListInclude };

@@ -129,7 +129,7 @@ export default function Magasins() {
             />
           </div>
           <button className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl transition-all duration-150 shadow-sm">
-            <FiPlus size={18} />
+            <FiSearch size={18} />
           </button>
         </div>
 
@@ -193,7 +193,9 @@ export default function Magasins() {
         {!isLoading && error && (
           <div className="text-center py-24 text-red-400">
             <p className="text-lg font-medium">{error}</p>
-            <p className="text-sm mt-1">Veuillez vous connecter et réessayer.</p>
+            <p className="text-sm mt-1">
+              Veuillez vous connecter et réessayer.
+            </p>
           </div>
         )}
 
@@ -206,14 +208,18 @@ export default function Magasins() {
             </p>
           </div>
         ) : (
-          !isLoading && !error && (
+          !isLoading &&
+          !error && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {filtered.map((store) => (
                 <ShopCards
                   key={store.id}
                   id={store.id}
                   name={store.store_name}
-                  image={getImageUrl(store.images[0] || store.logo_url) || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                  image={
+                    getImageUrl(store.images[0] || store.logo_url) ||
+                    "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"
+                  }
                   owner={store.owner_name}
                   wilaya={store.wilaya}
                   rating={store.rating_avg}

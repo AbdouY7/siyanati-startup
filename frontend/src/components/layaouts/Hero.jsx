@@ -1,86 +1,140 @@
-import React from "react";
-
+import React, { useEffect, useRef } from "react";
 import heroImage from "../../assets/img/syanati-hero-pic.png";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import { FiArrowRight } from "react-icons/fi";
 
 const Hero = () => {
+  const headingRef = useRef(null);
+
+  useEffect(() => {
+    const el = headingRef.current;
+    if (!el) return;
+    el.style.opacity = "0";
+    el.style.transform = "translateY(32px)";
+    requestAnimationFrame(() => {
+      el.style.transition = "opacity 0.9s ease, transform 0.9s ease";
+      el.style.opacity = "1";
+      el.style.transform = "translateY(0)";
+    });
+  }, []);
+
   return (
-    <div className="relative min-h-[calc(100vh-60px)] bg-gradient-to-tl from-white via-blue-200 to-blue-400  lg:to-blue-200 overflow-hidden  ">
-      {/* Desktop layout */}
-      <div className="hidden lg:flex items-center justify-between gap-6 px-10 xl:px-16 h-full min-h-[calc(100vh-60px)] pt-[100px] pb-10">
-        <div className="flex flex-col gap-12 items-baseline max-w-[55%]">
-          <div className="flex flex-col w-full gap-6 text-center md:text-left">
-            <h1 className="text-[80px] xl:text-[80px] font-bold font-secondary text-black leading-[1.2] uppercase">
-              Pièces auto & réparations, en un seul{" "}
-              <b className="bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
-                endroit
-              </b>
-            </h1>
-            <p className="text-[16px] text-gray-700  font-medium font-primary tracking-wide w-[80%]  ">
-              SIYANATI, la plateforme qui vous permet de trouver vos pièces de
-              voiture facilement
-            </p>
-          </div>
-          <div className="flex gap-4 w-full">
-            <AnimatedButton
-              variant="primary"
-              className="px-8 py-4"
-              icon={<FiArrowRight size={20} />}
-              iconPosition="right"
-              iconRight>
-              commencez avec SIYANATI
-            </AnimatedButton>
-            <AnimatedButton variant="secondary">
-              soyez professionnel SIYANATI
-            </AnimatedButton>
-          </div>
-        </div>
-        <img className="w-1/2 h-auto" src={heroImage} alt="Siyanati hero" />
-      </div>
+    <div className="relative min-h-[calc(100vh-60px)] overflow-hidden flex items-center justify-center pb-16">
+      {/* Background image */}
+      <img
+        src={heroImage}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover object-center scale-105"
+        style={{ filter: "brightness(0.45) saturate(1.1)" }}
+      />
 
-      {/* Mobile & Tablet layout */}
-      <div className="lg:hidden flex flex-col min-h-[calc(100vh-60px)]">
-        {/* Top: text + buttons */}
-        <div className="flex flex-col gap-6 px-5 sm:px-10 pt-[100px] pb-4">
-          <h1 className="text-[42px] sm:text-[56px] font-bold font-secondary text-black leading-[1.15] uppercase text-left">
-            Pièces auto & réparations, en un seul{" "}
-            <b className="bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
-              endroit
-            </b>
-          </h1>
-          <p className="text-[14px] sm:text-[15px] text-gray-700 font-medium font-primary tracking-wide">
-            SIYANATI, la plateforme qui vous permet de trouver vos pièces de
-            voiture facilement
-          </p>
+      {/* Gradient overlays for depth */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(5,15,40,0.55) 0%, rgba(5,15,40,0.25) 40%, rgba(5,15,40,0.70) 100%)",
+        }}
+      />
+      {/* Subtle vignette */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.45) 100%)",
+        }}
+      />
 
-          {/* Buttons — stacked on mobile, side by side on tablet */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <AnimatedButton
-              variant="primary"
-              className="w-full sm:flex-1 px-6 py-3.5 text-sm"
-              icon={<FiArrowRight size={18} />}
-              iconPosition="right"
-              iconRight>
-              commencez avec SIYANATI
-            </AnimatedButton>
-            <AnimatedButton
-              variant="secondary"
-              className="w-full sm:flex-1 px-6 py-3.5 text-sm">
-              soyez professionnel SIYANATI
-            </AnimatedButton>
-          </div>
-        </div>
-
-        {/* Bottom: image bleeds to edges */}
-        <div className="flex-1 flex items-end mt-4">
-          <img
-            className="w-full h-auto object-contain object-bottom drop-shadow-2xl"
-            src={heroImage}
-            alt="Siyanati hero"
+      {/* Content */}
+      <div
+        ref={headingRef}
+        className="relative z-10 flex flex-col items-center text-center px-6 sm:px-10 max-w-4xl mx-auto pt-20 sm:pt-24">
+        {/* Eyebrow pill */}
+        <div
+          className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase"
+          style={{
+            background: "rgba(255,255,255,0.12)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            color: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(8px)",
+            letterSpacing: "0.12em",
+          }}>
+          <span
+            className="w-1.5 h-1.5 rounded-full animate-pulse"
+            style={{ background: "#38bdf8" }}
           />
+          La plateforme automobile N°1 en Algérie
+        </div>
+
+        {/* Main heading */}
+        <h1
+          className="font-bold uppercase leading-[1.08] mb-6"
+          style={{
+            fontFamily: "'Arial Black', 'Impact', sans-serif",
+            fontSize: "clamp(2.8rem, 7vw, 5.5rem)",
+            color: "#ffffff",
+            textShadow: "0 4px 40px rgba(0,0,0,0.5)",
+          }}>
+          Pièces auto & <span style={{ color: "#ffffff" }}>réparations,</span>
+          <br />
+          en un seul{" "}
+          <span
+            style={{
+              background: "linear-gradient(90deg, #38bdf8, #2563eb)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>
+            ENDROIT
+          </span>
+        </h1>
+
+        {/* Subtext */}
+        <p
+          className="mb-10 max-w-lg"
+          style={{
+            color: "rgba(255,255,255,0.72)",
+            fontSize: "clamp(0.95rem, 2vw, 1.1rem)",
+            lineHeight: 1.65,
+            fontWeight: 400,
+          }}>
+          SIYANATI, la plateforme qui vous permet de trouver vos pièces de
+          voiture facilement — partout en Algérie.
+        </p>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <AnimatedButton
+            variant="primary"
+            className="px-8 py-4 text-base"
+            style={{
+              backdropFilter: "blur(12px)",
+            }}
+            icon={<FiArrowRight size={18} />}
+            iconPosition="right"
+            iconRight>
+            commencez avec SIYANATI
+          </AnimatedButton>
+
+          <AnimatedButton
+            variant="secondary"
+            className="px-8 py-4 text-base"
+            style={{
+              background: "rgba(255,255,255,0.10)",
+              border: "1px solid rgba(255,255,255,0.30)",
+              color: "#ffffff",
+              backdropFilter: "blur(12px)",
+            }}>
+            soyez professionnel SIYANATI
+          </AnimatedButton>
         </div>
       </div>
+
+      {/* Floating trust card straddling the hero bottom edge */}
+      <div
+        className="absolute bottom-0 left-1/2 w-full max-w-2xl px-6"
+        style={{ transform: "translate(-50%, 50%)", zIndex: 20 }}></div>
     </div>
   );
 };
