@@ -19,6 +19,8 @@ import Professionals from "./pages/Professionals";
 import ProfilePage from "./pages/normalUserPages/ProfilePage";
 import EditProfilePage from "./pages/normalUserPages/EditProfilePage";
 import VehiculesPage from "./pages/normalUserPages/vehiculesPage";
+import ClientPartsPage from "./pages/normalUserPages/ClientPartsPage";
+import ClientPartDetailsPage from "./pages/normalUserPages/ClientPartDetailsPage";
 
 import DashboardHome from "./pages/adminDashboard/DashboardHome";
 import AdminHome from "./pages/adminDashboard/AdminHome";
@@ -26,6 +28,7 @@ import AdminProfessionals from "./pages/adminDashboard/AdminProfessionals";
 import AdminProfessionalDetails from "./pages/adminDashboard/AdminProfessionalDetails";
 import AdminClients from "./pages/adminDashboard/AdminClients";
 import AdminClientDetails from "./pages/adminDashboard/AdminClientDetails";
+import AdminClientParts from "./pages/adminDashboard/AdminClientParts";
 import AdminStores from "./pages/adminDashboard/AdminStores";
 import AdminStoreDetails from "./pages/adminDashboard/AdminStoreDetails";
 import AdminStoreParts from "./pages/adminDashboard/AdminStoreParts";
@@ -73,6 +76,7 @@ import StoreReviews from "./pages/StoreDashboard/ReviewsStore";
 import StoreNotifications from "./pages/StoreDashboard/StoreNotifications";
 import StoreProfile from "./pages/StoreDashboard/StoreProfile";
 import SubscriptionPaymentPage from "./pages/SubscriptionPaymentPage";
+import AppointmentPaymentPage from "./pages/normalUserPages/AppointmentPaymentPage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -129,6 +133,8 @@ function App() {
             <Route index element={<ProfileInfoPage />} />
             <Route path="/profile/edit" element={<EditProfilePage />} />
             <Route path="/profile/vehicules" element={<VehiculesPage />} />
+            <Route path="/profile/my-parts" element={<ClientPartsPage />} />
+            <Route path="/profile/my-parts/:id" element={<ClientPartDetailsPage />} />
             <Route
               path="/profile/payment-accounts"
               element={<PaymentAccountsPage />}
@@ -220,6 +226,7 @@ function App() {
         </Route>
 
         <Route path="/subscription-payment/:ref" element={<SubscriptionPaymentPage />} />
+        <Route path="/appointment-payment/:ref" element={<AppointmentPaymentPage />} />
 
         {/* Admin Routes */}
         <Route element={<RoleRoute allowedRoles={["admin"]} />}>
@@ -232,6 +239,7 @@ function App() {
             <Route path="subscriptions" element={<AdminSubscriptions />} />
             <Route path="clients" element={<AdminClients />} />
             <Route path="clients/:id" element={<AdminClientDetails />} />
+            <Route path="clients/:id/parts" element={<AdminClientParts />} />
             <Route path="professionals" element={<AdminProfessionals />} />
             <Route
               path="professionals/:id"

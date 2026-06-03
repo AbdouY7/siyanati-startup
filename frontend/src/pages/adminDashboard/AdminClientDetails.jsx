@@ -8,6 +8,7 @@ import {
   FiCalendar,
   FiUser,
   FiSlash,
+  FiPackage,
 } from "react-icons/fi";
 import {
   getClientDetailsAdmin,
@@ -114,16 +115,21 @@ const AdminClientDetails = () => {
           </div>
         </div>
 
-        {client.is_active && (
-          <div className="px-8 py-5 border-b border-gray-100 bg-white">
+        <div className="px-8 py-5 border-b border-gray-100 bg-white flex flex-wrap gap-3">
+          <Link
+            to={`/admin/clients/${client.id}/parts`}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+            <FiPackage /> Voir les pièces du client
+          </Link>
+          {client.is_active && (
             <button
               onClick={handleBlock}
               disabled={actionLoading}
               className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors">
               <FiSlash /> Banne / Block user
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Info Grid */}
         <div className="p-8">

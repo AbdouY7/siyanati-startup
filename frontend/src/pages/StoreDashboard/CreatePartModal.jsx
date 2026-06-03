@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { createPart } from "../../services/partService";
+import { createPortal } from "react-dom";
+import { createPart, createCompatibility } from "../../services/partService";
 import { getBrands, getModelsByBrand } from "../../services/vehicleService";
 import { FiX, FiUpload, FiPackage, FiDollarSign, FiHash, FiFileText, FiLayers, FiImage } from "react-icons/fi";
 
-export default function CreatePartModal({ onClose, onCreated, categories = [] }) {
+export default function CreatePartModal({ onClose, onCreated, categories = [], isClient = false }) {
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -78,8 +79,21 @@ export default function CreatePartModal({ onClose, onCreated, categories = [] })
 
       const part = await createPart(formData);
 
-      // If compatibility info provided, we would need a separate endpoint.
-      // For now the part is created without compatibility (that can be added in the edit page).
+      if (compat.brand_id && compat.model_id && compat.year_from) {
+        try {
+          await createCompatibility({
+            part_id: part.id,
+            brand_id: compat.brand_id,
+            model_id: compat.model_id,
+            year_from: parseInt(compat.year_from),
+            year_to: compat.year_to ? parseInt(compat.year_to) : undefined,
+            engine_variant: compat.engine_variant || undefined,
+          });
+        } catch (compErr) {
+          console.error("Erreur lors de l'ajout de la compatibilité", compErr);
+        }
+      }
+      
       onCreated(part);
     } catch (error) {
       const msg = error.response?.data?.message || error.response?.data?.errors || "Erreur lors de la création";
@@ -93,8 +107,8 @@ export default function CreatePartModal({ onClose, onCreated, categories = [] })
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-[#e9effd]"
         onClick={(e) => e.stopPropagation()}
@@ -147,7 +161,7 @@ export default function CreatePartModal({ onClose, onCreated, categories = [] })
           </div>
 
           {/* Price + Stock + Weight */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className={`grid gap-4 ${isClient ? "grid-cols-2" : "grid-cols-3"}`}>
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Prix (DZD) *</label>
               <div className={`flex items-center gap-2 bg-gray-50 border rounded-xl px-3.5 py-2.5 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 ${errors.price_dzd ? "border-red-400 bg-red-50" : "border-gray-200"}`}>
@@ -157,14 +171,16 @@ export default function CreatePartModal({ onClose, onCreated, categories = [] })
               </div>
               {errors.price_dzd && <p className="text-red-500 text-xs mt-1">{errors.price_dzd}</p>}
             </div>
-            <div>
-              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Quantité</label>
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400">
-                <FiHash size={15} className="text-gray-300" />
-                <input type="number" min="0" placeholder="1" value={form.stock_qty} onChange={(e) => set("stock_qty", e.target.value)}
-                  className="flex-1 outline-none text-sm text-gray-800 placeholder-gray-300 bg-transparent" />
+            {!isClient && (
+              <div>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Quantité</label>
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400">
+                  <FiHash size={15} className="text-gray-300" />
+                  <input type="number" min="0" placeholder="1" value={form.stock_qty} onChange={(e) => set("stock_qty", e.target.value)}
+                    className="flex-1 outline-none text-sm text-gray-800 placeholder-gray-300 bg-transparent" />
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Poids (kg)</label>
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400">
@@ -250,6 +266,7 @@ export default function CreatePartModal({ onClose, onCreated, categories = [] })
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

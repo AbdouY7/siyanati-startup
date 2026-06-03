@@ -77,4 +77,33 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+// Optional auth: populates req.user if a valid token is present, but does NOT reject if absent.
+const optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return next();
+
+  const token = authHeader.split(" ")[1];
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.sub },
+    });
+
+    if (user && user.is_active) {
+      req.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      };
+    }
+  } catch (_) {
+    // Token invalid or expired — treat as unauthenticated, don't reject
+  }
+
+  next();
+};
+
 module.exports = authMiddleware;
+module.exports.optionalAuth = optionalAuth;

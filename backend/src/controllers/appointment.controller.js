@@ -57,6 +57,7 @@ const appointmentDetailInclude = {
       },
     },
   },
+  payment: true,
 };
 
 const getProfessionalProfile = (userId) =>
@@ -345,21 +346,17 @@ const completeAppointment = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Invalid status transition" });
     }
 
-    const { final_price_dzd, payment_collected, completion_notes } = req.body;
+    const { final_price_dzd, completion_notes } = req.body;
 
     if (final_price_dzd === undefined || Number(final_price_dzd) <= 0) {
       return res.status(400).json({ success: false, message: "final_price_dzd is required and must be positive" });
     }
-
-    const isPaymentCollected = payment_collected ?? false;
 
     const updated = await prisma.appointment.update({
       where: { id: appointment.id },
       data: {
         status: "completed",
         final_price_dzd: Number(final_price_dzd),
-        payment_collected: isPaymentCollected,
-        payment_collected_at: isPaymentCollected ? new Date() : null,
         completion_notes,
         completed_at: new Date(),
       },

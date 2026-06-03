@@ -1,5 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
+const { optionalAuth } = require("../middlewares/auth.middleware");
 const { requireAdmin } = require("../middlewares/admin.middleware");
 const upload = require("../middlewares/upload");
 const {
@@ -33,9 +34,9 @@ const validateSchema = (schema) => (req, res, next) => {
 };
 
 // Public part reading routes
-router.get("/parts", getAllParts);
+router.get("/parts", optionalAuth, getAllParts);
 router.get("/parts/my", authMiddleware, getMyParts);
-router.get("/parts/:id", getPartById);
+router.get("/parts/:id", optionalAuth, getPartById);
 
 // Create part listings.
 router.post(

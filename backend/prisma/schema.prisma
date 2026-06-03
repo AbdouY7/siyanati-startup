@@ -92,6 +92,7 @@ model StoreProfile {
   is_frozen            Boolean       @default(false)
   rating_avg           Decimal       @default(0) @db.Decimal(3, 2)
   rating_count         Int           @default(0)
+  dahabia_rip          String?
   created_at           DateTime      @default(now())
   orders               Order[]       @relation("StoreOrders")
   user                 User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -125,6 +126,7 @@ work_type   WorkType   @default(individuel)  // new enum
   rating_avg           Decimal                         @default(0) @db.Decimal(3, 2)
   rating_count         Int                             @default(0)
   subscription_id      String?
+  dahabia_rip          String?
   created_at           DateTime                        @default(now())
   full_name            String
   avatar_url           String?
@@ -345,7 +347,9 @@ model Payment {
   paid_at          DateTime?
   created_at       DateTime      @default(now())
   subscription_id  String?       @unique
+  appointment_id   String?       @unique
   order            Order?        @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  appointment      Appointment?  @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
   payer            User          @relation("UserPayments", fields: [payer_id], references: [id])
   subscription     Subscription? @relation(fields: [subscription_id], references: [id])
 
@@ -429,6 +433,7 @@ model Appointment {
   professional         ProfessionalProfile @relation("ProfessionalAppointments", fields: [professional_id], references: [id])
   vehicle              Vehicle?            @relation(fields: [vehicle_id], references: [id])
   reviews              Review[]
+  payment              Payment?
 
   @@index([customer_id, status])
   @@index([professional_id, scheduled_at])

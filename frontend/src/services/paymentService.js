@@ -18,9 +18,27 @@ export const initiateSubscriptionPayment = async (subscription_id, method) => {
   }
 };
 
+export const initiateAppointmentPayment = async (appointment_id, method) => {
+  try {
+    const response = await axiosInstance.post('/v1/payments/appointment', { appointment_id, method });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getPaymentByOrder = async (order_id) => {
   try {
     const response = await axiosInstance.get(`/v1/payments/${order_id}`);
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const collectCodPayment = async (payment_id) => {
+  try {
+    const response = await axiosInstance.patch(`/v1/payments/${payment_id}/collect-cod`);
     return response.data.data;
   } catch (error) {
     throw error;

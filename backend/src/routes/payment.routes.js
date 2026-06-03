@@ -36,6 +36,7 @@ const {
   adminUpdatePaymentStatus,
   initiateSubscriptionPayment,
   handleSubscriptionPaymentWebhook,
+  initiateAppointmentPayment,
 } = require("../controllers/payment.controller");
 const {
   initiatePaymentSchema,
@@ -52,6 +53,7 @@ router.post("/subscription/webhook", handleSubscriptionPaymentWebhook);
 router.use(authMiddleware);
 
 router.post("/initiate", validate(initiatePaymentSchema), initiatePayment);
+router.post("/appointment", initiateAppointmentPayment);
 router.get("/:order_id", validate(paymentByOrderParamsSchema), getPaymentByOrder);
 
 router.get("/id/:id", getPaymentById);

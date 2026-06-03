@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getPartById, updatePart, deletePart, getCategories } from "../../services/partService";
+import { getPartById, updatePart, deletePart, getCategories, createCompatibility, updateCompatibility, deleteCompatibility } from "../../services/partService";
 import { getBrands, getModelsByBrand } from "../../services/vehicleService";
 import {
   FiArrowLeft,
@@ -62,6 +62,7 @@ export default function StorePartDetailsPage() {
           weight_kg: partData.weight_kg || "",
           is_active: partData.is_active ?? true,
           // Compatibility
+          compatibility_id: comp?.id || "",
           brand_id: comp?.brand?.id || "",
           model_id: comp?.model?.id || "",
           year_from: comp?.year_from || "",
@@ -112,7 +113,38 @@ export default function StorePartDetailsPage() {
       newImages.forEach((file) => formData.append("images", file));
 
       const updated = await updatePart(id, formData);
-      setPart(updated);
+      
+      if (form.brand_id && form.model_id && form.year_from) {
+        const compPayload = {
+          part_id: id,
+          brand_id: form.brand_id,
+          model_id: form.model_id,
+          year_from: parseInt(form.year_from),
+          year_to: form.year_to ? parseInt(form.year_to) : undefined,
+          engine_variant: form.engine_variant || undefined,
+        };
+        try {
+          if (form.compatibility_id) {
+            await updateCompatibility(form.compatibility_id, compPayload);
+          } else {
+            const newComp = await createCompatibility(compPayload);
+            setForm(p => ({ ...p, compatibility_id: newComp.id }));
+          }
+        } catch (compErr) {
+          console.error("Erreur de compatibilité", compErr);
+        }
+      } else if (form.compatibility_id) {
+        try {
+          await deleteCompatibility(form.compatibility_id);
+          setForm(p => ({ ...p, compatibility_id: "" }));
+        } catch (compErr) {
+          console.error("Erreur suppression compatibilité", compErr);
+        }
+      }
+
+      const refreshedPart = await getPartById(id);
+      setPart(refreshedPart);
+      
       setNewImages([]);
       setPreviews([]);
       setSuccess(true);

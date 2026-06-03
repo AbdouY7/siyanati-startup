@@ -114,6 +114,74 @@ const initiatePayment = async (req, res, next) => {
 };
 
 /**
+ * Initiate a payment for an appointment.
+ */
+const initiateAppointmentPayment = async (req, res, next) => {
+  try {
+    if (!isCustomer(req.user)) {
+      return res.status(403).json({ success: false, message: "Only customers can initiate payments" });
+    }
+
+    const { appointment_id, method } = req.body;
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: appointment_id, customer_id: req.user.id },
+      include: { payment: true },
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    if (appointment.status !== "completed") {
+      return res.status(400).json({ success: false, message: "Only completed appointments can be paid" });
+    }
+
+    if (appointment.payment?.status === "success" || appointment.payment_collected) {
+      return res.status(409).json({ success: false, message: "Appointment is already paid" });
+    }
+
+    if (!appointment.final_price_dzd) {
+      return res.status(400).json({ success: false, message: "Appointment final price is not set" });
+    }
+
+    const edahabia_ref = method === "edahabia" ? generateEdahabiaRef() : null;
+    const payment = await prisma.payment.upsert({
+      where: { appointment_id: appointment.id },
+      update: {
+        method,
+        amount_dzd: appointment.final_price_dzd,
+        status: "pending",
+        edahabia_ref,
+        gateway_response: null,
+        failed_reason: null,
+        paid_at: null,
+      },
+      create: {
+        appointment_id: appointment.id,
+        payer_id: req.user.id,
+        method,
+        amount_dzd: appointment.final_price_dzd,
+        status: "pending",
+        edahabia_ref,
+      },
+    });
+
+    const data = { payment };
+
+    if (method === "edahabia") {
+      data.checkout_url = `https://edahabia.mock/pay?ref=${edahabia_ref}`;
+    }
+
+    res.status(201).json({ success: true, data });
+  } catch (error) {
+    if (error.code === "P2002") {
+      return res.status(409).json({ success: false, message: "Payment reference already exists" });
+    }
+    next(error);
+  }
+};
+
+/**
  * Receive a simulated Edahabia payment webhook.
  */
 const handleEdahabiaWebhook = async (req, res, next) => {
@@ -121,7 +189,7 @@ const handleEdahabiaWebhook = async (req, res, next) => {
     const { edahabia_ref, status, failed_reason } = req.body;
     const payment = await prisma.payment.findUnique({
       where: { edahabia_ref },
-      include: { order: true },
+      include: { order: true, appointment: true },
     });
 
     if (!payment) {
@@ -150,10 +218,17 @@ const handleEdahabiaWebhook = async (req, res, next) => {
       });
 
       if (status === "success") {
-        await tx.order.update({
-          where: { id: payment.order_id },
-          data: { status: "confirmed" },
-        });
+        if (payment.order_id) {
+          await tx.order.update({
+            where: { id: payment.order_id },
+            data: { status: "confirmed" },
+          });
+        } else if (payment.appointment_id) {
+          await tx.appointment.update({
+            where: { id: payment.appointment_id },
+            data: { payment_collected: true, payment_collected_at: new Date() },
+          });
+        }
       }
     });
 
@@ -210,7 +285,8 @@ const getPaymentByOrder = async (req, res, next) => {
  */
 const collectCodPayment = async (req, res, next) => {
   try {
-    if (!isAdmin(req.user) && !isStore(req.user)) {
+    const isProf = req.user?.role === "professional";
+    if (!isAdmin(req.user) && !isStore(req.user) && !isProf) {
       return res.status(403).json({
         success: false,
         message: "You are not allowed to collect payments",
@@ -219,7 +295,7 @@ const collectCodPayment = async (req, res, next) => {
 
     const payment = await prisma.payment.findUnique({
       where: { id: req.params.id },
-      include: { order: true },
+      include: { order: true, appointment: true },
     });
 
     if (!payment) {
@@ -231,7 +307,17 @@ const collectCodPayment = async (req, res, next) => {
 
     if (isStore(req.user)) {
       const storeProfile = await getStoreProfileForUser(req.user.id);
-      if (!storeProfile || storeProfile.id !== payment.order.store_id) {
+      if (!storeProfile || !payment.order || storeProfile.id !== payment.order.store_id) {
+        return res.status(404).json({
+          success: false,
+          message: "Payment not found",
+        });
+      }
+    }
+
+    if (isProf) {
+      const profProfile = await prisma.professionalProfile.findUnique({ where: { user_id: req.user.id } });
+      if (!profProfile || !payment.appointment || profProfile.id !== payment.appointment.professional_id) {
         return res.status(404).json({
           success: false,
           message: "Payment not found",
@@ -503,4 +589,5 @@ module.exports = {
   adminUpdatePaymentStatus,
   initiateSubscriptionPayment,
   handleSubscriptionPaymentWebhook,
+  initiateAppointmentPayment,
 };

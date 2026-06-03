@@ -42,6 +42,7 @@ export default function ProfilePro() {
     location_address: emptyToString(profile.location_address),
     bio: emptyToString(profile.bio),
     hourly_rate_dzd: emptyToString(profile.hourly_rate_dzd),
+    dahabia_rip: emptyToString(profile.dahabia_rip),
     work_type: emptyToString(profile.work_type || "individuel"),
     garage_name: emptyToString(garage?.name),
     garage_wilaya: emptyToString(garage?.wilaya),
@@ -233,6 +234,7 @@ export default function ProfilePro() {
                   : "Non renseigne"
               }
             />
+            <Info label="Compte Dahabia (RIP)" value={profile.dahabia_rip} />
             <Info
               label="Type de travail"
               value={
@@ -346,6 +348,11 @@ export default function ProfilePro() {
               type="number"
               value={form.hourly_rate_dzd}
               onChange={(value) => updateField("hourly_rate_dzd", value)}
+            />
+            <Field
+              label="Compte Dahabia (RIP)"
+              value={form.dahabia_rip}
+              onChange={(value) => updateField("dahabia_rip", value)}
             />
             <div>
               <label className="mb-1 block text-xs font-semibold text-[#6b7280]">

@@ -39,6 +39,7 @@ export default function StoreProfile() {
     description: emptyToString(profile.description),
     wilaya: emptyToString(profile.wilaya),
     address: emptyToString(profile.address),
+    dahabia_rip: emptyToString(profile.dahabia_rip),
     logo_url: emptyToString(profile.logo_url),
     images: emptyToString(profile.images?.join(", ")),
   }));
@@ -79,6 +80,7 @@ export default function StoreProfile() {
       formData.append("description", form.description);
       formData.append("wilaya", form.wilaya);
       formData.append("address", form.address);
+      formData.append("dahabia_rip", form.dahabia_rip);
       formData.append("logo_url", form.logo_url);
       
       const formImages = form.images.split(",").map((url) => url.trim()).filter(Boolean);
@@ -214,6 +216,7 @@ export default function StoreProfile() {
             <Info label="Téléphone" value={user?.phone} />
             <Info label="Wilaya" value={profile.wilaya} />
             <Info label="Adresse" value={profile.address} />
+            <Info label="Compte Dahabia (RIP)" value={profile.dahabia_rip} />
             <Info
               label="Statut"
               value={
@@ -294,6 +297,11 @@ export default function StoreProfile() {
               label="Adresse"
               value={form.address}
               onChange={(v) => updateField("address", v)}
+            />
+            <Field
+              label="Compte Dahabia (RIP)"
+              value={form.dahabia_rip}
+              onChange={(v) => updateField("dahabia_rip", v)}
             />
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-[#6b7280]">Logo du magasin</label>

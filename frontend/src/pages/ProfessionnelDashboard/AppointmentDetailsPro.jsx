@@ -21,6 +21,7 @@ import {
   startAppointment,
   completeAppointment,
 } from "../../services/appointmentService";
+import { collectCodPayment } from "../../services/paymentService";
 
 /* ─── Status config ────────────────────────────────────────────────────── */
 
@@ -102,7 +103,6 @@ export default function AppointmentDetailsPro() {
   const [actionLoading, setActionLoading] = useState(false);
   const [completeForm, setCompleteForm] = useState({
     final_price_dzd: "",
-    payment_collected: false,
     completion_notes: "",
   });
   const [showComplete, setShowComplete] = useState(false);
@@ -140,11 +140,25 @@ export default function AppointmentDetailsPro() {
     try {
       const updated = await completeAppointment(id, {
         final_price_dzd: Number(completeForm.final_price_dzd),
-        payment_collected: completeForm.payment_collected,
         completion_notes: completeForm.completion_notes || undefined,
       });
       setApt(updated);
       setShowComplete(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCollectCash = async () => {
+    if (!apt.payment) return;
+    setActionLoading(true);
+    try {
+      await collectCodPayment(apt.payment.id);
+      // Refresh appointment to get updated payment status
+      const data = await getAppointmentById(id);
+      setApt(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -301,6 +315,12 @@ export default function AppointmentDetailsPro() {
                 value={formatDate(apt.completed_at)}
               />
             )}
+            {apt.status === "completed" && !apt.payment_collected && (
+              <div className="flex items-center gap-2 mt-2 text-xs text-[#ef4444] font-medium">
+                <RiTimeLine /> Paiement en attente
+                {apt.payment?.method === "cash_on_delivery" && " (Espèces)"}
+              </div>
+            )}
             {apt.payment_collected && (
               <div className="flex items-center gap-2 mt-2 text-xs text-[#10b981] font-medium">
                 <RiCheckLine /> Paiement collecté
@@ -328,6 +348,20 @@ export default function AppointmentDetailsPro() {
               onClick={() => setShowComplete(true)}
               className="w-full py-3 rounded-xl text-sm font-semibold bg-[#10b981] text-white hover:bg-[#059669] shadow-lg shadow-[#10b981]/20 transition-all flex items-center justify-center gap-2">
               <RiCheckLine /> Terminer la consultation
+            </button>
+          )}
+
+          {apt.status === "completed" && !apt.payment_collected && apt.payment?.method === "cash_on_delivery" && apt.payment?.status !== "success" && (
+            <button
+              onClick={handleCollectCash}
+              disabled={actionLoading}
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-[#f59e0b] text-white hover:bg-[#d97706] shadow-lg shadow-[#f59e0b]/20 transition-all flex items-center justify-center gap-2">
+              {actionLoading ? (
+                <RiLoader4Line className="animate-spin" />
+              ) : (
+                <RiMoneyDollarCircleLine />
+              )}
+              Confirmer la réception de l'argent
             </button>
           )}
 
@@ -360,25 +394,6 @@ export default function AppointmentDetailsPro() {
                   }
                   className="w-full border border-[#e9effd] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2563eb]/50 transition-all"
                 />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="paymentCollected"
-                  checked={completeForm.payment_collected}
-                  onChange={(e) =>
-                    setCompleteForm({
-                      ...completeForm,
-                      payment_collected: e.target.checked,
-                    })
-                  }
-                  className="accent-[#2563eb]"
-                />
-                <label
-                  htmlFor="paymentCollected"
-                  className="text-sm text-[#6b7280]">
-                  Paiement collecté
-                </label>
               </div>
               <div>
                 <label className="text-xs font-medium text-[#6b7280] mb-1 block">

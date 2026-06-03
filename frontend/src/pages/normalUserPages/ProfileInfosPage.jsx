@@ -17,6 +17,7 @@ import {
   FiMessageSquare,
   FiCreditCard, // ✅ NEW
   FiBookmark,
+  FiPackage,
 } from "react-icons/fi";
 import { FaCar } from "react-icons/fa";
 
@@ -440,6 +441,11 @@ const ProfileInfoPage = () => {
             to: "/profile/saved-diagnostic-posts",
             icon: <FiBookmark size={20} />,
             label: "Diagnostics\nSauvegardés",
+          },
+          {
+            to: "/profile/my-parts",
+            icon: <FiPackage size={20} />,
+            label: "Mes Pièces\nen Vente",
           },
         ].map(({ to, icon, label }, i) => (
           <Link

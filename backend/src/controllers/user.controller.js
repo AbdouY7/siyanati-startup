@@ -484,6 +484,7 @@ const updateMyProfessionalProfile = async (req, res, next) => {
       garage_address,
       garage_logo_url,
       garage_images,
+      dahabia_rip,
     } = req.body;
 
     const userUpdateData = {};
@@ -521,6 +522,7 @@ const updateMyProfessionalProfile = async (req, res, next) => {
     if (work_type !== undefined) profileUpdateData.work_type = work_type;
     if (is_available !== undefined)
       profileUpdateData.is_available = Boolean(is_available);
+    if (dahabia_rip !== undefined) profileUpdateData.dahabia_rip = dahabia_rip;
 
     const profileId = user.professional_profile.id;
 
@@ -773,6 +775,7 @@ const updateMyStoreProfile = async (req, res, next) => {
       address,
       logo_url,
       images,
+      dahabia_rip,
     } = req.body;
 
     const userUpdateData = {};
@@ -785,6 +788,7 @@ const updateMyStoreProfile = async (req, res, next) => {
     if (wilaya !== undefined) profileUpdateData.wilaya = wilaya;
     if (address !== undefined) profileUpdateData.address = address;
     if (logo_url !== undefined) profileUpdateData.logo_url = logo_url;
+    if (dahabia_rip !== undefined) profileUpdateData.dahabia_rip = dahabia_rip;
     
     // Handle store logo upload
     if (req.files && req.files.logo) {

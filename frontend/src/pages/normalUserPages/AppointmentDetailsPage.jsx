@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axios";
 import {
   FiChevronLeft,
@@ -18,13 +18,17 @@ import {
   FiStar,
   FiEdit,
   FiTrash2,
+  FiCreditCard,
 } from "react-icons/fi";
+import { initiateAppointmentPayment } from "../../services/paymentService";
 
 const AppointmentDetailsPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     const fetchAppointmentDetails = async () => {
@@ -92,6 +96,25 @@ const AppointmentDetailsPage = () => {
           label: status,
           bgColor: "bg-gray-500",
         };
+    }
+  };
+
+  const handlePayment = async (method) => {
+    try {
+      setPaymentLoading(true);
+      const res = await initiateAppointmentPayment(appointment.id, method);
+      if (method === "edahabia" && res.payment?.edahabia_ref) {
+        navigate(`/appointment-payment/${res.payment.edahabia_ref}?amount=${appointment.final_price_dzd}&id=${appointment.id}`);
+      } else {
+        // Refresh appointment
+        const response = await axiosInstance.get(`/appointments/${id}`);
+        setAppointment(response.data.data || response.data);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'initiation du paiement");
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -350,6 +373,58 @@ const AppointmentDetailsPage = () => {
                   )}
               </div>
             </div>
+
+            {/* Payment Section */}
+            {appointment.status === "completed" && !appointment.payment_collected && appointment.payment?.method !== "cash_on_delivery" && (
+              <div className="bg-white rounded-2xl shadow-sm border border-emerald-200 p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    <FiCreditCard size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Paiement Requis
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Veuillez choisir votre méthode de paiement
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => handlePayment("edahabia")}
+                    disabled={paymentLoading}
+                    className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition disabled:opacity-50"
+                  >
+                    <img src="/dahabia.png" alt="Edahabia" className="h-10 mb-3 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                    <span className="font-semibold text-gray-900">Carte Edahabia</span>
+                  </button>
+                  <button
+                    onClick={() => handlePayment("cash_on_delivery")}
+                    disabled={paymentLoading}
+                    className="flex flex-col items-center justify-center p-6 border-2 border-gray-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition disabled:opacity-50"
+                  >
+                    <FiDollarSign size={40} className="text-emerald-500 mb-3" />
+                    <span className="font-semibold text-gray-900">Espèces (à la main)</span>
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {appointment.status === "completed" && appointment.payment?.method === "cash_on_delivery" && !appointment.payment_collected && (
+              <div className="bg-amber-50 rounded-2xl shadow-sm border border-amber-200 p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                    <FiClock size={24} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-amber-900">Paiement en espèces</p>
+                    <p className="text-sm text-amber-700">En attente de confirmation par le professionnel.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Professional Info */}

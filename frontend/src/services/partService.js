@@ -73,3 +73,33 @@ export const getCategories = async () => {
     throw error;
   }
 };
+
+export const createCompatibility = async (data) => {
+  try {
+    const response = await axiosInstance.post('/compatibilities', data);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error creating compatibility:', error);
+    throw error;
+  }
+};
+
+export const updateCompatibility = async (id, data) => {
+  try {
+    const response = await axiosInstance.patch(`/compatibilities/${id}`, data);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error updating compatibility:', error);
+    throw error;
+  }
+};
+
+export const deleteCompatibility = async (id) => {
+  try {
+    const response = await axiosInstance.delete(`/compatibilities/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting compatibility:', error);
+    throw error;
+  }
+};
