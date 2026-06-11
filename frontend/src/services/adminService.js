@@ -125,3 +125,46 @@ export const updateUserStatusAdmin = async (userId, is_active) => {
     throw error;
   }
 };
+
+export const openAdminDocument = async (documentPath) => {
+  if (!documentPath) return;
+
+  if (/^https?:\/\//i.test(documentPath)) {
+    // Proxy Cloudinary URLs through backend to avoid tracking prevention
+    if (documentPath.includes("cloudinary.com")) {
+      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+      const proxyUrl = `${apiBase}/proxy/image?url=${encodeURIComponent(documentPath)}`;
+      window.open(proxyUrl, "_blank", "noopener,noreferrer");
+    } else {
+      window.open(documentPath, "_blank", "noopener,noreferrer");
+    }
+    return;
+  }
+
+  const popup = window.open("", "_blank", "noopener,noreferrer");
+
+  try {
+    const response = await axiosInstance.get("/admin/documents/view", {
+      params: { path: documentPath },
+      responseType: "blob",
+    });
+
+    const blobUrl = window.URL.createObjectURL(response.data);
+
+    if (popup) {
+      popup.location.href = blobUrl;
+    } else {
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+    }
+
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60 * 1000);
+  } catch (error) {
+    if (popup) popup.close();
+    console.error("Error opening admin document:", error);
+    window.alert(
+      error.response?.data?.message ||
+        "Impossible d'ouvrir ce document. Le fichier est introuvable ou inaccessible.",
+    );
+    throw error;
+  }
+};

@@ -37,6 +37,7 @@ import AdminPartDetails from "./pages/adminDashboard/AdminPartDetails";
 import AdminReports from "./pages/adminDashboard/AdminReports";
 import AdminSubscriptionPlans from "./pages/adminDashboard/AdminSubscriptionPlans";
 import AdminSubscriptions from "./pages/adminDashboard/AdminSubscriptions";
+import AdminNotifications from "./pages/adminDashboard/AdminNotifications";
 import ProfileInfoPage from "./pages/normalUserPages/ProfileInfosPage";
 import PaymentAccountsPage from "./pages/normalUserPages/PaymentAcountsPage";
 import OrderHistoryPage from "./pages/normalUserPages/OrderHistoryPage";
@@ -251,6 +252,7 @@ function App() {
             <Route path="parts" element={<AdminAllParts />} />
             <Route path="parts/:id" element={<AdminPartDetails />} />
             <Route path="reports" element={<AdminReports />} />
+            <Route path="notifications" element={<AdminNotifications />} />
             <Route path="chat" element={<div>Chat Page</div>} />
           </Route>
         </Route>

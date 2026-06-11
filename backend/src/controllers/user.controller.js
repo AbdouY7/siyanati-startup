@@ -3,6 +3,42 @@ const bcrypt = require("bcrypt");
 const prisma = require("../prisma/client");
 const uploadImage = require("../utils/uploadImage");
 
+const getFiles = (req, fieldName) => {
+  if (!req.files) return [];
+  if (Array.isArray(req.files)) {
+    return req.files.filter((file) => file.fieldname === fieldName);
+  }
+
+  return req.files[fieldName] || [];
+};
+
+const uploadFiles = async (files, folder) => {
+  const results = await Promise.all(
+    files.map((file) => uploadImage(file.buffer, folder)),
+  );
+
+  return results.map((result) => result.secure_url);
+};
+
+const notifyAdminsAboutDocumentUpdate = async (tx, { actorName, actorRole, userId, count }) => {
+  const admins = await tx.user.findMany({
+    where: { role: "admin", is_active: true },
+    select: { id: true },
+  });
+
+  if (admins.length === 0) return;
+
+  await tx.notification.createMany({
+    data: admins.map((admin) => ({
+      user_id: admin.id,
+      type: "new_message",
+      title: "Documents de profil mis a jour",
+      message: `${actorName || actorRole} a ajoute ${count} document(s) a son profil. Veuillez les verifier depuis le tableau de bord admin.`,
+      reference_id: userId,
+    })),
+  });
+};
+
 // Get all users
 const getAllUsers = async (req, res, next) => {
   try {
@@ -525,6 +561,23 @@ const updateMyProfessionalProfile = async (req, res, next) => {
     if (dahabia_rip !== undefined) profileUpdateData.dahabia_rip = dahabia_rip;
 
     const profileId = user.professional_profile.id;
+    const professionalDocumentUrls = await uploadFiles(
+      getFiles(req, "documents"),
+      "professional-documents",
+    );
+    const garageDocumentUrls = await uploadFiles(
+      getFiles(req, "garageDocuments"),
+      "professional-store-documents",
+    );
+    const uploadedDocumentCount =
+      professionalDocumentUrls.length + garageDocumentUrls.length;
+
+    if (professionalDocumentUrls.length > 0) {
+      profileUpdateData.documents = [
+        ...(user.professional_profile.documents || []),
+        ...professionalDocumentUrls,
+      ];
+    }
 
     await prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdateData).length > 0) {
@@ -546,7 +599,8 @@ const updateMyProfessionalProfile = async (req, res, next) => {
         garage_wilaya !== undefined ||
         garage_address !== undefined ||
         garage_logo_url !== undefined ||
-        garage_images !== undefined;
+        garage_images !== undefined ||
+        garageDocumentUrls.length > 0;
 
       if (wantsGarageUpdate) {
         // Process uploaded garage logo
@@ -582,6 +636,12 @@ const updateMyProfessionalProfile = async (req, res, next) => {
           ...(garage_address !== undefined && { address: garage_address }),
           ...(finalGarageLogoUrl !== undefined && { logo_url: finalGarageLogoUrl }),
           ...(finalGarageImages !== undefined && { images: finalGarageImages }),
+          ...(garageDocumentUrls.length > 0 && {
+            documents: [
+              ...(user.professional_profile.ProfessionalStore?.documents || []),
+              ...garageDocumentUrls,
+            ],
+          }),
         };
 
         if (user.professional_profile.ProfessionalStore) {
@@ -605,12 +665,21 @@ const updateMyProfessionalProfile = async (req, res, next) => {
                 user.professional_profile.location_address ||
                 "Non renseignee",
               images: garageData.images || [],
-              documents: [],
+              documents: garageData.documents || [],
               logo_url: garageData.logo_url,
               status: "approved",
             },
           });
         }
+      }
+
+      if (uploadedDocumentCount > 0) {
+        await notifyAdminsAboutDocumentUpdate(tx, {
+          actorName: user.professional_profile.full_name,
+          actorRole: "Professionnel",
+          userId: req.user.id,
+          count: uploadedDocumentCount,
+        });
       }
     });
 
@@ -789,6 +858,10 @@ const updateMyStoreProfile = async (req, res, next) => {
     if (address !== undefined) profileUpdateData.address = address;
     if (logo_url !== undefined) profileUpdateData.logo_url = logo_url;
     if (dahabia_rip !== undefined) profileUpdateData.dahabia_rip = dahabia_rip;
+    const storeDocumentUrls = await uploadFiles(
+      getFiles(req, "documents"),
+      "store-documents",
+    );
     
     // Handle store logo upload
     if (req.files && req.files.logo) {
@@ -812,6 +885,13 @@ const updateMyStoreProfile = async (req, res, next) => {
             .filter(Boolean);
     }
 
+    if (storeDocumentUrls.length > 0) {
+      profileUpdateData.documents = [
+        ...(user.store_profile.documents || []),
+        ...storeDocumentUrls,
+      ];
+    }
+
     await prisma.$transaction(async (tx) => {
       if (Object.keys(userUpdateData).length > 0) {
         await tx.user.update({
@@ -824,6 +904,15 @@ const updateMyStoreProfile = async (req, res, next) => {
         await tx.storeProfile.update({
           where: { id: user.store_profile.id },
           data: profileUpdateData,
+        });
+      }
+
+      if (storeDocumentUrls.length > 0) {
+        await notifyAdminsAboutDocumentUpdate(tx, {
+          actorName: user.store_profile.store_name,
+          actorRole: "Magasin",
+          userId: req.user.id,
+          count: storeDocumentUrls.length,
         });
       }
     });

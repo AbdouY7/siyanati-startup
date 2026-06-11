@@ -13,9 +13,17 @@ const getUserPaymentAccounts = async (req, res, next) => {
       });
     }
 
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { user_id },
+    });
+
+    if (!clientProfile) {
+      return res.status(404).json({ success: false, message: "Client profile not found" });
+    }
+
     const accounts = await prisma.paymentAccount.findMany({
       where: {
-        client_id: user_id, // ✅ FIXED: was user_id
+        client_id: clientProfile.id,
         is_active: true,
       },
       orderBy: {
@@ -54,13 +62,21 @@ const createPaymentAccount = async (req, res, next) => {
       });
     }
 
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { user_id },
+    });
+
+    if (!clientProfile) {
+      return res.status(404).json({ success: false, message: "Client profile not found" });
+    }
+
     const existingCount = await prisma.paymentAccount.count({
-      where: { client_id: user_id, is_active: true }, // ✅ FIXED
+      where: { client_id: clientProfile.id, is_active: true },
     });
 
     const account = await prisma.paymentAccount.create({
       data: {
-        client_id: user_id, // ✅ FIXED: was user_id
+        client_id: clientProfile.id,
         account_name: account_name || "Compte CCP",
         ccp_code,
         ccp_key,
@@ -99,10 +115,18 @@ const updatePaymentAccount = async (req, res, next) => {
       });
     }
 
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { user_id },
+    });
+
+    if (!clientProfile) {
+      return res.status(404).json({ success: false, message: "Client profile not found" });
+    }
+
     const existing = await prisma.paymentAccount.findFirst({
       where: {
         id,
-        client_id: user_id, // ✅ FIXED
+        client_id: clientProfile.id,
         is_active: true,
       },
     });
@@ -119,7 +143,7 @@ const updatePaymentAccount = async (req, res, next) => {
     if (is_default === true) {
       await prisma.paymentAccount.updateMany({
         where: {
-          client_id: user_id, // ✅ FIXED
+          client_id: clientProfile.id,
           is_default: true,
           NOT: { id },
         },
@@ -167,10 +191,18 @@ const deletePaymentAccount = async (req, res, next) => {
       });
     }
 
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { user_id },
+    });
+
+    if (!clientProfile) {
+      return res.status(404).json({ success: false, message: "Client profile not found" });
+    }
+
     const existing = await prisma.paymentAccount.findFirst({
       where: {
         id,
-        client_id: user_id, // ✅ FIXED
+        client_id: clientProfile.id,
         is_active: true,
       },
     });
@@ -189,7 +221,7 @@ const deletePaymentAccount = async (req, res, next) => {
 
     if (existing.is_default) {
       const another = await prisma.paymentAccount.findFirst({
-        where: { client_id: user_id, is_active: true }, // ✅ FIXED
+        where: { client_id: clientProfile.id, is_active: true },
         orderBy: { created_at: "asc" },
       });
 

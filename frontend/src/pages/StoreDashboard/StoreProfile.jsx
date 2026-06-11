@@ -11,6 +11,7 @@ import {
   RiStore2Line,
   RiUser3Line,
   RiImageLine,
+  RiFileTextLine,
 } from "react-icons/ri";
 import useAuthStore from "../../store/authStore";
 import { deleteMyAccount } from "../../services/userService";
@@ -56,12 +57,15 @@ export default function StoreProfile() {
 
   const heroImage = getImageUrl(profile.logo_url || profile.images?.[0]) || "";
   const storeImages = profile.images?.map(getImageUrl) || [];
+  const storeDocuments = profile.documents || [];
 
   const [logoFile, setLogoFile] = useState(null);
   const [imageFiles, setImageFiles] = useState([]);
+  const [documentFiles, setDocumentFiles] = useState([]);
 
   const logoRef = useRef(null);
   const imagesRef = useRef(null);
+  const documentsRef = useRef(null);
 
   const updateField = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -92,6 +96,11 @@ export default function StoreProfile() {
       if (imageFiles.length > 0) {
         imageFiles.forEach((file) => {
           formData.append("images", file);
+        });
+      }
+      if (documentFiles.length > 0) {
+        documentFiles.forEach((file) => {
+          formData.append("documents", file);
         });
       }
 
@@ -264,6 +273,31 @@ export default function StoreProfile() {
         </div>
       </div>
 
+      <div className="rounded-2xl border border-[#e9effd] bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-[#1f1f1f]">
+          <RiFileTextLine className="text-[#2563eb]" /> Documents du magasin
+        </h2>
+        {storeDocuments.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {storeDocuments.map((doc, index) => (
+              <a
+                key={`${doc}-${index}`}
+                href={getImageUrl(doc)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#e9effd] bg-[#f8fafc] px-3 py-2 text-sm font-medium text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]">
+                <RiFileTextLine />
+                Document {index + 1}
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl bg-[#f8fafc] p-4 text-sm text-[#6b7280]">
+            Aucun document renseigne.
+          </p>
+        )}
+      </div>
+
       {/* Edit Form */}
       {editing && (
         <form
@@ -343,6 +377,30 @@ export default function StoreProfile() {
                 </button>
                 {imageFiles.length > 0 && <span className="text-xs text-gray-500">{imageFiles.length} fichier(s) selectionne(s)</span>}
               </div>
+            </div>
+            <div className="md:col-span-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-[#6b7280]">Documents du magasin</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  multiple
+                  className="hidden"
+                  ref={documentsRef}
+                  onChange={(e) => setDocumentFiles(Array.from(e.target.files))}
+                />
+                <button
+                  type="button"
+                  onClick={() => documentsRef.current.click()}
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  Choisir des documents
+                </button>
+                {documentFiles.length > 0 && <span className="text-xs text-gray-500">{documentFiles.length} document(s) selectionne(s)</span>}
+              </div>
+              <p className="text-xs text-[#9ca3af]">
+                Les nouveaux documents seront ajoutes et les administrateurs seront notifies.
+              </p>
             </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-semibold text-[#6b7280]">

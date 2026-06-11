@@ -5,6 +5,7 @@ import {
   RiBuilding2Line,
   RiDeleteBin6Line,
   RiEdit2Line,
+  RiFileTextLine,
   RiLoader4Line,
   RiMapPinLine,
   RiPhoneLine,
@@ -64,14 +65,20 @@ export default function ProfilePro() {
   const heroImage = getImageUrl(garage?.logo_url || garage?.images?.[0] || "");
   const garageImages = garage?.images?.map(getImageUrl) || [];
   const avatarImage = getImageUrl(profile.avatar_url || user?.avatar_url || "");
+  const professionalDocuments = profile.documents || [];
+  const garageDocuments = garage?.documents || [];
 
   const [profilePicFile, setProfilePicFile] = useState(null);
+  const [documentFiles, setDocumentFiles] = useState([]);
   const [garageLogoFile, setGarageLogoFile] = useState(null);
   const [garageImageFiles, setGarageImageFiles] = useState([]);
+  const [garageDocumentFiles, setGarageDocumentFiles] = useState([]);
 
   const profilePicRef = useRef(null);
+  const documentsRef = useRef(null);
   const garageLogoRef = useRef(null);
   const garageImagesRef = useRef(null);
+  const garageDocumentsRef = useRef(null);
 
   const updateField = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -87,10 +94,20 @@ export default function ProfilePro() {
         formData.append(key, value);
       });
       if (profilePicFile) formData.append("profilePicture", profilePicFile);
+      if (documentFiles.length > 0) {
+        documentFiles.forEach((file) => {
+          formData.append("documents", file);
+        });
+      }
       if (garageLogoFile) formData.append("garageLogo", garageLogoFile);
       if (garageImageFiles.length > 0) {
         garageImageFiles.forEach((file) => {
           formData.append("garageImages", file);
+        });
+      }
+      if (garageDocumentFiles.length > 0) {
+        garageDocumentFiles.forEach((file) => {
+          formData.append("garageDocuments", file);
         });
       }
 
@@ -284,6 +301,18 @@ export default function ProfilePro() {
         </div>
       </div>
 
+      <div className="rounded-2xl border border-[#e9effd] bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-[#1f1f1f]">
+          <RiFileTextLine className="text-[#2563eb]" /> Documents
+        </h2>
+        <DocumentList title="Documents professionnels" documents={professionalDocuments} />
+        {garage && (
+          <div className="mt-5 border-t border-[#e9effd] pt-5">
+            <DocumentList title="Documents du garage" documents={garageDocuments} />
+          </div>
+        )}
+      </div>
+
       {editing && (
         <form
           onSubmit={handleSave}
@@ -322,6 +351,30 @@ export default function ProfilePro() {
               value={form.phone}
               onChange={(value) => updateField("phone", value)}
             />
+            <div className="md:col-span-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-[#6b7280]">Documents professionnels</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  multiple
+                  className="hidden"
+                  ref={documentsRef}
+                  onChange={(e) => setDocumentFiles(Array.from(e.target.files))}
+                />
+                <button
+                  type="button"
+                  onClick={() => documentsRef.current.click()}
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  Choisir des documents
+                </button>
+                {documentFiles.length > 0 && <span className="text-xs text-gray-500">{documentFiles.length} document(s) selectionne(s)</span>}
+              </div>
+              <p className="text-xs text-[#9ca3af]">
+                Les nouveaux documents seront ajoutes et les administrateurs seront notifies.
+              </p>
+            </div>
             <Field
               label="Specialite"
               value={form.specialty_type}
@@ -441,6 +494,27 @@ export default function ProfilePro() {
                     {garageImageFiles.length > 0 && <span className="text-xs text-gray-500">{garageImageFiles.length} fichier(s) selectionne(s)</span>}
                   </div>
                 </div>
+                <div className="md:col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-[#6b7280]">Documents du garage</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      multiple
+                      className="hidden"
+                      ref={garageDocumentsRef}
+                      onChange={(e) => setGarageDocumentFiles(Array.from(e.target.files))}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => garageDocumentsRef.current.click()}
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                    >
+                      Choisir des documents
+                    </button>
+                    {garageDocumentFiles.length > 0 && <span className="text-xs text-gray-500">{garageDocumentFiles.length} document(s) selectionne(s)</span>}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -459,6 +533,35 @@ export default function ProfilePro() {
             </button>
           </div>
         </form>
+      )}
+    </div>
+  );
+}
+
+function DocumentList({ title, documents }) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#9ca3af]">
+        {title}
+      </p>
+      {documents.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {documents.map((doc, index) => (
+            <a
+              key={`${doc}-${index}`}
+              href={getImageUrl(doc)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#e9effd] bg-[#f8fafc] px-3 py-2 text-sm font-medium text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]">
+              <RiFileTextLine />
+              Document {index + 1}
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-xl bg-[#f8fafc] p-4 text-sm text-[#6b7280]">
+          Aucun document renseigne.
+        </p>
       )}
     </div>
   );

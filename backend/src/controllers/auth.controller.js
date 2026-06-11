@@ -220,6 +220,7 @@ const registerStore = async (req, res, next) => {
 
     const password_hash = await bcrypt.hash(password, 12);
     const userId = randomUUID();
+    const storeDocumentUrls = await uploadFiles(getFiles(req, "documents"), "store-documents");
     const storeImageUrls = await uploadFiles(getFiles(req, "images"), "stores");
     const logoFiles = [
       ...getFiles(req, "logo"),
@@ -241,7 +242,7 @@ const registerStore = async (req, res, next) => {
           address,
           wilaya,
           location_coordinates,
-          documents: documents || [],
+          documents: storeDocumentUrls.length ? storeDocumentUrls : documents || [],
           images: storeImageUrls.length ? storeImageUrls : images || [],
           logo_url: uploadedLogoUrl || logo_url,
           status: "pending",

@@ -17,6 +17,7 @@ import {
 import {
   approveStore,
   getStoreDetailsAdmin,
+  openAdminDocument,
   rejectStore,
   updateUserStatusAdmin,
 } from "../../services/adminService";
@@ -318,11 +319,10 @@ const AdminStoreDetails = () => {
             {profile.documents && profile.documents.length > 0 ? (
               <div className="flex flex-col gap-3">
                 {profile.documents.map((doc, index) => (
-                  <a
+                  <button
                     key={index}
-                    href={doc}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
+                    onClick={() => openAdminDocument(doc)}
                     className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors group">
                     <div className="p-2 bg-gray-100 rounded text-gray-500 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                       <FiFileText size={20} />
@@ -330,7 +330,7 @@ const AdminStoreDetails = () => {
                     <span className="font-medium text-gray-700 group-hover:text-primary transition-colors">
                       Document {index + 1}
                     </span>
-                  </a>
+                  </button>
                 ))}
               </div>
             ) : (
@@ -347,7 +347,7 @@ const AdminStoreDetails = () => {
                 {profile.images.map((img, index) => (
                   <a
                     key={index}
-                    href={img}
+                    href={getImageUrl(img)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block relative group overflow-hidden rounded-lg border border-gray-200 bg-white aspect-square">

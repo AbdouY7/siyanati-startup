@@ -4,6 +4,7 @@ import { getMyParts, deletePart, getCategories } from "../../services/partServic
 import CreatePartModal from "../StoreDashboard/CreatePartModal";
 import {
   FiSearch,
+  FiArrowLeft,
   FiPlus,
   FiEdit3,
   FiTrash2,
@@ -244,18 +245,27 @@ export default function ClientPartsPage() {
     <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 pt-8 relative z-10 pb-10">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1
-              className="text-2xl font-bold tracking-tight text-[#1f1f1f]"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/profile"
+              className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition flex-shrink-0"
+              title="Retour au profil"
             >
-              Mes Pièces en Vente
-            </h1>
-            <p className="text-sm text-[#6b7280] mt-0.5">
-              Gérez les pièces que vous avez mises en vente. Les pièces ajoutées nécessitent une
-              vérification par l'administration.
-            </p>
+              <FiArrowLeft size={20} />
+            </Link>
+            <div>
+              <h1
+                className="text-2xl font-bold tracking-tight text-[#1f1f1f]"
+                style={{ fontFamily: "'Montserrat', sans-serif" }}
+              >
+                Mes Pièces en Vente
+              </h1>
+              <p className="text-sm text-[#6b7280] mt-0.5">
+                Gérez les pièces que vous avez mises en vente. Les pièces ajoutées nécessitent une
+                vérification par l'administration.
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowModal(true)}

@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import Footer from "../components/layaouts/Footer";
 import { createOrder } from "../services/orderService";
+import { getUserPaymentAccounts } from "../services/paymentAccountService";
 
 // ─── El Dahabia card preview ──────────────────────────────────────────────────
 function DahabiaCardPreview({ fullName, cardNumber, expiry }) {
@@ -197,6 +198,25 @@ export default function BuyCartPage() {
 
   const fmtCvv = (v) => v.replace(/\D/g, "").slice(0, 4);
   const fmtPhone = (v) => v.replace(/\D/g, "").slice(0, 10);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const accounts = await getUserPaymentAccounts();
+        if (accounts && accounts.length > 0) {
+          const defaultAcc = accounts.find((a) => a.is_default) || accounts[0];
+          setForm((prev) => ({
+            ...prev,
+            fullName: defaultAcc.full_name || prev.fullName,
+            cardNumber: fmtCard(defaultAcc.ccp_code || prev.cardNumber),
+          }));
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchAccounts();
+  }, []);
 
   const validate = () => {
     const e = {};

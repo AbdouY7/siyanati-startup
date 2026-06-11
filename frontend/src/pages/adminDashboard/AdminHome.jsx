@@ -27,6 +27,7 @@ const navItems = [
   { label: "Magasins", icon: RiStoreLine, path: "/admin/stores" },
   { label: "Pièces", icon: RiSettings4Line, path: "/admin/parts" },
   { label: "Rapports", icon: RiFileTextLine, path: "/admin/reports" },
+  { label: "Notifications", icon: RiNotification3Line, path: "/admin/notifications" },
   { label: "Messages", icon: RiMessage3Line, path: "/admin/chat" },
 ];
 
@@ -154,7 +155,9 @@ export default function AdminHome() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <button className="relative w-10 h-10 rounded-xl bg-[#f5f7fa] border border-[#e9effd] flex items-center justify-center text-[#6b7280] hover:text-[#1f1f1f] hover:border-[#2563eb]/30 transition-all">
+            <button
+              onClick={() => navigate("/admin/notifications")}
+              className="relative w-10 h-10 rounded-xl bg-[#f5f7fa] border border-[#e9effd] flex items-center justify-center text-[#6b7280] hover:text-[#1f1f1f] hover:border-[#2563eb]/30 transition-all">
               <RiNotification3Line className="text-lg" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-[#2563eb] rounded-full" />
             </button>
@@ -180,3 +183,4 @@ export default function AdminHome() {
     </div>
   );
 }
+

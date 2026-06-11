@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import {
   approveProfessional,
   getProfessionalDetailsAdmin,
+  openAdminDocument,
   rejectProfessional,
   updateUserStatusAdmin,
 } from "../../services/adminService";
@@ -17,7 +18,10 @@ import {
   FiCheck,
   FiX,
   FiSlash,
+  FiFileText,
+  FiImage,
 } from "react-icons/fi";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const AdminProfessionalDetails = () => {
   const { id } = useParams(); // This is the user ID of the professional
@@ -282,6 +286,89 @@ const AdminProfessionalDetails = () => {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Documents */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-6">
+        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <FiFileText className="text-primary" /> Legal Documents
+        </h2>
+        {profile.documents && profile.documents.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {profile.documents.map((doc, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => openAdminDocument(doc)}
+                className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-primary hover:bg-white transition-all group">
+                <div className="p-2 bg-white border border-gray-100 rounded text-gray-500 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-all">
+                  <FiFileText size={20} />
+                </div>
+                <span className="font-medium text-gray-700 group-hover:text-primary transition-colors">
+                  Document {index + 1}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 italic">No documents uploaded.</p>
+        )}
+
+        {profile.ProfessionalStore && (
+          <div className="mt-8 border-t border-gray-100 pt-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FiFileText className="text-primary" /> Store Legal Documents ({profile.ProfessionalStore.name})
+            </h2>
+            {profile.ProfessionalStore.documents && profile.ProfessionalStore.documents.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {profile.ProfessionalStore.documents.map((doc, index) => (
+                  <button
+                    key={`store-doc-${index}`}
+                    type="button"
+                    onClick={() => openAdminDocument(doc)}
+                    className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-primary hover:bg-white transition-all group">
+                    <div className="p-2 bg-white border border-gray-100 rounded text-gray-500 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-all">
+                      <FiFileText size={20} />
+                    </div>
+                    <span className="font-medium text-gray-700 group-hover:text-primary transition-colors">
+                      Store Document {index + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic">No store documents uploaded.</p>
+            )}
+
+            <h2 className="text-lg font-bold text-gray-800 mb-4 mt-8 flex items-center gap-2">
+              <FiImage className="text-primary" /> Store Images
+            </h2>
+            {profile.ProfessionalStore.images && profile.ProfessionalStore.images.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {profile.ProfessionalStore.images.map((img, index) => (
+                  <a
+                    key={`store-img-${index}`}
+                    href={getImageUrl(img)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block relative group overflow-hidden rounded-lg border border-gray-200 bg-gray-50 aspect-square">
+                    <img
+                      src={getImageUrl(img)}
+                      alt={`Store ${index + 1}`}
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white font-medium text-xs">View</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic">No store images uploaded.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Grid for Appointments and Reviews */}

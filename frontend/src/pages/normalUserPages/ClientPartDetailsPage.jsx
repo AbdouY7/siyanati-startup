@@ -191,7 +191,7 @@ export default function ClientPartDetailsPage() {
         <FiAlertTriangle className="mx-auto text-4xl text-rose-400 mb-3" />
         <p className="text-gray-700 font-medium">Pièce introuvable</p>
         <button
-          onClick={() => navigate("/profile/my-parts")}
+          onClick={() => navigate(-1)}
           className="mt-4 text-sm text-blue-600 hover:underline"
         >
           ← Retour
@@ -207,7 +207,7 @@ export default function ClientPartDetailsPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("/profile/my-parts")}
+              onClick={() => navigate(-1)}
               className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition"
             >
               <FiArrowLeft size={20} />

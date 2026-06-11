@@ -22,8 +22,10 @@ router.put(
   authMiddleware,
   upload.fields([
     { name: "profilePicture", maxCount: 1 },
+    { name: "documents", maxCount: 10 },
     { name: "garageLogo", maxCount: 1 },
     { name: "garageImages", maxCount: 10 },
+    { name: "garageDocuments", maxCount: 10 },
   ]),
   userController.updateMyProfessionalProfile,
 );
@@ -75,6 +77,7 @@ router.put(
   upload.fields([
     { name: "logo", maxCount: 1 },
     { name: "images", maxCount: 10 },
+    { name: "documents", maxCount: 10 },
   ]),
   userController.updateMyStoreProfile,
 );

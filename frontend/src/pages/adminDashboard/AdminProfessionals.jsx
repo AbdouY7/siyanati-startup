@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 import {
   getAllProfessionalsAdmin,
+  openAdminDocument,
   approveProfessional,
   rejectProfessional,
 } from "../../services/adminService";
@@ -457,14 +458,13 @@ const AdminProfessionals = () => {
                               <div className="flex gap-2 flex-wrap">
                                 {selectedPro.professional_profile.documents.map(
                                   (doc, idx) => (
-                                    <a
+                                    <button
                                       key={idx}
-                                      href={doc}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                      type="button"
+                                      onClick={() => openAdminDocument(doc)}
                                       className="text-sm text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded">
                                       View Document {idx + 1}
-                                    </a>
+                                    </button>
                                   ),
                                 )}
                               </div>

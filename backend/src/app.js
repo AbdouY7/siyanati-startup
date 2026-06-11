@@ -57,6 +57,7 @@ app.use("/api/professional-stores", require("./routes/professionalStore.routes")
 
 app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/favorites", require("./routes/favorite.routes"));
+app.use("/api/proxy", require("./routes/proxy.routes"));
 
 // error handler
 app.use((err, req, res, next) => {

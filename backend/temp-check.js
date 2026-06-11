@@ -1,7 +1,11 @@
-const { PrismaClient } = require('@prisma/client'); 
-const prisma = new PrismaClient(); 
-async function main() { 
-  console.log("Stores:", await prisma.storeProfile.findMany({ select: { id: true, user_id: true, status: true, is_frozen: true } })); 
-  console.log("ProfessionalStores:", await prisma.professionalStore.findMany({ select: { id: true, status: true } })); 
-} 
-main().then(()=>prisma.$disconnect());
+const prisma = require('./src/prisma/client');
+
+async function run() {
+  const stores = await prisma.storeProfile.findMany({ select: { documents: true, images: true } });
+  console.log('Stores:', JSON.stringify(stores, null, 2));
+  
+  const pros = await prisma.professionalProfile.findMany({ select: { documents: true } });
+  console.log('Pros:', JSON.stringify(pros, null, 2));
+}
+
+run().catch(console.error).finally(() => prisma.$disconnect());

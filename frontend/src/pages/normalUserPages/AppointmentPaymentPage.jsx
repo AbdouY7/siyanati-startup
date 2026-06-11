@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import Footer from "../../components/layaouts/Footer";
 import { simulateEdahabiaWebhook } from "../../services/paymentService";
+import { getUserPaymentAccounts } from "../../services/paymentAccountService";
 
 // ─── El Dahabia card preview ──────────────────────────────────────────────────
 function DahabiaCardPreview({ fullName, cardNumber, expiry }) {
@@ -164,6 +165,25 @@ export default function AppointmentPaymentPage() {
   };
 
   const fmtCvv = (v) => v.replace(/\D/g, "").slice(0, 4);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const accounts = await getUserPaymentAccounts();
+        if (accounts && accounts.length > 0) {
+          const defaultAcc = accounts.find((a) => a.is_default) || accounts[0];
+          setForm((prev) => ({
+            ...prev,
+            fullName: defaultAcc.full_name || prev.fullName,
+            cardNumber: fmtCard(defaultAcc.ccp_code || prev.cardNumber),
+          }));
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchAccounts();
+  }, []);
 
   const validate = () => {
     const e = {};
