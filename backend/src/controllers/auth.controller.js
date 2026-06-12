@@ -251,6 +251,9 @@ const registerStore = async (req, res, next) => {
       }),
     ]);
 
+    const { notifyAdmins } = require("../services/notification.service");
+    await notifyAdmins("new_store_registration", "Nouveau Magasin", `Le magasin ${store_name} (${owner_name}) s'est inscrit et attend votre approbation.`);
+
     return res.status(201).json({
       message:
         "Store registration submitted successfully, pending admin approval",
@@ -384,6 +387,9 @@ const registerProfessional = async (req, res, next) => {
     }
 
     await prisma.$transaction(transactionOps);
+
+    const { notifyAdmins } = require("../services/notification.service");
+    await notifyAdmins("new_professional_registration", "Nouveau Professionnel", `Le professionnel ${full_name} s'est inscrit et attend votre approbation.`);
 
     return res.status(201).json({
       message:

@@ -806,4 +806,6 @@ enum NotificationType {
   loyalty_points_earned
   diagnostic_post_answered
   diagnostic_answer_accepted
+  new_store_registration
+  new_professional_registration
 }

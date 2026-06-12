@@ -29,7 +29,7 @@ export const createSubscriptionPlan = async (data) => {
 
 export const updateSubscriptionPlan = async (id, data) => {
   try {
-    const response = await axiosInstance.put(`/subscription-plans/${id}`, data);
+    const response = await axiosInstance.patch(`/subscription-plans/${id}`, data);
     return response.data.data;
   } catch (error) {
     throw error;

@@ -6,7 +6,9 @@ export default function AdminSubscriptionPlans() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [editingPlanId, setEditingPlanId] = useState(null);
+  
+  const initialFormState = {
     name: "",
     description: "",
     price_dzd: 0,
@@ -16,7 +18,9 @@ export default function AdminSubscriptionPlans() {
     features: "",
     is_free_trial: false,
     trial_days: 0
-  });
+  };
+  
+  const [formData, setFormData] = useState(initialFormState);
 
   useEffect(() => {
     fetchPlans();
@@ -51,18 +55,37 @@ export default function AdminSubscriptionPlans() {
         trial_days: Number(formData.trial_days),
         features: formData.features.split(',').map(f => f.trim()).filter(f => f)
       };
-      await createSubscriptionPlan(formattedData);
+      
+      if (editingPlanId) {
+        await updateSubscriptionPlan(editingPlanId, formattedData);
+      } else {
+        await createSubscriptionPlan(formattedData);
+      }
+      
       setIsModalOpen(false);
-      setFormData({
-        name: "", description: "", price_dzd: 0, duration_days: 30,
-        target_type: "store", billing_cycle: "monthly", features: "",
-        is_free_trial: false, trial_days: 0
-      });
+      setFormData(initialFormState);
+      setEditingPlanId(null);
       fetchPlans();
     } catch (error) {
-      console.error("Error creating plan", error);
-      alert("Failed to create plan");
+      console.error("Error saving plan", error);
+      alert(error?.response?.data?.message || "Failed to save plan");
     }
+  };
+
+  const handleEditClick = (plan) => {
+    setEditingPlanId(plan.id);
+    setFormData({
+      name: plan.name,
+      description: plan.description || "",
+      price_dzd: plan.price_dzd,
+      duration_days: plan.duration_days,
+      target_type: plan.target_type,
+      billing_cycle: plan.billing_cycle,
+      features: plan.features ? plan.features.join(", ") : "",
+      is_free_trial: plan.is_free_trial,
+      trial_days: plan.trial_days || 0
+    });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id) => {
@@ -89,7 +112,11 @@ export default function AdminSubscriptionPlans() {
           <p className="text-sm text-[#6b7280]">Gérez les forfaits pour les magasins et les professionnels</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingPlanId(null);
+            setFormData(initialFormState);
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-2 bg-[#2563eb] text-white px-4 py-2 rounded-xl hover:bg-[#1d4ed8]">
           <Plus size={18} />
           Créer un plan
@@ -100,7 +127,7 @@ export default function AdminSubscriptionPlans() {
         {plans.map((plan) => (
           <div key={plan.id} className="bg-white border border-[#e9effd] rounded-2xl p-6 shadow-sm relative">
             <div className="absolute top-4 right-4 flex gap-2">
-              <button className="text-blue-600 hover:text-blue-800"><Edit size={16}/></button>
+              <button onClick={() => handleEditClick(plan)} className="text-blue-600 hover:text-blue-800"><Edit size={16}/></button>
               <button onClick={() => handleDelete(plan.id)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
             </div>
             <h3 className="text-xl font-bold text-[#1f1f1f]">{plan.name}</h3>
@@ -138,7 +165,9 @@ export default function AdminSubscriptionPlans() {
               <X size={24} />
             </button>
             
-            <h2 className="text-xl font-bold text-[#1f1f1f] mb-6">Créer un nouveau plan</h2>
+            <h2 className="text-xl font-bold text-[#1f1f1f] mb-6">
+              {editingPlanId ? "Modifier le plan" : "Créer un nouveau plan"}
+            </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

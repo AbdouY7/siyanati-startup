@@ -4,10 +4,13 @@ import {
   getMyNotifications,
   markNotificationAsRead,
 } from "../../services/notificationService";
+import { initSocket } from "../../api/socket";
 
 const typeIcons = {
   new_message: FiFileText,
   report_reviewed: FiInfo,
+  new_store_registration: FiCheckCircle,
+  new_professional_registration: FiCheckCircle,
   default: FiBell,
 };
 
@@ -40,8 +43,16 @@ export default function AdminNotifications() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
+
+    const socket = initSocket();
+
+    socket.on("new_notification", (newNotif) => {
+      setNotifications((prev) => [newNotif, ...prev]);
+    });
+
+    return () => {
+      socket.off("new_notification");
+    };
   }, []);
 
   const handleMarkAsRead = async (id) => {

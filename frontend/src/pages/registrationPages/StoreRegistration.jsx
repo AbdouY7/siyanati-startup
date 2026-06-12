@@ -68,6 +68,10 @@ const StoreRegistration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (step < STEPS.length) {
+      nextStep();
+      return;
+    }
     setIsSubmitting(true);
     try {
       const data = new FormData();
