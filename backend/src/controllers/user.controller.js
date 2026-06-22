@@ -121,7 +121,8 @@ const getAllStores = async (req, res, next) => {
       where: { 
         role: "store",
         store_profile: {
-          is_frozen: false
+          is_frozen: false,
+          status: "approved"
         }
       },
       select: {
@@ -149,7 +150,8 @@ const getAllProfessionals = async (req, res, next) => {
       where: { 
         role: "professional",
         professional_profile: {
-          is_frozen: false
+          is_frozen: false,
+          status: "approved"
         }
       },
       select: {
@@ -511,6 +513,7 @@ const updateMyProfessionalProfile = async (req, res, next) => {
       experience_years,
       wilaya,
       location_address,
+      location_coordinates,
       bio,
       hourly_rate_dzd,
       work_type,
@@ -518,6 +521,7 @@ const updateMyProfessionalProfile = async (req, res, next) => {
       garage_name,
       garage_wilaya,
       garage_address,
+      garage_location,
       garage_logo_url,
       garage_images,
       dahabia_rip,
@@ -548,6 +552,8 @@ const updateMyProfessionalProfile = async (req, res, next) => {
     if (wilaya !== undefined) profileUpdateData.wilaya = wilaya;
     if (location_address !== undefined)
       profileUpdateData.location_address = location_address;
+    if (location_coordinates !== undefined)
+      profileUpdateData.location_coordinates = location_coordinates;
     if (bio !== undefined) profileUpdateData.bio = bio;
     if (hourly_rate_dzd !== undefined) {
       profileUpdateData.hourly_rate_dzd =
@@ -598,6 +604,7 @@ const updateMyProfessionalProfile = async (req, res, next) => {
         garage_name !== undefined ||
         garage_wilaya !== undefined ||
         garage_address !== undefined ||
+        garage_location !== undefined ||
         garage_logo_url !== undefined ||
         garage_images !== undefined ||
         garageDocumentUrls.length > 0;
@@ -634,6 +641,7 @@ const updateMyProfessionalProfile = async (req, res, next) => {
           ...(garage_name !== undefined && { name: garage_name }),
           ...(garage_wilaya !== undefined && { wilaya: garage_wilaya }),
           ...(garage_address !== undefined && { address: garage_address }),
+          ...(garage_location !== undefined && { location_coordinates: garage_location }),
           ...(finalGarageLogoUrl !== undefined && { logo_url: finalGarageLogoUrl }),
           ...(finalGarageImages !== undefined && { images: finalGarageImages }),
           ...(garageDocumentUrls.length > 0 && {
@@ -842,6 +850,7 @@ const updateMyStoreProfile = async (req, res, next) => {
       description,
       wilaya,
       address,
+      location_coordinates,
       logo_url,
       images,
       dahabia_rip,
@@ -856,6 +865,8 @@ const updateMyStoreProfile = async (req, res, next) => {
     if (description !== undefined) profileUpdateData.description = description;
     if (wilaya !== undefined) profileUpdateData.wilaya = wilaya;
     if (address !== undefined) profileUpdateData.address = address;
+    if (location_coordinates !== undefined)
+      profileUpdateData.location_coordinates = location_coordinates;
     if (logo_url !== undefined) profileUpdateData.logo_url = logo_url;
     if (dahabia_rip !== undefined) profileUpdateData.dahabia_rip = dahabia_rip;
     const storeDocumentUrls = await uploadFiles(

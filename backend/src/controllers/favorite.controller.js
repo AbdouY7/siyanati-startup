@@ -15,7 +15,7 @@ const getFavorites = async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
-    const [favorites, total] = await prisma.$transaction([
+    const [favorites, total] = await Promise.all([
       prisma.favorite.findMany({
         where,
         orderBy: { created_at: "desc" },

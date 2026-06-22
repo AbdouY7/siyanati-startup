@@ -251,7 +251,7 @@ export default function UserHome() {
             wilaya: pp.wilaya || "N/A",
             rating_avg: Number(pp.rating_avg) || 0,
             is_available: pp.is_available !== false,
-            avatar: getImageUrl(pp.shop_images?.[0]) ||
+            avatar: getImageUrl(pp.avatar_url || pp.ProfessionalStore?.logo_url || pp.ProfessionalStore?.images?.[0]) ||
               "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
           };
         });
@@ -493,10 +493,10 @@ export default function UserHome() {
                 <ShopCards
                   id={store.id}
                   name={store.store_name}
-                  image={getImageUrl(
-                    store.images?.[0] ||
-                    store.logo_url
-                  ) || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                  image={
+                    store.images?.[0] || store.logo_url ||
+                    "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"
+                  }
                   owner={store.owner_name}
                   wilaya={store.wilaya}
                   rating={store.rating_avg}
@@ -612,10 +612,10 @@ export default function UserHome() {
                     key={store.id}
                     id={store.id}
                     name={store.store_name}
-                    image={getImageUrl(
-                      store.images?.[0] ||
-                      store.logo_url
-                    ) || "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"}
+                    image={
+                      store.images?.[0] || store.logo_url ||
+                      "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"
+                    }
                     owner={store.owner_name}
                     wilaya={store.wilaya}
                     rating={store.rating_avg}

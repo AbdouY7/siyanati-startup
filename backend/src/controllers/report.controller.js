@@ -70,7 +70,7 @@ const getReports = async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
-    const [reports, total] = await prisma.$transaction([
+    const [reports, total] = await Promise.all([
       prisma.report.findMany({
         where,
         include: reportListInclude,

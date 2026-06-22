@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { getOrderHistory, updateOrderStatus } from "../../services/orderService";
+import useWorkflowSubscription from "../../hooks/useWorkflowSubscription";
 import PopupModal from "../../components/ui/PopupModal";
 import {
   FiSearch,
@@ -53,7 +54,7 @@ export default function StoreOrdersPage() {
 
   const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
 
-  const fetchOrders = async () => {
+  const fetchOrders = React.useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await getOrderHistory({
@@ -75,12 +76,18 @@ export default function StoreOrdersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, filters.status, filters.wilaya, searchQuery]);
 
   useEffect(() => {
     fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, pagination.limit, filters.status, filters.wilaya]);
+  }, [fetchOrders]);
+
+  useWorkflowSubscription({
+    entityType: "order",
+    onUpdate: () => {
+      fetchOrders();
+    }
+  });
 
   // Handle search when user types (with a basic debounce mechanism by listening to enter key or search button)
   const handleSearch = (e) => {

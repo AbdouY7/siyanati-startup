@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client");
+const { emitWorkflowUpdate } = require("../socket");
 const {
   calculateOrderTotals,
   generateOrderNumber,
@@ -278,6 +279,15 @@ const createOrder = async (req, res, next) => {
       });
     });
 
+    emitWorkflowUpdate({
+      entityType: "order",
+      entityId: order.id,
+      action: "created",
+      newState: order,
+      affectedUsers: [order.customer_id, store.user_id],
+      broadcastToRoles: ["admin"]
+    });
+
     res.status(201).json({ success: true, data: order });
   } catch (error) {
     if (error.statusCode === 409 && error.message === "Insufficient stock") {
@@ -340,7 +350,7 @@ const getOrders = async (req, res, next) => {
     const limitNum = parseInt(limit, 10) || 10;
     const skip = (pageNum - 1) * limitNum;
 
-    const [orders, total] = await prisma.$transaction([
+    const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where,
         include: listOrderInclude,
@@ -495,6 +505,15 @@ const updateOrderStatus = async (req, res, next) => {
       });
     }
 
+    emitWorkflowUpdate({
+      entityType: "order",
+      entityId: updatedOrder.id,
+      action: "updated",
+      newState: updatedOrder,
+      affectedUsers: [updatedOrder.customer_id, updatedOrder.store.user_id],
+      broadcastToRoles: ["admin"]
+    });
+
     res.json({ success: true, data: updatedOrder });
   } catch (error) {
     if (error.code === "P2025") {
@@ -553,6 +572,20 @@ const cancelOrder = async (req, res, next) => {
           cancellation_reason: "Cancelled by customer",
         },
       });
+    });
+
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: detailOrderInclude,
+    });
+
+    emitWorkflowUpdate({
+      entityType: "order",
+      entityId: order.id,
+      action: "cancelled",
+      newState: updatedOrder,
+      affectedUsers: [updatedOrder.customer_id, updatedOrder.store.user_id],
+      broadcastToRoles: ["admin"]
     });
 
     res.json({

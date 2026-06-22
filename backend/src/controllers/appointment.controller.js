@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client");
+const { emitWorkflowUpdate } = require("../socket");
 
 const appointmentListInclude = {
   customer: {
@@ -143,6 +144,15 @@ const createAppointment = async (req, res, next) => {
       include: appointmentDetailInclude,
     });
 
+    emitWorkflowUpdate({
+      entityType: "appointment",
+      entityId: appointment.id,
+      action: "created",
+      newState: appointment,
+      affectedUsers: [appointment.customer_id, appointment.professional.user_id],
+      broadcastToRoles: ["admin"]
+    });
+
     res.status(201).json({ success: true, data: appointment });
   } catch (error) {
     next(error);
@@ -276,6 +286,15 @@ const confirmAppointment = async (req, res, next) => {
       include: appointmentDetailInclude,
     });
 
+    emitWorkflowUpdate({
+      entityType: "appointment",
+      entityId: updated.id,
+      action: "confirmed",
+      newState: updated,
+      affectedUsers: [updated.customer_id, updated.professional.user_id],
+      broadcastToRoles: ["admin"]
+    });
+
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error.code === "P2025") {
@@ -312,6 +331,15 @@ const startAppointment = async (req, res, next) => {
       where: { id: appointment.id },
       data: { status: "in_progress" },
       include: appointmentDetailInclude,
+    });
+
+    emitWorkflowUpdate({
+      entityType: "appointment",
+      entityId: updated.id,
+      action: "started",
+      newState: updated,
+      affectedUsers: [updated.customer_id, updated.professional.user_id],
+      broadcastToRoles: ["admin"]
     });
 
     res.json({ success: true, data: updated });
@@ -361,6 +389,15 @@ const completeAppointment = async (req, res, next) => {
         completed_at: new Date(),
       },
       include: appointmentDetailInclude,
+    });
+
+    emitWorkflowUpdate({
+      entityType: "appointment",
+      entityId: updated.id,
+      action: "completed",
+      newState: updated,
+      affectedUsers: [updated.customer_id, updated.professional.user_id],
+      broadcastToRoles: ["admin"]
     });
 
     res.json({ success: true, data: updated });
@@ -413,6 +450,15 @@ const cancelAppointment = async (req, res, next) => {
         cancellation_reason,
       },
       include: appointmentDetailInclude,
+    });
+
+    emitWorkflowUpdate({
+      entityType: "appointment",
+      entityId: updated.id,
+      action: "cancelled",
+      newState: updated,
+      affectedUsers: [updated.customer_id, updated.professional.user_id],
+      broadcastToRoles: ["admin"]
     });
 
     res.json({ success: true, data: updated });

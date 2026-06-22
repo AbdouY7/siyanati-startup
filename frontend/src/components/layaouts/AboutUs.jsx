@@ -1,8 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import aboutUsImage from "../../assets/img/aboutusPicture.png";
 
 const AboutUs = () => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col lg:flex-row items-center justify-between gap-10 px-5 sm:px-10 lg:px-20 py-16 h-full bg-gradient-to-bl from-white via-blue-200 to-white">
       {/* Text + Button */}
@@ -20,7 +22,7 @@ const AboutUs = () => {
         </div>
 
         {/* ✅ Fix: self-start prevents the button from stretching full width */}
-        <AnimatedButton variant="secondary" className="self-start">
+        <AnimatedButton variant="secondary" className="self-start" onClick={() => navigate("/register-role")}>
           soyez professionnel SIYANATI
         </AnimatedButton>
       </div>

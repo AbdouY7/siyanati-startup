@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiBell, FiCheck, FiCheckCircle, FiAlertTriangle, FiInfo } from "react-icons/fi";
 import { getMyNotifications, markNotificationAsRead } from "../../services/notificationService";
+import useWorkflowSubscription from "../../hooks/useWorkflowSubscription";
 
 const typeIcons = {
   report_reviewed: FiAlertTriangle,
@@ -64,7 +65,7 @@ export default function NotificationDropdown() {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = React.useCallback(async () => {
     try {
       setLoading(true);
       const data = await getMyNotifications();
@@ -74,7 +75,13 @@ export default function NotificationDropdown() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useWorkflowSubscription({
+    onUpdate: () => {
+      fetchNotifications();
+    }
+  });
 
   const handleMarkAsRead = async (id) => {
     try {

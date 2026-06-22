@@ -168,4 +168,70 @@ const viewAdminDocument = async (req, res, next) => {
   }
 };
 
-module.exports = { getDashboardOverview, refreshDashboard, viewAdminDocument };
+// GET /api/admin/stores
+const getAllStoresAdmin = async (req, res, next) => {
+  try {
+    const stores = await prisma.user.findMany({
+      where: { 
+        role: "store",
+        store_profile: {
+          is_frozen: false
+        }
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        is_active: true,
+        email_verified: true,
+        created_at: true,
+        updated_at: true,
+        store_profile: true,
+      },
+      orderBy: { created_at: 'desc' }
+    });
+    res.status(200).json({ stores });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/admin/professionals
+const getAllProfessionalsAdmin = async (req, res, next) => {
+  try {
+    const professionals = await prisma.user.findMany({
+      where: { 
+        role: "professional",
+        professional_profile: {
+          is_frozen: false
+        }
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        is_active: true,
+        email_verified: true,
+        created_at: true,
+        updated_at: true,
+        professional_profile: {
+          include: { ProfessionalStore: true },
+        },
+      },
+      orderBy: { created_at: 'desc' }
+    });
+    res.status(200).json({ professionals });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { 
+  getDashboardOverview, 
+  refreshDashboard, 
+  viewAdminDocument,
+  getAllStoresAdmin,
+  getAllProfessionalsAdmin
+};

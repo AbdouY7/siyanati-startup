@@ -95,7 +95,7 @@ function mapProfessional(userData) {
     experience_years: profile.experience_years || 0,
     wilaya: profile.wilaya || "N/A",
     location_address: profile.location_address || "",
-    shop_images: store.images || [],
+    shop_images: store.images?.map(getImageUrl) || [],
     is_available: profile.is_available !== false,
     is_frozen: profile.is_frozen || false,
     hourly_rate_dzd: Number(profile.hourly_rate_dzd) || 0,

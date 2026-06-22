@@ -2,7 +2,7 @@ import axiosInstance from '../api/axios';
 
 export const getAllProfessionalsAdmin = async () => {
   try {
-    const response = await axiosInstance.get('/professionals');
+    const response = await axiosInstance.get('/admin/professionals');
     return response.data.professionals;
   } catch (error) {
     console.error('Error fetching professionals:', error);
@@ -74,7 +74,7 @@ export const getClientDetailsAdmin = async (id) => {
 
 export const getAllStoresAdmin = async () => {
   try {
-    const response = await axiosInstance.get('/shops');
+    const response = await axiosInstance.get('/admin/stores');
     return response.data.stores;
   } catch (error) {
     console.error('Error fetching stores:', error);

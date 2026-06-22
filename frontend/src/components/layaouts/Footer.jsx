@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { FiArrowRight } from "react-icons/fi";
 import { SlSocialInstagram } from "react-icons/sl";
 import { SlSocialFacebook } from "react-icons/sl";
@@ -222,6 +223,7 @@ const responsiveCSS = `
 `;
 
 const Footer = () => {
+  const navigate = useNavigate();
   const socialIcons = [
     { name: "Instagram", link: "#", icon: <SlSocialInstagram size={18} /> },
     { name: "Facebook", link: "#", icon: <SlSocialFacebook size={18} /> },
@@ -334,9 +336,7 @@ const Footer = () => {
                 <button
                   className="footer-cta-btn"
                   style={styles.ctaButton}
-                  onClick={() => {
-                    /* navigate */
-                  }}>
+                  onClick={() => navigate("/register")}>
                   COMMENCEZ AVEC SIYANATI
                   <FiArrowRight size={16} />
                 </button>

@@ -217,7 +217,7 @@ export default function Magasins() {
                   id={store.id}
                   name={store.store_name}
                   image={
-                    getImageUrl(store.images[0] || store.logo_url) ||
+                    store.images[0] || store.logo_url ||
                     "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=400&q=80"
                   }
                   owner={store.owner_name}

@@ -38,6 +38,7 @@ const initSocket = (server) => {
 
       // Join a room based on the user's role and id
       socket.join(`user_${user.id}`);
+      socket.join(`role_${user.role}`);
       if (user.role === 'admin') {
         socket.join('admin_room');
       }
@@ -66,7 +67,21 @@ const getIO = () => {
   return io;
 };
 
+const emitWorkflowUpdate = ({ entityType, entityId, action, newState, affectedUsers = [], broadcastToRoles = [] }) => {
+  if (!io) return;
+  const payload = { entityType, entityId, action, newState, timestamp: new Date().toISOString() };
+  
+  affectedUsers.forEach((userId) => {
+    if (userId) io.to(`user_${userId}`).emit("workflow_update", payload);
+  });
+  
+  broadcastToRoles.forEach((role) => {
+    if (role) io.to(`role_${role}`).emit("workflow_update", payload);
+  });
+};
+
 module.exports = {
   initSocket,
   getIO,
+  emitWorkflowUpdate,
 };

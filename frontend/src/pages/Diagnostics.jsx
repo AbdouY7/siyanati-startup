@@ -8,6 +8,7 @@ import {
   getPostComments,
   createPostComment,
 } from "../services/diagnosticService";
+import useWorkflowSubscription from "../hooks/useWorkflowSubscription";
 import AuthRequiredModal from "../components/modals/AuthRequiredModal";
 import { getUserVehicles } from "../services/vehicleService";
 import { getImageUrl } from "../utils/imageUtils";
@@ -792,6 +793,13 @@ const Diagnostics = () => {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  useWorkflowSubscription({
+    entityType: "diagnostic",
+    onUpdate: () => {
+      fetchPosts();
+    }
+  });
 
   const handlePostCreated = (newPost) => {
     setPosts((prev) => [newPost, ...prev]);

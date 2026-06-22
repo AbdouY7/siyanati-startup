@@ -8,6 +8,7 @@ import {
   createPostComment,
   toggleSavePost,
 } from "../services/diagnosticService";
+import useWorkflowSubscription from "../hooks/useWorkflowSubscription";
 import {
   FiChevronLeft,
   FiMessageSquare,
@@ -54,6 +55,7 @@ const resolveAuthor = (entity) => {
 const DiagnosticPostDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   
@@ -84,6 +86,13 @@ const DiagnosticPostDetails = () => {
   useEffect(() => {
     fetchPostDetails();
   }, [fetchPostDetails]);
+
+  useWorkflowSubscription({
+    entityType: "diagnostic",
+    onUpdate: () => {
+      fetchPostDetails();
+    }
+  });
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -139,8 +148,6 @@ const DiagnosticPostDetails = () => {
   if (!post) return null;
 
   const images = post.images?.length > 0 ? post.images : ["/placeholder-car.png"];
-
-  const location = useLocation();
 
   const isDashboard = location.pathname.startsWith('/pro') || location.pathname.startsWith('/store');
   const paddingClass = isDashboard ? "pt-8" : "pt-[100px]";

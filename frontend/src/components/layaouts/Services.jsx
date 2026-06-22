@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import { FaCogs, FaCreditCard } from "react-icons/fa";
 import { BiSolidCarMechanic } from "react-icons/bi";
@@ -7,6 +8,7 @@ import { FiArrowRight } from "react-icons/fi";
 import serviceImage from "../../assets/img/servicesPicture.png";
 
 const Services = () => {
+  const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -151,7 +153,8 @@ const Services = () => {
             className="px-8 py-4"
             icon={<FiArrowRight size={20} />}
             iconPosition="right"
-            iconRight>
+            iconRight
+            onClick={() => navigate("/register")}>
             commencez avec SIYANATI
           </AnimatedButton>
           <AnimatedButton

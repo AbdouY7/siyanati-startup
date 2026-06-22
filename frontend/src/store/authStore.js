@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 import { decodeJwt } from "../utils/jwtUtils";
+import socketService from "../services/socketService";
 
 const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
@@ -23,6 +24,10 @@ const useAuthStore = create((set) => ({
       isAuthenticated: true,
     }));
 
+    if (token) {
+      socketService.connect(token);
+    }
+
     // Then fetch user profile in the background if not provided
     if (!userParam && token) {
       const decoded = decodeJwt(token);
@@ -42,6 +47,7 @@ const useAuthStore = create((set) => ({
 
   clearAuth: () => {
     localStorage.removeItem("refreshToken");
+    socketService.disconnect();
     set({
       user: null,
       accessToken: null,
@@ -92,6 +98,10 @@ const useAuthStore = create((set) => ({
         isAuthenticated: true,
         isCheckingAuth: false,
       });
+
+      if (accessToken) {
+        socketService.connect(accessToken);
+      }
     } catch (error) {
       set({
         user: null,

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, User, MapPin, Upload, Calendar, Phone, Wrench, Mail, Lock, ArrowRight, ArrowLeft, CheckCircle, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
+import LocationSelector from '../../components/uiComponents/LocationSelector';
 
 const SPECIALTIES = [
   'Mécanique générale','Électricité auto','Carrosserie','Peinture','Climatisation',
@@ -335,6 +336,13 @@ const ProfessionalRegistration = () => {
                           </div>
                         </div>
                         {errors.store_wilaya && <p className="text-red-500 text-xs mt-1">{errors.store_wilaya}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Localisation du magasin sur la carte <span className="text-gray-400">(optionnel mais recommandé)</span></label>
+                        <LocationSelector 
+                          value={formData.store_location}
+                          onChange={(val) => setFormData(prev => ({ ...prev, store_location: val }))}
+                        />
                       </div>
                     </div>
                   )}

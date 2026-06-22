@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { getAppointmentHistory, cancelAppointment } from "../../services/appointmentService";
+import useWorkflowSubscription from "../../hooks/useWorkflowSubscription";
 import {
   FiChevronLeft,
   FiSearch,
@@ -97,38 +98,45 @@ const AppointmentHistoryPage = () => {
     }
   };
 
+  const fetchAppointments = React.useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      const response = await getAppointmentHistory({
+        page: pagination.page,
+        limit: pagination.limit,
+        status: filters.status || undefined,
+        from_date: filters.from_date || undefined,
+        to_date: filters.to_date || undefined,
+      });
+
+      setAppointments(response.appointments || []);
+      setFiltered(response.appointments || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: response.total || 0,
+        total_pages: response.total_pages || 0,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch appointments", error);
+      // Optionally show toast notification here
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, pagination.page, pagination.limit, filters.status, filters.from_date, filters.to_date]);
+
   // Fetch appointments from backend
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
+    fetchAppointments();
+  }, [fetchAppointments]);
 
-      try {
-        setIsLoading(true);
-        const response = await getAppointmentHistory({
-          page: pagination.page,
-          limit: pagination.limit,
-          status: filters.status || undefined,
-          from_date: filters.from_date || undefined,
-          to_date: filters.to_date || undefined,
-        });
-
-        setAppointments(response.appointments || []);
-        setFiltered(response.appointments || []);
-        setPagination((prev) => ({
-          ...prev,
-          total: response.total || 0,
-          total_pages: response.total_pages || 0,
-        }));
-      } catch (error) {
-        console.error("Failed to fetch appointments", error);
-        // Optionally show toast notification here
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user, pagination.page, pagination.limit, filters.status, filters.from_date, filters.to_date]);
+  useWorkflowSubscription({
+    entityType: "appointment",
+    onUpdate: () => {
+      fetchAppointments();
+    }
+  });
 
   // Client-side search filtering
   useEffect(() => {

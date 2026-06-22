@@ -1,5 +1,5 @@
 const prisma = require("../prisma/client");
-const { getIO } = require("../socket");
+const { getIO, emitWorkflowUpdate } = require("../socket");
 
 const notifyAdmins = async (type, title, message) => {
   try {
@@ -22,6 +22,15 @@ const notifyAdmins = async (type, title, message) => {
       try {
         const io = getIO();
         io.to("admin_room").emit("new_notification", { type, title, message, created_at: new Date() });
+
+        emitWorkflowUpdate({
+          entityType: "notification",
+          entityId: null,
+          action: "created",
+          newState: { type, title, message },
+          affectedUsers: admins.map(a => a.id),
+          broadcastToRoles: ["admin"]
+        });
       } catch (err) {
         console.error("Socket not initialized yet or error emitting:", err);
       }

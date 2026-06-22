@@ -8,7 +8,6 @@ import {
   RiPhoneLine,
   RiSave3Line,
   RiStarFill,
-  RiStore2Line,
   RiUser3Line,
   RiImageLine,
   RiFileTextLine,
@@ -17,6 +16,7 @@ import useAuthStore from "../../store/authStore";
 import { deleteMyAccount } from "../../services/userService";
 import { updateMyStoreProfile } from "../../services/storeService";
 import { getImageUrl } from "../../utils/imageUtils";
+import LocationSelector from "../../components/uiComponents/LocationSelector";
 
 const fieldClass =
   "w-full rounded-xl border border-[#e9effd] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10";
@@ -40,6 +40,7 @@ export default function StoreProfile() {
     description: emptyToString(profile.description),
     wilaya: emptyToString(profile.wilaya),
     address: emptyToString(profile.address),
+    location_coordinates: emptyToString(profile.location_coordinates),
     dahabia_rip: emptyToString(profile.dahabia_rip),
     logo_url: emptyToString(profile.logo_url),
     images: emptyToString(profile.images?.join(", ")),
@@ -84,24 +85,15 @@ export default function StoreProfile() {
       formData.append("description", form.description);
       formData.append("wilaya", form.wilaya);
       formData.append("address", form.address);
+      formData.append("location_coordinates", form.location_coordinates);
       formData.append("dahabia_rip", form.dahabia_rip);
-      formData.append("logo_url", form.logo_url);
-      
-      const formImages = form.images.split(",").map((url) => url.trim()).filter(Boolean);
-      formImages.forEach((url) => {
-        formData.append("images[]", url); // Note: we'll append as a regular string if no files
-      });
 
       if (logoFile) formData.append("logo", logoFile);
       if (imageFiles.length > 0) {
-        imageFiles.forEach((file) => {
-          formData.append("images", file);
-        });
+        imageFiles.forEach((file) => formData.append("images", file));
       }
       if (documentFiles.length > 0) {
-        documentFiles.forEach((file) => {
-          formData.append("documents", file);
-        });
+        documentFiles.forEach((file) => formData.append("documents", file));
       }
 
       const updatedUser = await updateMyStoreProfile(formData);
@@ -158,7 +150,10 @@ export default function StoreProfile() {
                   <img
                     src={heroImage}
                     alt={profile.store_name}
-                    onError={(e) => { e.target.onerror = null; e.target.src = "/default-avatar.png"; }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/default-avatar.png";
+                    }}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -225,6 +220,7 @@ export default function StoreProfile() {
             <Info label="Téléphone" value={user?.phone} />
             <Info label="Wilaya" value={profile.wilaya} />
             <Info label="Adresse" value={profile.address} />
+            <Info label="Coordonnées GPS" value={profile.location_coordinates} />
             <Info label="Compte Dahabia (RIP)" value={profile.dahabia_rip} />
             <Info
               label="Statut"
@@ -273,6 +269,7 @@ export default function StoreProfile() {
         </div>
       </div>
 
+      {/* Documents */}
       <div className="rounded-2xl border border-[#e9effd] bg-white p-6 shadow-sm">
         <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-[#1f1f1f]">
           <RiFileTextLine className="text-[#2563eb]" /> Documents du magasin
@@ -293,7 +290,7 @@ export default function StoreProfile() {
           </div>
         ) : (
           <p className="rounded-xl bg-[#f8fafc] p-4 text-sm text-[#6b7280]">
-            Aucun document renseigne.
+            Aucun document renseigné.
           </p>
         )}
       </div>
@@ -310,35 +307,49 @@ export default function StoreProfile() {
             <Field
               label="Nom du magasin"
               value={form.store_name}
-              onChange={(v) => updateField("store_name", v)}
+              onChange={(value) => updateField("store_name", value)}
             />
             <Field
               label="Nom du propriétaire"
               value={form.owner_name}
-              onChange={(v) => updateField("owner_name", v)}
+              onChange={(value) => updateField("owner_name", value)}
             />
             <Field
               label="Téléphone"
               value={form.phone}
-              onChange={(v) => updateField("phone", v)}
+              onChange={(value) => updateField("phone", value)}
             />
             <Field
               label="Wilaya"
               value={form.wilaya}
-              onChange={(v) => updateField("wilaya", v)}
+              onChange={(value) => updateField("wilaya", value)}
             />
             <Field
               label="Adresse"
               value={form.address}
-              onChange={(v) => updateField("address", v)}
+              onChange={(value) => updateField("address", value)}
             />
             <Field
               label="Compte Dahabia (RIP)"
               value={form.dahabia_rip}
-              onChange={(v) => updateField("dahabia_rip", v)}
+              onChange={(value) => updateField("dahabia_rip", value)}
             />
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-[#6b7280]">
+                Coordonnées GPS
+              </label>
+              <LocationSelector
+                value={form.location_coordinates}
+                onChange={(value) => updateField("location_coordinates", value)}
+                placeholder="Sélectionnez l'emplacement du magasin"
+              />
+            </div>
+
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-[#6b7280]">Logo du magasin</label>
+              <label className="text-xs font-semibold text-[#6b7280]">
+                Logo du magasin
+              </label>
               <div className="flex items-center gap-3">
                 <input
                   type="file"
@@ -350,15 +361,21 @@ export default function StoreProfile() {
                 <button
                   type="button"
                   onClick={() => logoRef.current.click()}
-                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
-                >
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50">
                   Choisir le logo
                 </button>
-                {logoFile && <span className="text-xs text-gray-500 truncate max-w-[120px]">{logoFile.name}</span>}
+                {logoFile && (
+                  <span className="text-xs text-gray-500 truncate max-w-[120px]">
+                    {logoFile.name}
+                  </span>
+                )}
               </div>
             </div>
-            <div className="md:col-span-2 flex flex-col gap-1">
-              <label className="text-xs font-semibold text-[#6b7280]">Images du magasin</label>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-[#6b7280]">
+                Images du magasin
+              </label>
               <div className="flex items-center gap-3">
                 <input
                   type="file"
@@ -371,15 +388,21 @@ export default function StoreProfile() {
                 <button
                   type="button"
                   onClick={() => imagesRef.current.click()}
-                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
-                >
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50">
                   Choisir des images
                 </button>
-                {imageFiles.length > 0 && <span className="text-xs text-gray-500">{imageFiles.length} fichier(s) selectionne(s)</span>}
+                {imageFiles.length > 0 && (
+                  <span className="text-xs text-gray-500">
+                    {imageFiles.length} fichier(s) sélectionné(s)
+                  </span>
+                )}
               </div>
             </div>
+
             <div className="md:col-span-2 flex flex-col gap-1">
-              <label className="text-xs font-semibold text-[#6b7280]">Documents du magasin</label>
+              <label className="text-xs font-semibold text-[#6b7280]">
+                Documents du magasin
+              </label>
               <div className="flex items-center gap-3">
                 <input
                   type="file"
@@ -392,16 +415,21 @@ export default function StoreProfile() {
                 <button
                   type="button"
                   onClick={() => documentsRef.current.click()}
-                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50"
-                >
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50">
                   Choisir des documents
                 </button>
-                {documentFiles.length > 0 && <span className="text-xs text-gray-500">{documentFiles.length} document(s) selectionne(s)</span>}
+                {documentFiles.length > 0 && (
+                  <span className="text-xs text-gray-500">
+                    {documentFiles.length} document(s) sélectionné(s)
+                  </span>
+                )}
               </div>
               <p className="text-xs text-[#9ca3af]">
-                Les nouveaux documents seront ajoutes et les administrateurs seront notifies.
+                Les nouveaux documents seront ajoutés et les administrateurs
+                seront notifiés.
               </p>
             </div>
+
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-semibold text-[#6b7280]">
                 Description

@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "../../assets/img/syanati-hero-pic.png";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import { FiArrowRight } from "react-icons/fi";
 
 const Hero = () => {
   const headingRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const el = headingRef.current;
@@ -113,7 +115,8 @@ const Hero = () => {
             }}
             icon={<FiArrowRight size={18} />}
             iconPosition="right"
-            iconRight>
+            iconRight
+            onClick={() => navigate("/register")}>
             commencez avec SIYANATI
           </AnimatedButton>
 
@@ -125,7 +128,8 @@ const Hero = () => {
               border: "1px solid rgba(255,255,255,0.30)",
               color: "#ffffff",
               backdropFilter: "blur(12px)",
-            }}>
+            }}
+            onClick={() => navigate("/register-role")}>
             soyez professionnel SIYANATI
           </AnimatedButton>
         </div>

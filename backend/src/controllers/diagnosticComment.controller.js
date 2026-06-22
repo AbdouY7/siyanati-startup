@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client");
+const { emitWorkflowUpdate } = require("../socket");
 
 const commentInclude = {
   author: {
@@ -100,6 +101,14 @@ const createComment = async (req, res, next) => {
         images: images || [],
       },
       include: commentInclude,
+    });
+
+    emitWorkflowUpdate({
+      entityType: "diagnostic",
+      entityId: postId,
+      action: "comment_created",
+      newState: maskDeleted(comment),
+      affectedUsers: [post.author_id]
     });
 
     res.status(201).json({ success: true, data: maskDeleted(comment) });
@@ -211,6 +220,14 @@ const acceptAnswer = async (req, res, next) => {
           data: { status: "open" },
         });
       }
+    });
+
+    emitWorkflowUpdate({
+      entityType: "diagnostic",
+      entityId: postId,
+      action: "status_updated",
+      newState: { status: isAccepting ? "resolved" : "open" },
+      affectedUsers: [post.author_id, comment.author_id]
     });
 
     res.json({ success: true, data: maskDeleted(updatedComment) });

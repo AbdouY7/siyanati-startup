@@ -21,6 +21,7 @@ import {
   confirmAppointment,
   cancelAppointment,
 } from "../../services/appointmentService";
+import useWorkflowSubscription from "../../hooks/useWorkflowSubscription";
 import { getImageUrl } from "../../utils/imageUtils";
 
 /* ─── Status config ────────────────────────────────────────────────────── */
@@ -123,6 +124,13 @@ export default function AppointmentPro() {
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
+
+  useWorkflowSubscription({
+    entityType: "appointment",
+    onUpdate: () => {
+      fetchAppointments();
+    }
+  });
 
   useEffect(() => {
     setPage(1);

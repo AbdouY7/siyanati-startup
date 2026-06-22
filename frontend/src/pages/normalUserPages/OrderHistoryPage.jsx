@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { getOrderHistory, cancelOrder, updateOrderStatus } from "../../services/orderService";
+import useWorkflowSubscription from "../../hooks/useWorkflowSubscription";
 import {
   FiChevronLeft,
   FiSearch,
@@ -52,36 +53,32 @@ const OrderHistoryPage = () => {
 
   const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!user) return;
+  const fetchOrders = React.useCallback(async () => {
+    if (!user) return;
 
-      try {
-        setIsLoading(true);
-        const response = await getOrderHistory({
-          page: pagination.page,
-          limit: pagination.limit,
-          status: filters.status || undefined,
-          delivery_type: filters.delivery_type || undefined,
-          from_date: filters.from_date || undefined,
-          to_date: filters.to_date || undefined,
-        });
+    try {
+      setIsLoading(true);
+      const response = await getOrderHistory({
+        page: pagination.page,
+        limit: pagination.limit,
+        status: filters.status || undefined,
+        delivery_type: filters.delivery_type || undefined,
+        from_date: filters.from_date || undefined,
+        to_date: filters.to_date || undefined,
+      });
 
-        setOrders(response.orders || []);
-        setFilteredOrders(response.orders || []);
-        setPagination((prev) => ({
-          ...prev,
-          total: response.total || 0,
-          total_pages: response.total_pages || 0,
-        }));
-      } catch (error) {
-        console.error("Failed to fetch orders", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrders();
+      setOrders(response.orders || []);
+      setFilteredOrders(response.orders || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: response.total || 0,
+        total_pages: response.total_pages || 0,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch orders", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [
     user,
     pagination.page,
@@ -91,6 +88,17 @@ const OrderHistoryPage = () => {
     filters.from_date,
     filters.to_date,
   ]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useWorkflowSubscription({
+    entityType: "order",
+    onUpdate: () => {
+      fetchOrders();
+    }
+  });
 
   useEffect(() => {
     if (searchQuery) {

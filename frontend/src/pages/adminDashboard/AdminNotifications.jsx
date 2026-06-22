@@ -5,6 +5,7 @@ import {
   markNotificationAsRead,
 } from "../../services/notificationService";
 import { initSocket } from "../../api/socket";
+import { useOutletContext } from "react-router-dom";
 
 const typeIcons = {
   new_message: FiFileText,
@@ -29,6 +30,9 @@ export default function AdminNotifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Badge: clear all_notifications badge when admin views this page
+  const { resetBadge } = useOutletContext() || {};
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
@@ -43,6 +47,9 @@ export default function AdminNotifications() {
 
   useEffect(() => {
     fetchNotifications();
+
+    // Clear the notifications badge when admin views this page
+    if (resetBadge) resetBadge("all_notifications");
 
     const socket = initSocket();
 

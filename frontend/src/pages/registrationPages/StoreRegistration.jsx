@@ -3,6 +3,7 @@ import { ChevronLeft, Store, MapPin, Upload, Calendar, Mail, Lock, Phone, User, 
 import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
 import registrationImg from '../../assets/img/registrationImg.png';
+import LocationSelector from '../../components/uiComponents/LocationSelector';
 
 const WILAYAS = [
   'Adrar','Chlef','Laghouat','Oum El Bouaghi','Batna','Béjaïa','Biskra','Béchar',
@@ -255,11 +256,11 @@ const StoreRegistration = () => {
 
                   {/* GPS (optional) */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Coordonnées GPS <span className="text-gray-400">(optionnel)</span></label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input type="text" name="location_coordinates" value={formData.location_coordinates} onChange={handleChange} placeholder="36.7372, 3.0865" className={inputNormal} />
-                    </div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">Localisation sur la carte <span className="text-gray-400">(optionnel mais recommandé)</span></label>
+                    <LocationSelector 
+                      value={formData.location_coordinates}
+                      onChange={(val) => setFormData(prev => ({ ...prev, location_coordinates: val }))}
+                    />
                   </div>
                 </div>
               )}

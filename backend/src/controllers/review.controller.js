@@ -236,7 +236,7 @@ const getReviews = async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
-    const [reviews, total] = await prisma.$transaction([
+    const [reviews, total] = await Promise.all([
       prisma.review.findMany({
         where,
         include: reviewListInclude,

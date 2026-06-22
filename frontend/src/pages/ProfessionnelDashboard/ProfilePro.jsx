@@ -18,6 +18,7 @@ import {
   deleteMyAccount,
   updateMyProfessionalProfile,
 } from "../../services/professionalService";
+import LocationSelector from "../../components/uiComponents/LocationSelector";
 
 const fieldClass =
   "w-full rounded-xl border border-[#e9effd] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10";
@@ -41,6 +42,7 @@ export default function ProfilePro() {
     experience_years: emptyToString(profile.experience_years),
     wilaya: emptyToString(profile.wilaya),
     location_address: emptyToString(profile.location_address),
+    location_coordinates: emptyToString(profile.location_coordinates),
     bio: emptyToString(profile.bio),
     hourly_rate_dzd: emptyToString(profile.hourly_rate_dzd),
     dahabia_rip: emptyToString(profile.dahabia_rip),
@@ -48,6 +50,7 @@ export default function ProfilePro() {
     garage_name: emptyToString(garage?.name),
     garage_wilaya: emptyToString(garage?.wilaya),
     garage_address: emptyToString(garage?.address),
+    garage_location: emptyToString(garage?.location_coordinates),
     garage_logo_url: emptyToString(garage?.logo_url),
     garage_images: emptyToString(garage?.images?.join(", ")),
   }));
@@ -243,6 +246,7 @@ export default function ProfilePro() {
             />
             <Info label="Wilaya" value={profile.wilaya} />
             <Info label="Adresse" value={profile.location_address} />
+            <Info label="Coordonnées GPS" value={profile.location_coordinates} />
             <Info
               label="Tarif horaire"
               value={
@@ -280,6 +284,7 @@ export default function ProfilePro() {
               <Info label="Nom" value={garage.name} />
               <Info label="Wilaya" value={garage.wilaya} />
               <Info label="Adresse" value={garage.address} />
+              <Info label="Coordonnées GPS" value={garage.location_coordinates} />
               {garageImages.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   {garageImages.slice(0, 4).map((image) => (
@@ -396,6 +401,16 @@ export default function ProfilePro() {
               value={form.location_address}
               onChange={(value) => updateField("location_address", value)}
             />
+            <div className="md:col-span-2 z-0">
+              <label className="mb-1 block text-xs font-semibold text-[#6b7280]">
+                Coordonnées GPS
+              </label>
+              <LocationSelector
+                value={form.location_coordinates}
+                onChange={(value) => updateField("location_coordinates", value)}
+                placeholder="Sélectionnez votre emplacement sur la carte"
+              />
+            </div>
             <Field
               label="Tarif horaire DZD"
               type="number"
@@ -453,6 +468,16 @@ export default function ProfilePro() {
                   value={form.garage_address}
                   onChange={(value) => updateField("garage_address", value)}
                 />
+                <div className="md:col-span-2 z-0">
+                  <label className="mb-1 block text-xs font-semibold text-[#6b7280]">
+                    Coordonnées GPS du garage
+                  </label>
+                  <LocationSelector
+                    value={form.garage_location}
+                    onChange={(value) => updateField("garage_location", value)}
+                    placeholder="Sélectionnez l'emplacement du garage"
+                  />
+                </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-[#6b7280]">Logo du garage</label>
                   <div className="flex items-center gap-3">

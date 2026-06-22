@@ -1,5 +1,6 @@
 const prisma = require("../prisma/client");
 const jwt = require("jsonwebtoken");
+const { emitWorkflowUpdate } = require("../socket");
 
 const postListInclude = {
   author: {
@@ -74,7 +75,7 @@ const getPosts = async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
-    const [posts, total] = await prisma.$transaction([
+    const [posts, total] = await Promise.all([
       prisma.diagnosticPost.findMany({
         where,
         include: postListInclude,
@@ -223,6 +224,15 @@ const createPost = async (req, res, next) => {
       include: postDetailInclude,
     });
 
+    emitWorkflowUpdate({
+      entityType: "diagnostic",
+      entityId: post.id,
+      action: "created",
+      newState: post,
+      affectedUsers: [post.author_id],
+      broadcastToRoles: ["professional", "admin"]
+    });
+
     res.status(201).json({ success: true, data: post });
   } catch (error) {
     next(error);
@@ -321,6 +331,15 @@ const updatePostStatus = async (req, res, next) => {
       where: { id: post.id },
       data: { status },
       include: postDetailInclude,
+    });
+
+    emitWorkflowUpdate({
+      entityType: "diagnostic",
+      entityId: updated.id,
+      action: "status_updated",
+      newState: updated,
+      affectedUsers: [updated.author_id],
+      broadcastToRoles: ["professional", "admin"]
     });
 
     res.json({ success: true, data: updated });
@@ -470,7 +489,7 @@ const getMyPosts = async (req, res, next) => {
       is_deleted: false,
     };
 
-    const [posts, total] = await prisma.$transaction([
+    const [posts, total] = await Promise.all([
       prisma.diagnosticPost.findMany({
         where,
         include: postListInclude,
@@ -504,7 +523,7 @@ const getSavedPosts = async (req, res, next) => {
 
     const where = { user_id: req.user.id };
 
-    const [savedPosts, total] = await prisma.$transaction([
+    const [savedPosts, total] = await Promise.all([
       prisma.diagnosticSave.findMany({
         where,
         include: {

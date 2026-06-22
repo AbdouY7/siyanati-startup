@@ -1,10 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import PartCard from "../uiComponents/PartCard";
 import { FiArrowRight, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { getAllParts } from "../../services/partService";
 
 const BestParts = () => {
+  const navigate = useNavigate();
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -153,7 +155,8 @@ const BestParts = () => {
             className="px-8 py-4 self-start"
             icon={<FiArrowRight size={20} />}
             iconPosition="right"
-            iconRight>
+            iconRight
+            onClick={() => navigate("/register")}>
             commencez avec SIYANATI
           </AnimatedButton>
         </div>

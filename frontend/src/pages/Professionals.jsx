@@ -4,6 +4,7 @@ import { FiSearch, FiFilter, FiPlus, FiChevronDown } from "react-icons/fi";
 import Footer from "../components/layaouts/Footer";
 import ProfessionalCard from "../components/uiComponents/ProfessionalCard";
 import { getAllProfessionals } from "../services/professionalService";
+import { getImageUrl } from "../utils/imageUtils";
 
 // ─── Specialty type to label map ──────────────────────────────────────────────
 const specialtyTypeLabels = {
@@ -116,7 +117,7 @@ export default function Professionals() {
             rating_count: profile.rating_count || 0,
             bio: profile.bio || "",
             created_at: p.created_at || profile.created_at,
-            avatar: profile.shop_images?.[0] || "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
+            avatar: getImageUrl(profile.avatar_url || profile.ProfessionalStore?.logo_url || profile.ProfessionalStore?.images?.[0]) || "https://images.unsplash.com/photo-1632823471565-1ecdf5c6da1e?w=300&q=80",
           };
         });
         setProfessionals(mappedPros);

@@ -1,9 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Cards from "../uiComponents/Cards";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import { FiArrowRight } from "react-icons/fi";
 
 const ProSection = () => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-10 px-5 sm:px-10 lg:px-20 py-16 bg-gradient-to-bl from-white via-blue-200 to-white">
       <div className="flex flex-col gap-3 text-center md:text-left">
@@ -22,7 +24,8 @@ const ProSection = () => {
           className="px-8 py-4"
           icon={<FiArrowRight size={20} />}
           iconPosition="right"
-          iconRight>
+          iconRight
+          onClick={() => navigate("/register")}>
           commencez avec SIYANATI
         </AnimatedButton>
       </div>

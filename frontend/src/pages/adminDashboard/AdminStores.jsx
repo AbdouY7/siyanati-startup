@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import {
   FiSearch,
   FiFilter,
@@ -32,8 +32,12 @@ const AdminStores = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Badge: clear store registration badge when admin views this page
+  const { resetBadge } = useOutletContext() || {};
+
   useEffect(() => {
     fetchStores();
+    if (resetBadge) resetBadge("new_store_registration");
   }, []);
 
   const fetchStores = async () => {

@@ -296,8 +296,8 @@ export default function ShopProfilePage() {
                 store_name: sp.store_name || "Magasin",
                 owner_name: sp.owner_name || "Propriétaire",
                 wilaya: sp.wilaya || "N/A",
-                images: sp.images || [],
-                logo_url: sp.logo_url || "",
+                images: sp.images?.map(getImageUrl) || [],
+                logo_url: getImageUrl(sp.logo_url) || "",
                 rating_avg: Number(sp.rating_avg) || 0,
               };
             });
