@@ -183,8 +183,8 @@ export default function Professionals() {
     <div className="min-h-screen bg-gray-50 font-sans">
       <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-8">
         {/* Search row */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full max-w-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5 w-full">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full sm:max-w-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
             <FiSearch className="text-gray-400 shrink-0" size={16} />
             <input
               type="text"
@@ -194,7 +194,7 @@ export default function Professionals() {
               className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
             />
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl transition-all duration-150 shadow-sm">
+          <button className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl transition-all duration-150 shadow-sm w-full sm:w-auto flex justify-center items-center">
             <FiPlus size={18} />
           </button>
         </div>
@@ -239,7 +239,7 @@ export default function Professionals() {
           <button
             onClick={resetAll}
             title="Réinitialiser les filtres"
-            className={`ml-auto p-2.5 rounded-xl transition-all duration-150 active:scale-95
+            className={`mt-2 sm:mt-0 sm:ml-auto w-full sm:w-auto p-2.5 rounded-xl transition-all duration-150 active:scale-95 flex justify-center items-center
               ${
                 anyActive
                   ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"

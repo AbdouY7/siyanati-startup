@@ -96,6 +96,48 @@ const globalStyles = `
   .solutions-container:hover .divider-line { height: 80%; opacity: 0.8; }
 
   .solutions-font { font-family: 'Rajdhani', sans-serif; }
+
+  @media (max-width: 768px) {
+    .solutions-container {
+      flex-direction: column !important;
+      height: auto !important;
+      border-radius: 18px !important;
+    }
+
+    .solutions-card {
+      flex: 1 1 auto !important;
+      min-height: 390px;
+    }
+
+    .card-content {
+      text-align: center;
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+
+    .card-meta {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .card-details-wrap,
+    .card-badge,
+    .card-cta-btn {
+      max-height: 260px !important;
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    .detail-item {
+      justify-content: center;
+      text-align: center;
+      transform: none !important;
+    }
+
+    .divider-line {
+      display: none;
+    }
+  }
 `;
 
 const cards = [
@@ -242,10 +284,10 @@ export default function SolutionsCards() {
             <div className="card-bottom-fade absolute bottom-0 left-0 right-0 z-[2]" />
 
             {/* Content */}
-            <div className="absolute bottom-0 left-0 right-0 px-7 pb-7 z-[3]">
+            <div className="card-content absolute bottom-0 left-0 right-0 px-7 pb-7 z-[3]">
               {/* Icon + Badge */}
               <div
-                className="flex items-center gap-2.5 mb-2.5 text-white"
+                className="card-meta flex items-center gap-2.5 mb-2.5 text-white"
                 style={{ color: "#e9effd" }}>
                 {card.icon}
                 <span

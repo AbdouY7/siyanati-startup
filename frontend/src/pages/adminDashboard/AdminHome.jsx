@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Outlet, NavLink, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import {
+  Outlet,
+  NavLink,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom";
 import {
   RiDashboardLine,
   RiUserLine,
@@ -17,22 +23,49 @@ import {
   RiFilePaper2Line,
 } from "react-icons/ri";
 import useAuthStore from "../../store/authStore";
-import { getNotificationBadges, markNotificationsReadByType } from "../../services/notificationService";
+import {
+  getNotificationBadges,
+  markNotificationsReadByType,
+} from "../../services/notificationService";
 import { initSocket } from "../../api/socket";
+import siyanatiLogo from "../../assets/img/siyanati-logo-vertical-withoutbg.png";
 
 // ─── Badge key mapping: notification types that map to sidebar items ─────────
 // Each navItem can have a `badgeKey` which is a notification type string.
 // The badge count is derived from unread notifications of that type.
 const navItems = [
   { label: "Tableau de bord", icon: RiDashboardLine, path: "/admin" },
-  { label: "Plans d'abonnement", icon: RiFilePaper2Line, path: "/admin/subscription-plans" },
-  { label: "Abonnements", icon: RiMoneyDollarCircleLine, path: "/admin/subscriptions" },
+  {
+    label: "Plans d'abonnement",
+    icon: RiFilePaper2Line,
+    path: "/admin/subscription-plans",
+  },
+  {
+    label: "Abonnements",
+    icon: RiMoneyDollarCircleLine,
+    path: "/admin/subscriptions",
+  },
   { label: "Clients", icon: RiUserLine, path: "/admin/clients" },
-  { label: "Professionnels", icon: RiBriefcaseLine, path: "/admin/professionals", badgeKey: "new_professional_registration" },
-  { label: "Magasins", icon: RiStoreLine, path: "/admin/stores", badgeKey: "new_store_registration" },
+  {
+    label: "Professionnels",
+    icon: RiBriefcaseLine,
+    path: "/admin/professionals",
+    badgeKey: "new_professional_registration",
+  },
+  {
+    label: "Magasins",
+    icon: RiStoreLine,
+    path: "/admin/stores",
+    badgeKey: "new_store_registration",
+  },
   { label: "Pièces", icon: RiSettings4Line, path: "/admin/parts" },
   { label: "Rapports", icon: RiFileTextLine, path: "/admin/reports" },
-  { label: "Notifications", icon: RiNotification3Line, path: "/admin/notifications", badgeKey: "all_notifications" },
+  {
+    label: "Notifications",
+    icon: RiNotification3Line,
+    path: "/admin/notifications",
+    badgeKey: "all_notifications",
+  },
   { label: "Messages", icon: RiMessage3Line, path: "/admin/chat" },
 ];
 
@@ -121,7 +154,10 @@ export default function AdminHome() {
       updated[badgeKey] = 0;
       // Also decrement the total
       if (badgeKey !== "all_notifications") {
-        updated["all_notifications"] = Math.max(0, (updated["all_notifications"] || 0) - removedCount);
+        updated["all_notifications"] = Math.max(
+          0,
+          (updated["all_notifications"] || 0) - removedCount,
+        );
       }
       return updated;
     });
@@ -130,7 +166,8 @@ export default function AdminHome() {
     try {
       if (badgeKey === "all_notifications") {
         // Mark ALL unread notifications as read
-        const { markNotificationAsRead } = await import("../../services/notificationService");
+        const { markNotificationAsRead } =
+          await import("../../services/notificationService");
         await markNotificationAsRead("all");
         setBadgeCounts({});
       } else {
@@ -151,7 +188,9 @@ export default function AdminHome() {
   const totalUnread = badgeCounts["all_notifications"] || 0;
 
   return (
-    <div className="flex h-screen bg-[#f5f7fa] text-[#1f1f1f] overflow-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div
+      className="flex h-screen bg-[#f5f7fa] text-[#1f1f1f] overflow-hidden"
+      style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Badge animation keyframes */}
       <style>{`
         @keyframes badge-in {
@@ -166,18 +205,13 @@ export default function AdminHome() {
 
       {/* ── Sidebar ── */}
       <aside
-        className={`${sidebarOpen ? "w-64" : "w-20"} transition-all duration-300 flex-shrink-0 flex flex-col bg-white border-r border-[#e9effd]`}
-      >
+        className={`${sidebarOpen ? "w-64" : "w-20"} transition-all duration-300 flex-shrink-0 flex flex-col bg-white border-r border-[#e9effd]`}>
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-6 border-b border-[#e9effd]">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#0b3c5d] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#2563eb]/20">
-            <RiCarLine className="text-white text-xl" />
-          </div>
+        <div className="flex  items-center gap-3 px-3 py-4 border-b border-[#e9effd]">
+          <img className="w-1/2 " src={siyanatiLogo} alt="" />
+
           {sidebarOpen && (
             <div>
-              <p className="font-bold text-base tracking-tight leading-none" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                SIYANATI
-              </p>
               <p className="text-xs text-[#6b7280]">Admin</p>
             </div>
           )}
@@ -195,12 +229,12 @@ export default function AdminHome() {
                 end={item.path === "/admin"}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative no-underline
-                  ${isActive
-                    ? "bg-gradient-to-r from-[#2563eb]/10 to-[#2563eb]/5 text-[#2563eb]"
-                    : "text-[#6b7280] hover:text-[#1f1f1f] hover:bg-[#e9effd]/50"
+                  ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#2563eb]/10 to-[#2563eb]/5 text-[#2563eb]"
+                      : "text-[#6b7280] hover:text-[#1f1f1f] hover:bg-[#e9effd]/50"
                   }`
-                }
-              >
+                }>
                 {({ isActive }) => (
                   <>
                     {isActive && (
@@ -212,7 +246,9 @@ export default function AdminHome() {
                     </div>
                     {sidebarOpen && (
                       <>
-                        <span className="text-sm font-medium">{item.label}</span>
+                        <span className="text-sm font-medium">
+                          {item.label}
+                        </span>
                         <BadgeCount count={badgeCount} />
                       </>
                     )}
@@ -225,13 +261,16 @@ export default function AdminHome() {
 
         {/* Profile card */}
         <div className="p-3 border-t border-[#e9effd]">
-          <div className={`flex items-center gap-3 px-3 py-3 rounded-xl bg-[#e9effd]/50 ${sidebarOpen ? "" : "justify-center"}`}>
+          <div
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl bg-[#e9effd]/50 ${sidebarOpen ? "" : "justify-center"}`}>
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2563eb] to-[#0b3c5d] flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
               {initials}
             </div>
             {sidebarOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate text-[#1f1f1f]">Admin</p>
+                <p className="text-sm font-semibold truncate text-[#1f1f1f]">
+                  Admin
+                </p>
                 <p className="text-xs text-[#6b7280] truncate">{adminName}</p>
               </div>
             )}
@@ -239,8 +278,7 @@ export default function AdminHome() {
               <button
                 onClick={handleLogout}
                 className="text-[#6b7280] hover:text-[#ef4444] transition-colors"
-                title="Logout"
-              >
+                title="Logout">
                 <RiLogoutBoxRLine className="text-base" />
               </button>
             )}
@@ -254,8 +292,7 @@ export default function AdminHome() {
         <header className="flex items-center gap-4 px-6 py-4 bg-white border-b border-[#e9effd] flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-[#6b7280] hover:text-[#1f1f1f] transition-colors p-1"
-          >
+            className="text-[#6b7280] hover:text-[#1f1f1f] transition-colors p-1">
             <RiMenuLine className="text-xl" />
           </button>
 
@@ -288,7 +325,9 @@ export default function AdminHome() {
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#2563eb] to-[#0b3c5d] flex items-center justify-center text-xs font-bold text-white">
                 {initials}
               </div>
-              <span className="text-sm font-medium text-[#1f1f1f]">{shortName}</span>
+              <span className="text-sm font-medium text-[#1f1f1f]">
+                {shortName}
+              </span>
             </button>
           </div>
         </header>

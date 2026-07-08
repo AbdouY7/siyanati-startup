@@ -8,8 +8,8 @@ const ProSection = () => {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-10 px-5 sm:px-10 lg:px-20 py-16 bg-gradient-to-bl from-white via-blue-200 to-white">
-      <div className="flex flex-col gap-3 text-center md:text-left">
-        <h1 className="text-[32px] md:text-[48px] font-bold font-secondary text-primary line-clamp-4 md:line-clamp-3 w-full lg:w-1/2 leading-[1.2] uppercase">
+      <div className="flex flex-col gap-3 text-center lg:text-left items-center lg:items-start">
+        <h1 className="text-[32px] md:text-[48px] font-bold font-secondary text-primary line-clamp-4 md:line-clamp-3 w-full max-w-3xl lg:max-w-none lg:w-1/2 leading-[1.2] uppercase">
           Comment devenir professionnel ou vendeur sur
           <b className="bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
             {" "}
@@ -17,11 +17,11 @@ const ProSection = () => {
           </b>{" "}
         </h1>
       </div>
-      <div className="flex flex-col gap-8 items-center justify-center">
+      <div className="flex flex-col gap-8 items-center justify-center w-full">
         <Cards />
         <AnimatedButton
           variant="secondary"
-          className="px-8 py-4"
+          className="px-8 py-4 w-full max-w-xs sm:w-auto justify-center"
           icon={<FiArrowRight size={20} />}
           iconPosition="right"
           iconRight

@@ -5,6 +5,7 @@ import { SlSocialInstagram } from "react-icons/sl";
 import { SlSocialFacebook } from "react-icons/sl";
 import { SlSocialLinkedin } from "react-icons/sl";
 import { SlSocialGoogle } from "react-icons/sl";
+import siyanatiLogo from "../../assets/img/siyanati-logo-white-withoutbg.png";
 
 // ─── Inline styles (no Tailwind dependency issues) ───────────────────────────
 const styles = {
@@ -173,6 +174,7 @@ const styles = {
     paddingTop: "16px",
     borderTop: "1px solid rgba(255,255,255,0.15)",
     width: "100%",
+    textAlign: "center",
   },
 };
 
@@ -195,21 +197,43 @@ const responsiveCSS = `
   @media (max-width: 768px) {
     .footer-top-row {
       flex-direction: column !important;
-      align-items: flex-start !important;
+      align-items: center !important;
       gap: 20px !important;
+      text-align: center !important;
     }
     .footer-v-line { display: none !important; }
     .footer-nav-grid {
       grid-template-columns: 1fr !important;
       gap: 4px 0 !important;
+      width: 100% !important;
+      justify-items: center !important;
     }
     .footer-bottom-row {
       flex-direction: column !important;
-      align-items: flex-start !important;
+      align-items: center !important;
       gap: 20px !important;
+      text-align: center !important;
     }
     .footer-logo-text {
       font-size: 2rem !important;
+    }
+    .footer-content-block,
+    .footer-social-block,
+    .footer-cta-block {
+      align-items: center !important;
+    }
+    .footer-tagline {
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+    .footer-nav-item {
+      justify-content: center !important;
+    }
+    .footer-nav-link {
+      margin-left: 0 !important;
+    }
+    .footer-copyright {
+      text-align: center !important;
     }
   }
 
@@ -258,18 +282,20 @@ const Footer = () => {
           <div style={styles.logoBlock}>
             {/* Replace the <h1> below with your <img> when available:
                 <img src={siyanatiLogo} alt="Siyanati Logo" style={{ width: "180px", height: "auto" }} /> */}
-            <h1 className="footer-logo-text" style={styles.logoText}>
-              SIYANATI
-            </h1>
+            <img
+              src={siyanatiLogo}
+              alt="Siyanati Logo"
+              className="h-60 w-60 sm:h-80 sm:w-80 object-contain"
+            />
           </div>
 
           {/* Vertical divider (hidden on mobile via CSS) */}
           <div className="footer-v-line" style={styles.vLine} />
 
           {/* Content */}
-          <div style={styles.contentBlock}>
+          <div className="footer-content-block" style={styles.contentBlock}>
             {/* Tagline */}
-            <p style={styles.tagline}>
+            <p className="footer-tagline" style={styles.tagline}>
               La plateforme qui simplifie la réparation et l'entretien
               automobile.
             </p>
@@ -288,6 +314,7 @@ const Footer = () => {
                   {col.map((item, li) => (
                     <li
                       key={li}
+                      className="footer-nav-item"
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -296,7 +323,10 @@ const Footer = () => {
                       <span style={{ fontSize: "0.6rem", opacity: 0.7 }}>
                         •
                       </span>
-                      <a href={item.href} style={styles.navLink}>
+                      <a
+                        href={item.href}
+                        className="footer-nav-link"
+                        style={styles.navLink}>
                         {item.label}
                       </a>
                     </li>
@@ -308,7 +338,7 @@ const Footer = () => {
             {/* Social icons + CTA — side by side on desktop, stacked on mobile */}
             <div className="footer-bottom-row" style={styles.bottomRow}>
               {/* Social icons */}
-              <div style={styles.socialBlock}>
+              <div className="footer-social-block" style={styles.socialBlock}>
                 <p style={styles.socialLabel}>
                   suivez-nous sur les réseaux sociaux
                 </p>
@@ -329,7 +359,7 @@ const Footer = () => {
               </div>
 
               {/* CTA */}
-              <div style={styles.ctaBlock}>
+              <div className="footer-cta-block" style={styles.ctaBlock}>
                 <p style={styles.ctaLabel}>
                   suivez-nous sur les réseaux sociaux
                 </p>

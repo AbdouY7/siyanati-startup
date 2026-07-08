@@ -106,10 +106,10 @@ const Hero = () => {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto mt-4">
           <AnimatedButton
             variant="primary"
-            className="px-8 py-4 text-base"
+            className="px-8 py-4 text-base w-full sm:w-auto justify-center"
             style={{
               backdropFilter: "blur(12px)",
             }}
@@ -122,7 +122,7 @@ const Hero = () => {
 
           <AnimatedButton
             variant="secondary"
-            className="px-8 py-4 text-base"
+            className="px-8 py-4 text-base w-full sm:w-auto justify-center"
             style={{
               background: "rgba(255,255,255,0.10)",
               border: "1px solid rgba(255,255,255,0.30)",

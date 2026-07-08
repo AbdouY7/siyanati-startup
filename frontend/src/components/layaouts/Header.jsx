@@ -91,7 +91,7 @@ const Header = () => {
             <img
               src={siyanatiLogo}
               alt="Siyanati Logo"
-              className="h-8 w-auto"
+              className="h-22 w-22 sm:h-28 sm:w-28 object-contain"
             />
           </NavLink>
 
@@ -180,8 +180,10 @@ const Header = () => {
       {/* Mobile / Tablet Drawer */}
       <div
         ref={drawerRef}
-        className={`lg:hidden fixed top-[90px] left-4 right-4 sm:left-6 sm:right-6 z-40 bg-primary-dark/95 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl transition-all duration-300 ease-in-out overflow-hidden ${
-          menuOpen ? "max-h-[600px] opacity-100 py-2" : "max-h-0 opacity-0 py-0"
+        className={`lg:hidden fixed top-[90px] left-4 right-4 sm:left-6 sm:right-6 z-40 bg-primary-dark/95 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden ${
+          menuOpen
+            ? "max-h-[calc(100vh-110px)] opacity-100 py-2"
+            : "max-h-0 opacity-0 py-0"
         }`}>
         {/* Nav links */}
         <nav className="flex flex-col px-4 pt-3 gap-1">

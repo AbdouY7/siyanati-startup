@@ -53,7 +53,7 @@ const Services = () => {
       {/* Top: title/description + image */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
         <div className="flex flex-col gap-6 max-w-[600px] items-center lg:items-start text-center lg:text-left">
-          <h1 className="text-[48px] sm:text-[60px] lg:text-[80px] font-bold font-secondary text-primary leading-[1.2] uppercase w-full md:w-0.7">
+          <h1 className="text-[32px] sm:text-[48px] lg:text-[80px] font-bold font-secondary text-primary leading-[1.2] uppercase w-full lg:w-[70%]">
             services de SIYANATI
           </h1>
           <p className="text-[16px] text-gray-700 font-medium font-primary tracking-wide">
@@ -147,10 +147,10 @@ const Services = () => {
         </div>
 
         {/* Button */}
-        <div className="flex flex-col gap-6 sm:flex-row justify-center lg:justify-start">
+        <div className="flex flex-col gap-4 sm:flex-row justify-center lg:justify-start w-full sm:w-auto items-center">
           <AnimatedButton
             variant="primary"
-            className="px-8 py-4"
+            className="px-8 py-4 w-full max-w-xs sm:w-auto justify-center"
             icon={<FiArrowRight size={20} />}
             iconPosition="right"
             iconRight
@@ -159,7 +159,7 @@ const Services = () => {
           </AnimatedButton>
           <AnimatedButton
             variant="outline-white"
-            className="ml-4 border border-primary"
+            className="border border-primary w-full max-w-xs sm:w-auto justify-center"
             icon={<FiArrowRight size={20} />}
             iconPosition="right"
             iconRight>

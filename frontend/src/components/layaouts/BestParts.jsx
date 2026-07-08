@@ -75,8 +75,8 @@ const BestParts = () => {
   return (
     <div className="flex flex-col gap-10 px-5 sm:px-10 lg:px-20 py-16 bg-gradient-to-bl from-white via-blue-200 to-white">
       {/* Section header */}
-      <div className="flex flex-col gap-3 text-center md:text-left">
-        <h1 className="text-[48px] sm:text-[60px] lg:text-[72px] font-bold font-secondary text-primary leading-[1.2] uppercase">
+      <div className="flex flex-col gap-3 text-center lg:text-left">
+        <h1 className="text-[36px] sm:text-[48px] lg:text-[72px] font-bold font-secondary text-primary leading-[1.2] uppercase">
           <b className="bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
             Pièces
           </b>{" "}
@@ -149,10 +149,10 @@ const BestParts = () => {
         </div>
 
         {/* CTA Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-center w-full sm:w-auto mt-4">
           <AnimatedButton
             variant="primary"
-            className="px-8 py-4 self-start"
+            className="px-8 py-4 w-full max-w-xs sm:w-auto justify-center"
             icon={<FiArrowRight size={20} />}
             iconPosition="right"
             iconRight

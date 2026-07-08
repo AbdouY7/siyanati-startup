@@ -17,10 +17,15 @@ import {
   RiMoneyDollarCircleLine,
 } from "react-icons/ri";
 import useAuthStore from "../../store/authStore";
+import siyanatiLogo from "../../assets/img/siyanati-logo-vertical-withoutbg.png";
 
 const navItems = [
   { label: "Tableau de bord", icon: RiDashboardLine, path: "/pro" },
-  { label: "Mon Abonnement", icon: RiMoneyDollarCircleLine, path: "/pro/subscription" },
+  {
+    label: "Mon Abonnement",
+    icon: RiMoneyDollarCircleLine,
+    path: "/pro/subscription",
+  },
   { label: "Rendez-vous", icon: RiCalendarLine, path: "/pro/appointments" },
   { label: "Planification", icon: RiTimeLine, path: "/pro/schedule" },
   { label: "Avis", icon: RiStarLine, path: "/pro/reviews" },
@@ -71,18 +76,15 @@ export default function HomePro() {
       <aside
         className={`${sidebarOpen ? "w-64" : "w-20"} transition-all duration-300 flex-shrink-0 flex flex-col bg-white border-r border-[#e9effd]`}>
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-6 border-b border-[#e9effd]">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#0b3c5d] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#2563eb]/20">
-            <RiCarLine className="text-white text-xl" />
-            {/* // the logo of the website */}
-          </div>
+        <div className="flex flex-col items-center gap-3 px-5 py-6 border-b border-[#e9effd]">
+          <img className="w-1/2 " src={siyanatiLogo} alt="" />
           {/* //the name of the website */}
           {sidebarOpen && (
             <div>
               <p
-                className="font-bold text-base tracking-tight leading-none"
+                className="font-bold text-[12px] text-gray-400 tracking-tight leading-none"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                SIYANATI
+                Professionnel
               </p>
             </div>
           )}

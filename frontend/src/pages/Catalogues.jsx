@@ -157,8 +157,8 @@ const Catalogues = () => {
         </div>
 
         {/* Search row */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full max-w-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 w-full">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full sm:max-w-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
             <IoSearchOutline className="text-gray-400 shrink-0" size={17} />
             <input
               type="text"
@@ -168,20 +168,22 @@ const Catalogues = () => {
               className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
             />
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl transition-all duration-150 shadow-sm">
-            <IoSearchOutline size={18} />
-          </button>
-          <button
-            onClick={resetAll}
-            title="Réinitialiser les filtres"
-            className={` p-2.5 rounded-xl transition-all duration-150 active:scale-95
-              ${
-                anyActive
-                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-500"
-              }`}>
-            <FiFilter size={16} />
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl transition-all duration-150 shadow-sm flex-1 sm:flex-none flex justify-center items-center">
+              <IoSearchOutline size={18} />
+            </button>
+            <button
+              onClick={resetAll}
+              title="Réinitialiser les filtres"
+              className={`p-2.5 rounded-xl transition-all duration-150 active:scale-95 flex-1 sm:flex-none flex justify-center items-center
+                ${
+                  anyActive
+                    ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-500"
+                }`}>
+              <FiFilter size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Filter pills row */}

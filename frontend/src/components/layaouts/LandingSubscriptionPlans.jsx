@@ -36,11 +36,11 @@ export default function LandingSubscriptionPlans({ onRequireAuth }) {
         </div>
 
         {/* Toggle Filter */}
-        <div className="flex justify-center mb-12">
-          <div className="bg-white p-1 rounded-xl border border-gray-200 inline-flex shadow-sm">
+        <div className="flex justify-center mb-12 w-full">
+          <div className="bg-white p-1 rounded-xl border border-gray-200 flex flex-col sm:flex-row shadow-sm w-full sm:w-auto">
             <button
               onClick={() => setFilter("professional")}
-              className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+              className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all w-full sm:w-auto ${
                 filter === "professional"
                   ? "bg-blue-600 text-white shadow-md"
                   : "text-gray-500 hover:text-gray-700"
@@ -50,7 +50,7 @@ export default function LandingSubscriptionPlans({ onRequireAuth }) {
             </button>
             <button
               onClick={() => setFilter("store")}
-              className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+              className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all w-full sm:w-auto ${
                 filter === "store"
                   ? "bg-blue-600 text-white shadow-md"
                   : "text-gray-500 hover:text-gray-700"
@@ -73,14 +73,14 @@ export default function LandingSubscriptionPlans({ onRequireAuth }) {
             {filteredPlans.map((plan) => (
               <div
                 key={plan.id}
-                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-blue-900/5 flex flex-col h-full relative overflow-hidden transition-transform hover:-translate-y-1"
+                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-blue-900/5 flex flex-col h-full relative overflow-hidden transition-transform hover:-translate-y-1 text-center md:text-left"
               >
                 {/* Decorative background shape */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-bl-full -z-10 opacity-50" />
                 
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                 
-                <div className="mb-6 flex items-baseline gap-1">
+                <div className="mb-6 flex items-baseline justify-center md:justify-start gap-1">
                   <span className="text-4xl font-black text-blue-600">
                     {Number(plan.price_dzd).toLocaleString("fr-DZ")}
                   </span>
@@ -89,16 +89,16 @@ export default function LandingSubscriptionPlans({ onRequireAuth }) {
                 </div>
 
                 <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-start gap-3">
+                  <li className="flex flex-col md:flex-row items-center md:items-start gap-3">
                     <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
                     <span className="text-gray-600 text-sm">Visibilité accrue sur la plateforme</span>
                   </li>
-                  <li className="flex items-start gap-3">
+                  <li className="flex flex-col md:flex-row items-center md:items-start gap-3">
                     <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
                     <span className="text-gray-600 text-sm">Badge exclusif sur votre profil</span>
                   </li>
                   {plan.trial_days > 0 && (
-                    <li className="flex items-start gap-3">
+                    <li className="flex flex-col md:flex-row items-center md:items-start gap-3">
                       <CheckCircle2 size={20} className="text-green-500 shrink-0 mt-0.5" />
                       <span className="text-gray-600 text-sm font-semibold">
                         Période d'essai gratuite de {plan.trial_days} jours incluse

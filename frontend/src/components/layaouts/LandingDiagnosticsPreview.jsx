@@ -90,8 +90,8 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
   return (
     <section className="py-20 bg-white border-t border-gray-100">
       <div className="max-w-6xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
-          <div className="max-w-2xl">
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 mb-12 text-center md:text-left">
+          <div className="max-w-2xl flex flex-col items-center md:items-start">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold mb-4">
               <Search size={16} />
               Diagnostics Communautaires
@@ -106,7 +106,7 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
           </div>
           <button
             onClick={() => onRequireAuth("Inscrivez-vous pour consulter tous les diagnostics et poser vos questions.")}
-            className="shrink-0 flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-all active:scale-[0.98]"
+            className="shrink-0 flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white w-full max-w-xs md:max-w-none md:w-auto px-6 py-3 rounded-xl font-semibold transition-all active:scale-[0.98]"
           >
             <Wrench size={18} />
             Voir tous les diagnostics
@@ -127,21 +127,21 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
               <div
                 key={post.id}
                 onClick={() => onRequireAuth("Connectez-vous pour lire ce diagnostic en détail.")}
-                className="group bg-white border border-gray-200 hover:border-blue-300 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all cursor-pointer flex flex-col h-full relative overflow-hidden"
+                className="group bg-white border border-gray-200 hover:border-blue-300 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all cursor-pointer flex flex-col h-full relative overflow-hidden text-center md:text-left"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-start justify-center md:justify-between mb-4">
+                  <div className="flex flex-col md:flex-row items-center gap-3">
                     <img
                       src={getImageUrl(post.user?.avatar_url || "")}
                       alt="Avatar"
                       onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=User&background=eff6ff&color=2563eb"; }}
                       className="w-10 h-10 rounded-full object-cover border border-gray-100"
                     />
-                    <div>
+                    <div className="text-center md:text-left">
                       <p className="text-sm font-bold text-gray-900 leading-tight">
                         {post.user?.full_name || "Utilisateur"}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                      <div className="flex items-center justify-center md:justify-start gap-1 text-xs text-gray-400 mt-0.5">
                         <Clock size={10} />
                         <span>
                           {getRelativeTime(post.created_at)}
@@ -164,7 +164,7 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
                   {post.content}
                 </p>
 
-                <div className="flex items-center gap-4 pt-4 border-t border-gray-100 mt-auto">
+                <div className="flex items-center justify-center md:justify-start gap-4 pt-4 border-t border-gray-100 mt-auto">
                   <div className="flex items-center gap-1.5 text-gray-400 text-xs font-semibold">
                     <ThumbsUp size={14} />
                     <span>{post._count?.reactions || 0}</span>
