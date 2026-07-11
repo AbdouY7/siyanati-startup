@@ -29,7 +29,7 @@ import { getUserVehicles } from "../../services/vehicleService";
 import { getDiagnosticPosts } from "../../services/diagnosticService";
 import { getImageUrl } from "../../utils/imageUtils";
 
-import heroBg from "../../assets/img/home-user-hero.png";
+import heroBg from "../../assets/img/Home-user-Hero.png";
 
 // ─── Specialty label map ──────────────────────────────────────────────────────
 const specialtyLabels = {
