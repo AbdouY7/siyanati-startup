@@ -79,6 +79,7 @@ import StoreProfile from "./pages/StoreDashboard/StoreProfile";
 import SubscriptionPaymentPage from "./pages/SubscriptionPaymentPage";
 import AppointmentPaymentPage from "./pages/normalUserPages/AppointmentPaymentPage";
 import ChatPage from "./pages/ChatPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -263,6 +264,9 @@ function App() {
             <Route path="chat" element={<ChatPage />} />
           </Route>
         </Route>
+        
+        {/* Fallback 404 Route */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );
