@@ -44,7 +44,7 @@ const Header = () => {
       name: "Message",
       icon: <FiMessageSquare size={18} />,
       label: "Messages",
-      link: "/messages",
+      link: "/profile/chat",
     },
     {
       name: "Notifications",

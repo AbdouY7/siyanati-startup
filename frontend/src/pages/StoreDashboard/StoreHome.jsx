@@ -37,7 +37,7 @@ const navItems = [
   {
     label: "Messages",
     icon: RiMessage3Line,
-    path: "/store/messages",
+    path: "/store/chat",
     badge: 3,
   },
   { label: "Diagnostic", icon: RiCarLine, path: "/store/diagnostic" },

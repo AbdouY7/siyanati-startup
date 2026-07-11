@@ -78,6 +78,7 @@ import StoreNotifications from "./pages/StoreDashboard/StoreNotifications";
 import StoreProfile from "./pages/StoreDashboard/StoreProfile";
 import SubscriptionPaymentPage from "./pages/SubscriptionPaymentPage";
 import AppointmentPaymentPage from "./pages/normalUserPages/AppointmentPaymentPage";
+import ChatPage from "./pages/ChatPage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
@@ -178,6 +179,10 @@ function App() {
               element={<SavedDiagnosticPostsPage />}
             />
             <Route
+              path="/profile/chat"
+              element={<ChatPage />}
+            />
+            <Route
               path="/profile/appointments/:id"
               element={<AppointmentDetailsPage />}
             />
@@ -198,6 +203,7 @@ function App() {
             <Route path="reviews" element={<ReviewsPro />} />
             <Route path="diagnostic" element={<Diagnostics />} />
             <Route path="diagnostic/:id" element={<DiagnosticPostDetails />} />
+            <Route path="chat" element={<ChatPage />} />
             <Route
               path="appointments/:id"
               element={<AppointmentDetailsPro />}
@@ -218,6 +224,7 @@ function App() {
             <Route path="notifications" element={<StoreNotifications />} />
             <Route path="reviews" element={<StoreReviews />} />
             <Route path="profile" element={<StoreProfile />} />
+            <Route path="chat" element={<ChatPage />} />
             {/* <Route path="appointments" element={<AppointmentPro />} />
             <Route
               path="appointments/:id"
@@ -253,7 +260,7 @@ function App() {
             <Route path="parts/:id" element={<AdminPartDetails />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="notifications" element={<AdminNotifications />} />
-            <Route path="chat" element={<div>Chat Page</div>} />
+            <Route path="chat" element={<ChatPage />} />
           </Route>
         </Route>
       </Routes>
