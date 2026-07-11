@@ -378,7 +378,7 @@ export default function BuyPartPage() {
 
           <div className="flex gap-3">
             <Link
-              to="/shops"
+              to="/magasins"
               className="flex-1 no-underline border border-gray-200 text-gray-600 text-sm font-semibold py-3 rounded-xl hover:bg-gray-50 active:scale-95 transition-all text-center">
               Retour aux magasins
             </Link>
