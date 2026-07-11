@@ -60,7 +60,7 @@ const ShopCards = ({ id, name, image, owner, wilaya, rating, available }) => {
         <div className="flex items-center gap-2">
           {/* Discussion Button */}
           <Link
-            to={`/shops/${id}/chat`}
+            to="/profile/chat"
             onMouseDown={() => setChatPressed(true)}
             onMouseUp={() => setChatPressed(false)}
             onMouseLeave={() => setChatPressed(false)}

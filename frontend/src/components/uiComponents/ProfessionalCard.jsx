@@ -70,7 +70,7 @@ const ProfessionalCard = ({
         {/* Actions */}
         <div className="flex items-center gap-2">
           <Link
-            to={`/professionnels/${id}/chat`}
+            to="/profile/chat"
             onMouseDown={() => setChatPressed(true)}
             onMouseUp={() => setChatPressed(false)}
             onMouseLeave={() => setChatPressed(false)}

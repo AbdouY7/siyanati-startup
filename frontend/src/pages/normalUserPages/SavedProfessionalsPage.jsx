@@ -211,8 +211,8 @@ const SavedProfessionalsPage = () => {
                     )}
                     <div className="flex gap-2">
                       <Link
-                        to={`/messages/${pro.user_id}`}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition">
+                        to="/profile/chat"
+                        className="flex-1 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 border border-blue-100">
                         Discussion <FiMessageSquare size={14} />
                       </Link>
                       <button
