@@ -37,16 +37,11 @@ const Login = () => {
       newErrors.email = "Please enter a valid email address.";
     }
 
-    // Password
+    // Password — match backend loginSchema (min 6 chars)
     if (!data.password) {
       newErrors.password = "Password is required.";
-    } else if (data.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters.";
-    } else if (!/[A-Z]/.test(data.password)) {
-      newErrors.password =
-        "Password must contain at least one uppercase letter.";
-    } else if (!/[0-9]/.test(data.password)) {
-      newErrors.password = "Password must contain at least one number.";
+    } else if (data.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters.";
     }
 
     return newErrors;

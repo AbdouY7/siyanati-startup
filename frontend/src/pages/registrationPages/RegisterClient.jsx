@@ -71,11 +71,10 @@ const RegisterClient = () => {
         try {
           // Real API call
           await axiosInstance.post("/auth/register", {
-            fullName: formData.fullName,
+            full_name: formData.fullName,
             email: formData.email,
             phone: formData.phone,
             password: formData.password,
-            role: "client" // sending role depending on your backend expectation
           });
 
           setSubmitStatus("success");
