@@ -53,9 +53,17 @@ router.post(
   authController.registerProfessional,
 );
 
+const authMiddleware = require("../middlewares/auth.middleware");
+
 router.post("/register-admin", authController.registerAdmin);
 
 router.post("/refresh", authController.refreshToken);
 router.post("/logout", authController.logout);
+
+// Verification routes
+router.post("/send-email-verification", authMiddleware, authController.sendEmailVerification);
+router.post("/verify-email", authMiddleware, authController.verifyEmail);
+router.post("/send-phone-verification", authMiddleware, authController.sendPhoneVerification);
+router.post("/verify-phone", authMiddleware, authController.verifyPhone);
 
 module.exports = router;

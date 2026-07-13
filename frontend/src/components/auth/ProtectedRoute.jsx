@@ -18,6 +18,17 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Enforce verification (exempt admins)
+  const user = useAuthStore.getState().user;
+  if (user && user.role !== "admin") {
+    if (!user.email_verified) {
+      return <Navigate to="/verify-email" state={{ from: location }} replace />;
+    }
+    if (!user.phone_verified) {
+      return <Navigate to="/verify-phone" state={{ from: location }} replace />;
+    }
+  }
+
   return <Outlet />;
 };
 

@@ -52,6 +52,8 @@ import SavedDiagnosticPostsPage from "./pages/normalUserPages/SavedDiagnosticPos
 import SelectionScreen from "./pages/registrationPages/SelectionScreen";
 import ProfessionalRegistration from "./pages/registrationPages/ProfessionalRegistration";
 import StoreRegistration from "./pages/registrationPages/StoreRegistration";
+import EmailVerification from "./pages/registrationPages/EmailVerification";
+import PhoneVerification from "./pages/registrationPages/PhoneVerification";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RoleRoute from "./components/auth/RoleRoute";
 import Diagnostics from "./pages/Diagnostics";
@@ -129,6 +131,8 @@ function App() {
         <Route path="/register-role" element={<SelectionScreen />} />
         <Route path="/register-pro" element={<ProfessionalRegistration />} />
         <Route path="/register-store" element={<StoreRegistration />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
+        <Route path="/verify-phone" element={<PhoneVerification />} />
 
         {/* Customer Profile Routes */}
         <Route element={<RoleRoute allowedRoles={["customer"]} />}>

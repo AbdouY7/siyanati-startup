@@ -22,6 +22,16 @@ const RoleRoute = ({ allowedRoles }) => {
     return <Navigate to="/" replace />;
   }
 
+  // Enforce verification (exempt admins)
+  if (user.role !== "admin") {
+    if (!user.email_verified) {
+      return <Navigate to="/verify-email" state={{ from: location }} replace />;
+    }
+    if (!user.phone_verified) {
+      return <Navigate to="/verify-phone" state={{ from: location }} replace />;
+    }
+  }
+
   return <Outlet />;
 };
 

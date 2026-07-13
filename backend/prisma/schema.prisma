@@ -35,6 +35,29 @@ model User {
 
   favorites Favorite[]
 
+  // Verification fields
+  phone_verified        Boolean              @default(false)
+  
+  // Email OTP fields
+  email_otp_hash        String?
+  email_otp_expires_at  DateTime?
+  email_otp_last_sent_at DateTime?
+  email_otp_attempts    Int                  @default(0)
+
+  // Phone OTP fields
+  phone_otp_hash        String?
+  phone_otp_expires_at  DateTime?
+  phone_otp_last_sent_at DateTime?
+  phone_otp_attempts    Int                  @default(0)
+
+  // Legacy token fields (to be replaced, kept for migration safety if needed, but best to remove if not used elsewhere)
+  email_verification_token      String?
+  email_verification_expires_at DateTime?
+  phone_verification_code       String?
+  phone_verification_expires_at DateTime?
+  reset_password_token          String?
+  reset_password_expires_at     DateTime?
+
   @@index([role, created_at])  // Dashboard: count by role, trend by date
   @@map("users")
 }

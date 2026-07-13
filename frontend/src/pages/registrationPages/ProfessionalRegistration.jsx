@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, User, MapPin, Upload, Calendar, Phone, Wrench, Mail, Lock, ArrowRight, ArrowLeft, CheckCircle, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
+import useAuthStore from '../../store/authStore';
 import LocationSelector from '../../components/uiComponents/LocationSelector';
 
 const SPECIALTIES = [
@@ -33,6 +34,7 @@ const STEPS = [
 
 const ProfessionalRegistration = () => {
   const navigate = useNavigate();
+  const setAuth = useAuthStore(state => state.setAuth);
   const [step, setStep] = useState(1);
   const [workType, setWorkType] = useState('individuel');
   const [formData, setFormData] = useState({
@@ -107,7 +109,16 @@ const ProfessionalRegistration = () => {
       const response = await axios.post('/auth/register-professional', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (response.status === 201) setSubmitSuccess(true);
+      if (response.status === 201) {
+        const { accessToken, refreshToken } = response.data;
+        if (accessToken) {
+          await setAuth(null, accessToken, refreshToken);
+          setSubmitSuccess(true);
+          setTimeout(() => navigate('/verify-email'), 1500);
+        } else {
+          setSubmitSuccess(true);
+        }
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Erreur de connexion au serveur';
       setErrors({ general: msg });
@@ -183,8 +194,8 @@ const ProfessionalRegistration = () => {
               </div>
               <h2 className="text-xl font-bold text-gray-800">Inscription soumise !</h2>
               <p className="text-gray-500 text-sm max-w-xs">Votre demande est en attente d'approbation par l'administrateur.</p>
-              <button onClick={() => navigate('/login')} className="mt-4 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
-                Aller à la connexion
+              <button onClick={() => navigate('/verify-email')} className="mt-4 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+                Aller à la vérification
               </button>
             </div>
           ) : (

@@ -4,9 +4,11 @@ import registrationImg from "../../assets/img/registrationImg.png";
 import Input from "../../components/uiComponents/InputField";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axios";
+import useAuthStore from "../../store/authStore";
 
 const RegisterClient = () => {
   const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -70,16 +72,19 @@ const RegisterClient = () => {
       const submitRegistration = async () => {
         try {
           // Real API call
-          await axiosInstance.post("/auth/register", {
+          const response = await axiosInstance.post("/auth/register", {
             full_name: formData.fullName,
             email: formData.email,
             phone: formData.phone,
             password: formData.password,
           });
 
+          const { accessToken, refreshToken } = response.data;
+          await setAuth(null, accessToken, refreshToken);
+
           setSubmitStatus("success");
           setTimeout(() => {
-            navigate("/login");
+            navigate("/verify-email");
           }, 1500);
         } catch (err) {
           if (err.response && err.response.data && err.response.data.errors) {
