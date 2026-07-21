@@ -83,12 +83,7 @@ const registerAdmin = async (req, res, next) => {
 
   try {
 
-    const { parsePhoneNumberFromString } = require("libphonenumber-js");
-    const parsedPhone = parsePhoneNumberFromString(phone, "DZ");
-    if (!parsedPhone || !parsedPhone.isValid()) {
-      return res.status(400).json({ message: "Invalid Algerian phone number" });
-    }
-    const formattedPhone = parsedPhone.format("E.164");
+    const formattedPhone = phone;
 
     const existingEmail = await prisma.user.findUnique({ where: { email } });
     if (existingEmail) {
@@ -120,13 +115,10 @@ const registerAdmin = async (req, res, next) => {
 };
 
 const registerCustomer = async (req, res, next) => {
-  const { email, password, phone, full_name, wilaya, address, date_of_birth } =
-    req.body;
+  const { email, password, phone, full_name, wilaya, address, date_of_birth } = req.body;
 
   if (!email || !password || !phone || !full_name) {
-    return res
-      .status(400)
-      .json({ message: "Email, password, phone and full_name are required" });
+    return res.status(400).json({ message: "Email, password, phone and full_name are required" });
   }
 
   if (date_of_birth) {
@@ -143,90 +135,71 @@ const registerCustomer = async (req, res, next) => {
     }
 
     if (phone) {
-      const existingPhone = await prisma.user.findUnique({
-        where: { phone },
-      });
+      const existingPhone = await prisma.user.findUnique({ where: { phone } });
       if (existingPhone) {
         return res.status(409).json({ message: "Phone number already in use" });
       }
     }
 
+    const existingPending = await prisma.pendingRegistration.findUnique({ where: { email } });
+
     const password_hash = await bcrypt.hash(password, 12);
-    const userId = randomUUID();
+    const otp = generateNumericOTP();
+    const hashedOtp = hashOTP(otp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    const userForToken = { id: userId, role: "customer" };
-    const accessToken = generateAccessToken(userForToken);
-    const refreshToken = generateRefreshToken(userForToken);
+    const pendingData = {
+      password_hash,
+      phone,
+      role: "customer",
+      registration_data: { full_name, wilaya, address, date_of_birth },
+      otp_hash: hashedOtp,
+      otp_expires_at: expiresAt,
+      otp_last_sent_at: new Date(),
+    };
 
-    await prisma.user.create({
-      data: {
-        id: userId,
-        email,
-        password_hash,
-        role: "customer",
-        phone,
-        refresh_token: refreshToken,
-        client_profile: {
-          create: {
-            full_name,
-            wilaya,
-            address,
-            date_of_birth: date_of_birth ? new Date(date_of_birth) : undefined,
-          },
+    let pendingRegistration;
+    if (existingPending) {
+      pendingRegistration = await prisma.pendingRegistration.update({
+        where: { email },
+        data: pendingData,
+      });
+    } else {
+      pendingRegistration = await prisma.pendingRegistration.create({
+        data: {
+          email,
+          ...pendingData
         },
-      },
-    });
-
-    return res
-      .status(201)
-      .json({ message: "Customer registration successful", accessToken, refreshToken });
-  } catch (err) {
-    if (err.code === "P2002") {
-      return res.status(409).json({ message: "Email or phone number already in use" });
+      });
     }
-    console.error(err);
-    return res.status(500).json({ message: "Registration failed" });
+
+    const pendingToken = jwt.sign({ pendingId: pendingRegistration.id, type: "pending" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+        <h2>Verify your email address</h2>
+        <p>Your verification code is:</p>
+        <h1 style="font-size: 32px; letter-spacing: 5px; color: #007bff;">${otp}</h1>
+        <p>This code will expire in 5 minutes.</p>
+      </div>
+    `;
+
+    await sendEmail(email, "Your Email Verification Code", html);
+
+    return res.status(200).json({ message: "Please verify your email", pendingToken });
+  } catch (err) {
+    next(err);
   }
 };
 
 const registerStore = async (req, res, next) => {
-  const {
-    email,
-    password,
-    phone,
-    owner_name,
-    store_name,
-    description,
-    address,
-    wilaya,
-    location_coordinates,
-    documents,
-    images,
-    logo_url,
-  } = req.body;
+  const { email, password, phone, owner_name, store_name, description, address, wilaya, location_coordinates, documents, images, logo_url } = req.body;
 
-  const { parsePhoneNumberFromString } = require("libphonenumber-js");
-
-  if (
-    !email ||
-    !password ||
-    !owner_name ||
-    !phone ||
-    !store_name ||
-    !address ||
-    !wilaya
-  ) {
-    return res.status(400).json({
-      message:
-        "email, password, phone, owner_name, store_name, address, and wilaya are required",
-    });
+  if (!email || !password || !owner_name || !phone || !store_name || !address || !wilaya) {
+    return res.status(400).json({ message: "email, password, phone, owner_name, store_name, address, and wilaya are required" });
   }
 
-  const parsedPhone = parsePhoneNumberFromString(phone, "DZ");
-  if (!parsedPhone || !parsedPhone.isValid()) {
-    return res.status(400).json({ message: "Invalid Algerian phone number" });
-  }
-  const formattedPhone = parsedPhone.format("E.164");
+  const formattedPhone = phone;
 
   try {
     const existingEmail = await prisma.user.findUnique({ where: { email } });
@@ -241,58 +214,64 @@ const registerStore = async (req, res, next) => {
       }
     }
 
+    const existingPending = await prisma.pendingRegistration.findUnique({ where: { email } });
+
     const password_hash = await bcrypt.hash(password, 12);
-    const userId = randomUUID();
     const storeDocumentUrls = await uploadFiles(getFiles(req, "documents"), "store-documents");
     const storeImageUrls = await uploadFiles(getFiles(req, "images"), "stores");
-    const logoFiles = [
-      ...getFiles(req, "logo"),
-      ...getFiles(req, "image"),
-      ...getFiles(req, "logo_url"),
-    ];
+    const logoFiles = [...getFiles(req, "logo"), ...getFiles(req, "image"), ...getFiles(req, "logo_url")];
     const [uploadedLogoUrl] = await uploadFiles(logoFiles.slice(0, 1), "stores");
 
-    const userForToken = { id: userId, role: "store" };
-    const accessToken = generateAccessToken(userForToken);
-    const refreshToken = generateRefreshToken(userForToken);
+    const otp = generateNumericOTP();
+    const hashedOtp = hashOTP(otp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await prisma.$transaction([
-      prisma.user.create({
-        data: { id: userId, email, phone: formattedPhone, password_hash, role: "store", refresh_token: refreshToken },
-      }),
-      prisma.storeProfile.create({
+    const pendingData = {
+      password_hash,
+      phone: formattedPhone,
+      role: "store",
+      registration_data: { owner_name, store_name, description, address, wilaya, location_coordinates },
+      file_urls: {
+        documents: storeDocumentUrls.length ? storeDocumentUrls : documents || [],
+        images: storeImageUrls.length ? storeImageUrls : images || [],
+        logo_url: uploadedLogoUrl || logo_url
+      },
+      otp_hash: hashedOtp,
+      otp_expires_at: expiresAt,
+      otp_last_sent_at: new Date(),
+    };
+
+    let pendingRegistration;
+    if (existingPending) {
+      pendingRegistration = await prisma.pendingRegistration.update({
+        where: { email },
+        data: pendingData,
+      });
+    } else {
+      pendingRegistration = await prisma.pendingRegistration.create({
         data: {
-          user_id: userId,
-          owner_name,
-          store_name,
-          description,
-          address,
-          wilaya,
-          location_coordinates,
-          documents: storeDocumentUrls.length ? storeDocumentUrls : documents || [],
-          images: storeImageUrls.length ? storeImageUrls : images || [],
-          logo_url: uploadedLogoUrl || logo_url,
-          status: "pending",
-          submitted_at: new Date(),
+          email,
+          ...pendingData
         },
-      }),
-    ]);
-
-    const { notifyAdmins } = require("../services/notification.service");
-    await notifyAdmins("new_store_registration", "Nouveau Magasin", `Le magasin ${store_name} (${owner_name}) s'est inscrit et attend votre approbation.`);
-
-    return res.status(201).json({
-      message:
-        "Store registration submitted successfully, pending admin approval",
-      accessToken,
-      refreshToken
-    });
-  } catch (err) {
-    if (err.code === "P2002") {
-      return res.status(409).json({ message: "Email or phone number already in use" });
+      });
     }
-    console.error(err);
-    return res.status(500).json({ message: "Registration failed" });
+
+    const pendingToken = jwt.sign({ pendingId: pendingRegistration.id, type: "pending" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+        <h2>Verify your email address</h2>
+        <p>Your verification code is:</p>
+        <h1 style="font-size: 32px; letter-spacing: 5px; color: #007bff;">${otp}</h1>
+        <p>This code will expire in 5 minutes.</p>
+      </div>
+    `;
+
+    await sendEmail(email, "Your Email Verification Code", html);
+
+    return res.status(200).json({ message: "Please verify your email", pendingToken });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -330,12 +309,7 @@ const registerProfessional = async (req, res, next) => {
     });
   }
 
-  const { parsePhoneNumberFromString } = require("libphonenumber-js");
-  const parsedPhone = parsePhoneNumberFromString(phone, "DZ");
-  if (!parsedPhone || !parsedPhone.isValid()) {
-    return res.status(400).json({ message: "Invalid Algerian phone number" });
-  }
-  const formattedPhone = parsedPhone.format("E.164");
+  const formattedPhone = phone;
 
   const resolvedWorkType = work_type || "individuel";
 
@@ -821,6 +795,209 @@ const verifyPhone = async (req, res, next) => {
   }
 };
 
+
+const verifyRegistrationEmail = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: "No token provided" });
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid or expired pending token" });
+    }
+
+    if (decoded.type !== "pending") return res.status(401).json({ message: "Invalid token type" });
+
+    const pending = await prisma.pendingRegistration.findUnique({ where: { id: decoded.pendingId } });
+    if (!pending) return res.status(404).json({ message: "Pending registration not found" });
+
+    if (new Date() > new Date(pending.otp_expires_at)) {
+      return res.status(400).json({ success: false, message: "Verification code expired. Please request a new one." });
+    }
+
+    if (pending.otp_attempts >= 5) {
+      return res.status(429).json({ success: false, message: "Too many failed attempts. Please request a new code." });
+    }
+
+    const hashedInputOtp = hashOTP(code);
+    if (hashedInputOtp !== pending.otp_hash) {
+      await prisma.pendingRegistration.update({
+        where: { id: pending.id },
+        data: { otp_attempts: { increment: 1 } },
+      });
+      return res.status(400).json({ success: false, message: "Invalid verification code" });
+    }
+
+    const userId = randomUUID();
+    const userForToken = { id: userId, role: pending.role };
+    const accessToken = generateAccessToken(userForToken);
+    const refreshToken = generateRefreshToken(userForToken);
+    const regData = pending.registration_data;
+    const files = pending.file_urls || {};
+
+    let prismaTransaction = [];
+
+    prismaTransaction.push(
+      prisma.user.create({
+        data: {
+          id: userId,
+          email: pending.email,
+          phone: pending.phone,
+          password_hash: pending.password_hash,
+          role: pending.role,
+          refresh_token: refreshToken,
+          email_verified: true,
+        },
+      })
+    );
+
+    if (pending.role === 'customer') {
+      prismaTransaction.push(
+        prisma.clientProfile.create({
+          data: {
+            user_id: userId,
+            full_name: regData.full_name,
+            wilaya: regData.wilaya,
+            address: regData.address,
+            date_of_birth: regData.date_of_birth ? new Date(regData.date_of_birth) : undefined,
+          },
+        })
+      );
+    } else if (pending.role === 'store') {
+      prismaTransaction.push(
+        prisma.storeProfile.create({
+          data: {
+            user_id: userId,
+            owner_name: regData.owner_name,
+            store_name: regData.store_name,
+            description: regData.description,
+            address: regData.address,
+            wilaya: regData.wilaya,
+            location_coordinates: regData.location_coordinates,
+            documents: files.documents || [],
+            images: files.images || [],
+            logo_url: files.logo_url || null,
+            status: "pending",
+            submitted_at: new Date(),
+          },
+        })
+      );
+    } else if (pending.role === 'professional') {
+      prismaTransaction.push(
+        prisma.professionalProfile.create({
+          data: {
+            user_id: userId,
+            full_name: regData.full_name,
+            specialty_type: regData.specialty_type,
+            experience_years: regData.experience_years ? parseInt(regData.experience_years) : null,
+            wilaya: regData.wilaya,
+            location_address: regData.location_address,
+            bio: regData.bio,
+            hourly_rate_dzd: regData.hourly_rate_dzd ? parseFloat(regData.hourly_rate_dzd) : null,
+            work_type: regData.work_type,
+            documents: files.documents || [],
+            status: "pending",
+            submitted_at: new Date(),
+          },
+        })
+      );
+      if (regData.work_type === "avec_magasin") {
+        prismaTransaction.push(
+          prisma.storeProfile.create({
+            data: {
+              user_id: userId,
+              owner_name: regData.full_name,
+              store_name: regData.store_name,
+              address: regData.store_address,
+              wilaya: regData.store_wilaya,
+              location_coordinates: regData.store_location,
+              documents: files.store_documents || [],
+              images: files.store_images || [],
+              status: "pending",
+              submitted_at: new Date(),
+            },
+          })
+        );
+      }
+    }
+
+    prismaTransaction.push(prisma.pendingRegistration.delete({ where: { id: pending.id } }));
+
+    await prisma.$transaction(prismaTransaction);
+
+    if (pending.role === 'store' || pending.role === 'professional') {
+      const { notifyAdmins } = require("../services/notification.service");
+      const title = pending.role === 'store' ? "Nouveau Magasin" : "Nouveau Professionnel";
+      const name = pending.role === 'store' ? regData.store_name : regData.full_name;
+      await notifyAdmins(`new_${pending.role}_registration`, title, `Le compte ${name} s'est inscrit et attend votre approbation.`);
+    }
+
+    return res.status(201).json({ message: "Registration verified successfully", accessToken, refreshToken });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resendRegistrationOtp = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: "No token provided" });
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid or expired pending token" });
+    }
+
+    if (decoded.type !== "pending") return res.status(401).json({ message: "Invalid token type" });
+
+    const pending = await prisma.pendingRegistration.findUnique({ where: { id: decoded.pendingId } });
+    if (!pending) return res.status(404).json({ message: "Pending registration not found" });
+
+    if (pending.otp_last_sent_at) {
+      const secondsSinceLastSent = (Date.now() - new Date(pending.otp_last_sent_at).getTime()) / 1000;
+      if (secondsSinceLastSent < 60) {
+        return res.status(429).json({ success: false, message: "Please wait 60 seconds before requesting a new code" });
+      }
+    }
+
+    const otp = generateNumericOTP();
+    const hashedOtp = hashOTP(otp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await prisma.pendingRegistration.update({
+      where: { id: pending.id },
+      data: {
+        otp_hash: hashedOtp,
+        otp_expires_at: expiresAt,
+        otp_last_sent_at: new Date(),
+        otp_attempts: 0,
+      }
+    });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+        <h2>Verify your email address</h2>
+        <p>Your verification code is:</p>
+        <h1 style="font-size: 32px; letter-spacing: 5px; color: #007bff;">${otp}</h1>
+        <p>This code will expire in 5 minutes.</p>
+      </div>
+    `;
+
+    await sendEmail(pending.email, "Your Email Verification Code", html);
+
+    return res.json({ success: true, message: "Verification email resent" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   login,
   register: registerCustomer,
@@ -830,6 +1007,8 @@ module.exports = {
   registerAdmin,
   refreshToken,
   logout,
+  verifyRegistrationEmail,
+  resendRegistrationOtp,
   sendEmailVerification,
   verifyEmail,
   forgotPassword,

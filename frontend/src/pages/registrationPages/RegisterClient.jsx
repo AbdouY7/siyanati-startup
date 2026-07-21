@@ -38,8 +38,6 @@ const RegisterClient = () => {
 
     if (!formData.phone.trim()) {
       newErrors.phone = "Le numéro de téléphone est requis.";
-    } else if (!/^(0)[5-7][0-9]{8}$/.test(formData.phone.replace(/\s/g, ""))) {
-      newErrors.phone = "Veuillez entrer un numéro de téléphone valide.";
     }
     
     setErrors(newErrors);
@@ -79,8 +77,10 @@ const RegisterClient = () => {
             password: formData.password,
           });
 
-          const { accessToken, refreshToken } = response.data;
-          await setAuth(null, accessToken, refreshToken);
+          const { pendingToken } = response.data;
+          if (pendingToken) {
+            localStorage.setItem("pendingToken", pendingToken);
+          }
 
           setSubmitStatus("success");
           setTimeout(() => {

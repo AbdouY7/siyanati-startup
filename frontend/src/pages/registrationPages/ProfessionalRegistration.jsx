@@ -109,10 +109,10 @@ const ProfessionalRegistration = () => {
       const response = await axios.post('/auth/register-professional', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (response.status === 201) {
-        const { accessToken, refreshToken } = response.data;
-        if (accessToken) {
-          await setAuth(null, accessToken, refreshToken);
+      if (response.status === 200 || response.status === 201) {
+        const { pendingToken } = response.data;
+        if (pendingToken) {
+          localStorage.setItem("pendingToken", pendingToken);
           setSubmitSuccess(true);
           setTimeout(() => navigate('/verify-email'), 1500);
         } else {
@@ -199,7 +199,7 @@ const ProfessionalRegistration = () => {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 flex-1">
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-4 flex-1">
 
               {/* ── STEP 1: Account ── */}
               {step === 1 && (
@@ -423,7 +423,7 @@ const ProfessionalRegistration = () => {
                     Suivant <ArrowRight size={18} />
                   </button>
                 ) : (
-                  <button type="submit" disabled={isSubmitting} className="w-[75%] py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="w-[75%] py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     {isSubmitting ? 'Inscription...' : "S'inscrire"}
                   </button>
                 )}

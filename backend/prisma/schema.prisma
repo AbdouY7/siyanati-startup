@@ -17,7 +17,7 @@ model User {
   created_at            DateTime             @default(now())
   updated_at            DateTime             @updatedAt
   refresh_token         String?
-  phone                 String               @unique
+  phone                 String?              @unique
   customer_appointments Appointment[]        @relation("CustomerAppointments")
   client_profile        ClientProfile?
   diagnostic_comments   DiagnosticComment[]
@@ -831,4 +831,21 @@ enum NotificationType {
   diagnostic_answer_accepted
   new_store_registration
   new_professional_registration
+}
+
+model PendingRegistration {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password_hash   String
+  phone           String?
+  role            String   // "customer", "store", "professional"
+  registration_data Json   // All profile-specific fields (full_name, store_name, etc.)
+  file_urls       Json?    // Uploaded file URLs (documents, images, logos)
+  otp_hash        String
+  otp_expires_at  DateTime
+  otp_last_sent_at DateTime?
+  otp_attempts    Int      @default(0)
+  created_at      DateTime @default(now())
+
+  @@map("pending_registrations")
 }

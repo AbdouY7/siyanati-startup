@@ -10,18 +10,7 @@ const emailSchema = z
     message: "Invalid email format",
   });
 
-const phoneSchema = z
-  .string()
-  .refine((val) => {
-    const phoneNumber = parsePhoneNumberFromString(val, "DZ");
-    return phoneNumber?.isValid();
-  }, {
-    message: "Invalid Algerian phone number",
-  })
-  .transform((val) => {
-    const phoneNumber = parsePhoneNumberFromString(val, "DZ");
-    return phoneNumber.format("E.164"); // +213XXXXXXXXX
-  });
+const phoneSchema = z.string().optional();
 
 const loginSchema = z.object({
   email: emailSchema,

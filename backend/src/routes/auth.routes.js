@@ -63,6 +63,8 @@ router.post("/logout", authController.logout);
 // Verification routes
 router.post("/send-email-verification", authMiddleware, authController.sendEmailVerification);
 router.post("/verify-email", authMiddleware, authController.verifyEmail);
+router.post("/verify-registration-email", authController.verifyRegistrationEmail);
+router.post("/resend-registration-otp", authController.resendRegistrationOtp);
 router.post("/send-phone-verification", authMiddleware, authController.sendPhoneVerification);
 router.post("/verify-phone", authMiddleware, authController.verifyPhone);
 

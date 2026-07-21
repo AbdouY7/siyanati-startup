@@ -13,17 +13,21 @@ const EmailVerification = () => {
   const [success, setSuccess] = useState(null);
   const [countdown, setCountdown] = useState(60);
 
-  const { user, checkAuth } = useAuthStore();
+  const { user, setAuth, checkAuth } = useAuthStore();
   const navigate = useNavigate();
 
+  const pendingToken = localStorage.getItem("pendingToken");
+
   useEffect(() => {
-    // If already verified, redirect to phone verification or home
-    if (user?.email_verified) {
-      navigate(user.phone_verified ? "/" : "/verify-phone");
-    } else {
-      // Send initial OTP
-      handleResend();
+    // If we have an authenticated user and they are already verified
+    if (user && user.email_verified) {
+      navigate("/");
+      return;
     }
+
+    // Initial countdown for the OTP sent during registration
+    setCountdown(60);
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email_verified, navigate]);
 
@@ -49,10 +53,29 @@ const EmailVerification = () => {
     setSuccess(null);
 
     try {
-      await axiosInstance.post("/auth/verify-email", { code: otp });
-      setSuccess("Email verified successfully!");
-      await checkAuth(); // Refresh user state
-      navigate("/verify-phone"); // Go to next step
+      if (pendingToken) {
+        // Pending registration flow
+        const response = await axiosInstance.post("/auth/verify-registration-email", { code: otp }, {
+          headers: { Authorization: `Bearer ${pendingToken}` }
+        });
+        
+        setSuccess("Email verified successfully!");
+        
+        // Clear pending token and set real auth
+        localStorage.removeItem("pendingToken");
+        const { accessToken, refreshToken } = response.data;
+        if (accessToken) {
+          await setAuth(null, accessToken, refreshToken);
+        }
+        
+        navigate("/");
+      } else {
+        // Fallback for authenticated user verifying existing email
+        await axiosInstance.post("/auth/verify-email", { code: otp });
+        setSuccess("Email verified successfully!");
+        await checkAuth(); // Refresh user state
+        navigate("/");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to verify email");
     } finally {
@@ -68,7 +91,13 @@ const EmailVerification = () => {
     setSuccess(null);
 
     try {
-      await axiosInstance.post("/auth/send-email-verification");
+      if (pendingToken) {
+        await axiosInstance.post("/auth/resend-registration-otp", {}, {
+          headers: { Authorization: `Bearer ${pendingToken}` }
+        });
+      } else {
+        await axiosInstance.post("/auth/send-email-verification");
+      }
       setSuccess("A new verification code has been sent to your email.");
       setCountdown(60); // Reset timer
     } catch (err) {
@@ -77,9 +106,6 @@ const EmailVerification = () => {
       setResendLoading(false);
     }
   };
-
-  // Trigger initial send if they just landed (optional, but good UX if they didn't just register)
-  // For safety against spam, we require user to click send if they want a new one, unless it's their first time.
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -91,10 +117,7 @@ const EmailVerification = () => {
           Verify your email
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          We've sent a 6-digit code to{" "}
-          <span className="font-semibold text-gray-900">
-            {user?.email || "your email"}
-          </span>
+          We've sent a 6-digit code to your email
         </p>
       </div>
 
