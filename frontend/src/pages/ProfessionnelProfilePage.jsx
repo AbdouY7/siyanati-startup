@@ -298,9 +298,9 @@ export default function ProfessionalProfilePage() {
           <FiArrowLeft size={15} /> Retour
         </button>
 
-        <div className="max-w-6xl mx-auto flex items-start gap-5">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-5">
           {/* Circular avatar with Initials fallback */}
-          <div className="w-[88px] h-[88px] rounded-full overflow-hidden border-4 border-white shadow-xl shrink-0 bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
+          <div className="w-[100px] h-[100px] md:w-[88px] md:h-[88px] rounded-full overflow-hidden border-4 border-white shadow-xl shrink-0 bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
             {pro.avatar ? (
               <img
                 src={pro.avatar}
@@ -321,7 +321,7 @@ export default function ProfessionalProfilePage() {
           </div>
 
           {/* Name / meta */}
-          <div className="flex-1 min-w-0 pt-1">
+          <div className="flex-1 min-w-0 pt-1 text-center md:text-left flex flex-col items-center md:items-start">
             <h1 className="text-white font-black text-2xl leading-tight mb-0.5">
               {pro.full_name}
             </h1>
@@ -341,7 +341,7 @@ export default function ProfessionalProfilePage() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 shrink-0 mt-4 md:mt-0 w-full md:w-auto">
             <button
               onClick={handleOpenBooking}
               className="flex items-center gap-1.5 bg-white text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-50 active:scale-95 transition-all shadow cursor-pointer">
@@ -385,10 +385,10 @@ export default function ProfessionalProfilePage() {
       </div>
 
       {/* ── Content (floats over hero) ── */}
-      <div className="max-w-6xl mx-auto px-6 -mt-12 pb-8">
-        <div className="grid grid-cols-3 gap-5 mb-10">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 -mt-8 md:-mt-12 pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
           {/* Bio card */}
-          <div className="col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
+          <div className="col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col relative z-10">
             <h2 className="text-blue-700 font-bold text-base mb-2">Bio :</h2>
             <p className="text-gray-600 text-sm leading-relaxed mb-5">
               {pro.bio || "Aucune description disponible."}
@@ -487,7 +487,7 @@ export default function ProfessionalProfilePage() {
           </div>
 
           {/* Images carousel */}
-          <div className="col-span-2">
+          <div className="md:col-span-2 relative z-10">
             <ImageCarousel images={pro.shop_images} />
           </div>
         </div>
