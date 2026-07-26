@@ -28,7 +28,11 @@ const createSubscriptionPlan = async (req, res, next) => {
   try {
     if (req.user.role !== "admin") return res.status(403).json({ success: false, message: "Forbidden" });
 
-    const { name, description, price_dzd, billing_cycle, duration_days, target_type, features, is_free_trial, trial_days } = req.body;
+    let { name, description, price_dzd, billing_cycle, duration_days, target_type, features, is_free_trial, trial_days } = req.body;
+
+    if (billing_cycle === "yearly") {
+      billing_cycle = "annual";
+    }
 
     const plan = await prisma.subscriptionPlan.create({
       data: {
@@ -55,9 +59,14 @@ const updateSubscriptionPlan = async (req, res, next) => {
   try {
     if (req.user.role !== "admin") return res.status(403).json({ success: false, message: "Forbidden" });
 
+    const updateData = { ...req.body };
+    if (updateData.billing_cycle === "yearly") {
+      updateData.billing_cycle = "annual";
+    }
+
     const updated = await prisma.subscriptionPlan.update({
       where: { id: req.params.id },
-      data: req.body
+      data: updateData
     });
 
     res.json({ success: true, data: updated });

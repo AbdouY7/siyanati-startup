@@ -39,10 +39,16 @@ export default function AdminSubscriptionPlans() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    let newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value
-    });
+    };
+
+    if (name === "billing_cycle") {
+      newFormData.duration_days = value === "yearly" ? 365 : 30;
+    }
+
+    setFormData(newFormData);
   };
 
   const handleSubmit = async (e) => {
