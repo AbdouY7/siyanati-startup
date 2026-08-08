@@ -7,7 +7,8 @@ const {
   refreshDashboard,
   viewAdminDocument,
   getAllStoresAdmin,
-  getAllProfessionalsAdmin
+  getAllProfessionalsAdmin,
+  getReportedChat
 } = require('../controllers/admin.controller');
 
 router.get('/dashboard/overview', authMiddleware, requireAdmin, getDashboardOverview);
@@ -15,5 +16,6 @@ router.post('/dashboard/refresh', authMiddleware, requireAdmin, refreshDashboard
 router.get('/documents/view', authMiddleware, requireAdmin, viewAdminDocument);
 router.get('/stores', authMiddleware, requireAdmin, getAllStoresAdmin);
 router.get('/professionals', authMiddleware, requireAdmin, getAllProfessionalsAdmin);
+router.get('/chat/:conversation_id/messages', authMiddleware, requireAdmin, getReportedChat);
 
 module.exports = router;

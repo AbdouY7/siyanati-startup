@@ -228,10 +228,30 @@ const getAllProfessionalsAdmin = async (req, res, next) => {
   }
 };
 
+// GET /api/admin/chat/:conversation_id/messages
+const getReportedChat = async (req, res, next) => {
+  try {
+    const { conversation_id } = req.params;
+    const messages = await prisma.message.findMany({
+      where: { conversation_id },
+      orderBy: { created_at: "asc" },
+      include: {
+        sender: {
+          select: { email: true, role: true }
+        }
+      }
+    });
+    res.status(200).json({ success: true, data: messages });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = { 
   getDashboardOverview, 
   refreshDashboard, 
   viewAdminDocument,
   getAllStoresAdmin,
-  getAllProfessionalsAdmin
+  getAllProfessionalsAdmin,
+  getReportedChat
 };

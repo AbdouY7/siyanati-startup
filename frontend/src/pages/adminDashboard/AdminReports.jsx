@@ -10,6 +10,9 @@ import {
   FiClock,
 } from "react-icons/fi";
 import { getAdminReports, updateReportStatus } from "../../services/reportService";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 const reasonLabels = {
   spam: "Spam",
@@ -68,6 +71,12 @@ const AdminReports = () => {
   const [reviewAction, setReviewAction] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Chat Viewer
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
+
   useEffect(() => {
     fetchReports();
   }, [page, statusFilter, targetTypeFilter]);
@@ -122,6 +131,24 @@ const AdminReports = () => {
       alert("Erreur: " + (err.response?.data?.message || err.message));
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const openReportedChat = async (conversationId) => {
+    setShowChatModal(true);
+    setChatLoading(true);
+    setChatError("");
+    setChatMessages([]);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_URL}/admin/chat/${conversationId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setChatMessages(res.data);
+    } catch (err) {
+      setChatError("Impossible de charger la conversation.");
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -342,6 +369,16 @@ const AdminReports = () => {
                       <p className="text-gray-800 bg-white p-2 rounded-lg border border-gray-100">{selectedReport.description}</p>
                     </div>
                   )}
+                  {selectedReport?.conversation_id && (
+                    <div className="pt-2 border-t border-gray-200">
+                      <button 
+                        onClick={() => openReportedChat(selectedReport.conversation_id)}
+                        className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
+                      >
+                        Voir la conversation signalée
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Admin action */}
@@ -393,6 +430,67 @@ const AdminReports = () => {
             </div>
           </div>,
           document.body,
+        )}
+
+      {/* Reported Chat Modal */}
+      {showChatModal &&
+        createPortal(
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col" style={{ height: '80vh' }}>
+              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Conversation signalée
+                </h3>
+                <button
+                  onClick={() => setShowChatModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <FiXCircle size={24} />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+                {chatLoading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : chatError ? (
+                  <div className="text-center text-red-500 font-medium py-8">{chatError}</div>
+                ) : chatMessages.length === 0 ? (
+                  <div className="text-center text-gray-500 font-medium py-8">Aucun message dans cette conversation.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {chatMessages.map(msg => {
+                      const isReporter = msg.sender_id === selectedReport?.reporter_id;
+                      return (
+                        <div key={msg.id} className={`flex w-full ${isReporter ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                            isReporter 
+                              ? 'bg-blue-600 text-white rounded-br-none' 
+                              : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                          }`}>
+                            <div className="text-[10px] font-semibold opacity-70 mb-1">
+                              {isReporter ? 'Signaleur' : 'Signalé'}
+                            </div>
+                            {msg.message_type === 'image' ? (
+                              <img src={msg.content} alt="Upload" className="max-w-full rounded-lg mb-1 object-cover max-h-60" />
+                            ) : msg.message_type === 'file' ? (
+                              <a href={msg.content} target="_blank" rel="noopener noreferrer" className="underline">📎 Fichier joint</a>
+                            ) : (
+                              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            )}
+                            <div className={`text-[10px] text-right mt-1 ${isReporter ? 'text-blue-100' : 'text-gray-500'}`}>
+                              {new Date(msg.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', '')}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
     </div>
   );

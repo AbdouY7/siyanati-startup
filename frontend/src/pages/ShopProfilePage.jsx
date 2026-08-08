@@ -523,7 +523,7 @@ export default function ShopProfilePage() {
                   setAuthModalOpen(true);
                   return;
                 }
-                navigate("/profile/chat");
+                navigate(`/profile/chat?userId=${store.id}`);
               }}
               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all">
               <FiMessageSquare size={15} /> Discussion

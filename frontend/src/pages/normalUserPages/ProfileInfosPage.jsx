@@ -447,6 +447,11 @@ const ProfileInfoPage = () => {
             icon: <FiPackage size={20} />,
             label: "Mes Pièces\nen Vente",
           },
+          {
+            to: "/profile/chat",
+            icon: <FiMessageSquare size={20} />,
+            label: "Messages",
+          },
         ].map(({ to, icon, label }, i) => (
           <Link
             key={i}

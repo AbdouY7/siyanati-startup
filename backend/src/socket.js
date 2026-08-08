@@ -53,6 +53,13 @@ const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log(`Socket connected: ${socket.id} (User: ${socket.user.sub})`);
 
+    socket.on("typing", ({ recipientId, isTyping }) => {
+      io.to(`user_${recipientId}`).emit("typing", {
+        senderId: socket.user.sub,
+        isTyping,
+      });
+    });
+
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
     });

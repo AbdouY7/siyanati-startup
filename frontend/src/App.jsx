@@ -80,7 +80,7 @@ import StoreNotifications from "./pages/StoreDashboard/StoreNotifications";
 import StoreProfile from "./pages/StoreDashboard/StoreProfile";
 import SubscriptionPaymentPage from "./pages/SubscriptionPaymentPage";
 import AppointmentPaymentPage from "./pages/normalUserPages/AppointmentPaymentPage";
-import ChatPage from "./pages/ChatPage";
+import ChatPage from "./pages/Chat/ChatPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {

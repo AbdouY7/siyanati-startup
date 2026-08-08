@@ -20,8 +20,9 @@ const reasonLabels = {
  *  - targetId: string – the ID of the entity being reported
  *  - targetType: "store" | "professional" | "post" | "comment" | "user"
  *  - targetName: string – a display name for context (e.g. "Magasin ABC")
+ *  - conversationId: string – optional ID of the conversation if reporting from chat
  */
-export default function ReportModal({ isOpen, onClose, targetId, targetType, targetName }) {
+export default function ReportModal({ isOpen, onClose, targetId, targetType, targetName, conversationId }) {
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +44,7 @@ export default function ReportModal({ isOpen, onClose, targetId, targetType, tar
         target_type: targetType,
         reason,
         description,
+        conversation_id: conversationId,
       });
       setSuccess(true);
     } catch (err) {

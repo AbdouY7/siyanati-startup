@@ -35,6 +35,11 @@ model User {
 
   favorites Favorite[]
 
+  // Chat System
+  conversations_as_participant_one Conversation[] @relation("ParticipantOne")
+  conversations_as_participant_two Conversation[] @relation("ParticipantTwo")
+  sent_messages                    Message[]      @relation("SentMessages")
+
   // Verification fields
   phone_verified        Boolean              @default(false)
   
@@ -495,6 +500,8 @@ model Report {
   description          String?
   status               ReportStatus @default(pending)
   reviewed_by_admin_id String?
+  conversation_id      String?
+  conversation         Conversation? @relation(fields: [conversation_id], references: [id])
   admin_notes          String?
   reviewed_at          DateTime?
   created_at           DateTime     @default(now())
@@ -791,6 +798,7 @@ enum ReportTarget {
   post
   comment
   user
+  conversation
 }
 
 enum ReportReason {
@@ -848,4 +856,41 @@ model PendingRegistration {
   created_at      DateTime @default(now())
 
   @@map("pending_registrations")
+}
+
+model Conversation {
+  id                 String    @id @default(uuid())
+  participant_one_id String
+  participant_two_id String
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  participant_one    User      @relation("ParticipantOne", fields: [participant_one_id], references: [id], onDelete: Cascade)
+  participant_two    User      @relation("ParticipantTwo", fields: [participant_two_id], references: [id], onDelete: Cascade)
+  messages           Message[]
+  reports            Report[]
+
+  @@unique([participant_one_id, participant_two_id])
+  @@index([participant_one_id])
+  @@index([participant_two_id])
+  @@index([updated_at])
+  @@map("conversations")
+}
+
+model Message {
+  id              String      @id @default(uuid())
+  conversation_id String
+  sender_id       String
+  message_type    MessageType @default(text)
+  content         String      @db.Text
+  is_read         Boolean     @default(false)
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+
+  conversation    Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender          User         @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id, created_at])
+  @@index([sender_id])
+  @@map("messages")
 }

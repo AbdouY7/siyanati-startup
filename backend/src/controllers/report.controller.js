@@ -8,9 +8,9 @@ const reportListInclude = {
 
 const createReport = async (req, res, next) => {
   try {
-    const { target_id, target_type, reason, description } = req.body;
+    const { target_id, target_type, reason, description, conversation_id } = req.body;
 
-    const validTargetTypes = ["store", "professional", "post", "comment", "user"];
+    const validTargetTypes = ["store", "professional", "post", "comment", "user", "conversation"];
     const validReasons = ["spam", "fraud", "inappropriate_content", "fake_parts", "no_show", "other"];
 
     if (!validTargetTypes.includes(target_type)) {
@@ -44,6 +44,7 @@ const createReport = async (req, res, next) => {
         target_type,
         reason,
         description,
+        conversation_id,
         status: "pending",
       },
     });
