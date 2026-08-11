@@ -410,7 +410,7 @@ const registerProfessional = async (req, res, next) => {
     await prisma.$transaction(transactionOps);
 
     const { notifyAdmins } = require("../services/notification.service");
-    await notifyAdmins("new_professional_registration", "Nouveau Professionnel", `Le professionnel ${full_name} s'est inscrit et attend votre approbation.`);
+    await notifyAdmins("new_professional_registration", "Nouveau Professionnel", `Le professionnel ${full_name} s'est inscrit et attend votre approbation.`, userId);
 
     return res.status(201).json({
       message:
@@ -933,7 +933,10 @@ const verifyRegistrationEmail = async (req, res, next) => {
       const { notifyAdmins } = require("../services/notification.service");
       const title = pending.role === 'store' ? "Nouveau Magasin" : "Nouveau Professionnel";
       const name = pending.role === 'store' ? regData.store_name : regData.full_name;
-      await notifyAdmins(`new_${pending.role}_registration`, title, `Le compte ${name} s'est inscrit et attend votre approbation.`);
+      await notifyAdmins(`new_${pending.role}_registration`, title, `Le compte ${name} s'est inscrit et attend votre approbation.`, userId);
+    } else if (pending.role === 'customer') {
+      const { notifyAdmins } = require("../services/notification.service");
+      await notifyAdmins("new_user_registration", "Nouveau Client", `Un nouveau client (${regData.full_name}) s'est inscrit sur la plateforme.`, userId);
     }
 
     return res.status(201).json({ message: "Registration verified successfully", accessToken, refreshToken });

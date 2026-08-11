@@ -839,6 +839,11 @@ enum NotificationType {
   diagnostic_answer_accepted
   new_store_registration
   new_professional_registration
+  new_user_registration
+  new_order
+  new_appointment
+  new_report
+  admin_signal_response
 }
 
 model PendingRegistration {

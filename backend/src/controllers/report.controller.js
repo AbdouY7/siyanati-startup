@@ -1,4 +1,5 @@
 const prisma = require("../prisma/client");
+const { notifyUser, notifyAdmins } = require("../services/notification.service");
 
 const reportListInclude = {
   reporter: {
@@ -48,6 +49,14 @@ const createReport = async (req, res, next) => {
         status: "pending",
       },
     });
+
+    // Notify all admins about the new report
+    notifyAdmins(
+      "new_report",
+      "Nouveau signalement",
+      `Un signalement de type "${reason}" a été soumis concernant un(e) ${target_type}.`,
+      report.id
+    );
 
     res.status(201).json({ success: true, data: report });
   } catch (error) {
@@ -142,15 +151,14 @@ const updateReport = async (req, res, next) => {
     });
 
     if (status === "actioned" || status === "dismissed") {
-      await prisma.notification.create({
-        data: {
-          user_id: updated.reporter_id,
-          type: "report_reviewed",
-          title: "Signalement traité",
-          message: `Votre signalement a été examiné par un administrateur. Résultat: ${status === "actioned" ? "Action prise" : "Rejeté"}. Note: ${admin_notes || "Aucune note additionnelle."}`,
-          reference_id: updated.id,
-        },
-      });
+      // Notify the reporter that their report was reviewed
+      notifyUser(
+        updated.reporter_id,
+        "report_reviewed",
+        "Signalement traité",
+        `Votre signalement a été examiné par un administrateur. Résultat: ${status === "actioned" ? "Action prise" : "Rejeté"}. Note: ${admin_notes || "Aucune note additionnelle."}`,
+        updated.id
+      );
 
       if (status === "actioned") {
         let reportedUserId = null;
@@ -171,15 +179,13 @@ const updateReport = async (req, res, next) => {
         }
 
         if (reportedUserId) {
-          await prisma.notification.create({
-            data: {
-              user_id: reportedUserId,
-              type: "report_reviewed",
-              title: "Action de modération",
-              message: `Un signalement vous concernant ou concernant votre contenu a été validé par l'administration. Note: ${admin_notes || "Veuillez respecter les règles de la plateforme."}`,
-              reference_id: updated.id,
-            },
-          });
+          notifyUser(
+            reportedUserId,
+            "admin_signal_response",
+            "Action de modération",
+            `Un signalement vous concernant ou concernant votre contenu a été validé par l'administration. Note: ${admin_notes || "Veuillez respecter les règles de la plateforme."}`,
+            updated.id
+          );
         }
       }
     }

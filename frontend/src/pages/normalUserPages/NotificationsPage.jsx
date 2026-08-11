@@ -1,124 +1,98 @@
-import React, { useEffect, useState } from "react";
-import { FiBell, FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   getMyNotifications,
   markNotificationAsRead,
 } from "../../services/notificationService";
-import { Link } from "react-router-dom";
-import { FiChevronLeft } from "react-icons/fi";
-
-const typeIcons = {
-  report_reviewed: FiAlertTriangle,
-  order_status_updated: FiInfo,
-  appointment_confirmed: FiCheckCircle,
-  default: FiInfo,
-};
-
-const typeColors = {
-  report_reviewed: "text-yellow-600 bg-yellow-50",
-  order_status_updated: "text-blue-600 bg-blue-50",
-  appointment_confirmed: "text-green-600 bg-green-50",
-  default: "text-gray-600 bg-gray-50",
-};
-
-function timeAgo(dateString) {
-  const now = new Date();
-  const date = new Date(dateString);
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "À l'instant";
-  if (diffMins < 60) return `Il y a ${diffMins}min`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `Il y a ${diffHours}h`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `Il y a ${diffDays}j`;
-  return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
-}
+import { initSocket } from "../../api/socket";
+import NotificationList from "../../components/uiComponents/NotificationList";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async (cursor = null) => {
     try {
       setLoading(true);
-      const data = await getMyNotifications();
-      setNotifications(Array.isArray(data) ? data : []);
+      const data = await getMyNotifications(cursor, 50);
+      const newNotifs = Array.isArray(data) ? data : [];
+      
+      if (cursor) {
+        setNotifications((prev) => {
+          const existingIds = new Set(prev.map(n => n.id));
+          const filtered = newNotifs.filter(n => !existingIds.has(n.id));
+          return [...prev, ...filtered];
+        });
+      } else {
+        setNotifications(newNotifs);
+      }
+      
+      setHasMore(newNotifs.length === 50);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
-  }, []);
+
+    const socket = initSocket();
+
+    const handleNewNotification = (newNotif) => {
+      setNotifications((prev) => [newNotif, ...prev]);
+    };
+    
+    const handleNotificationRead = (readData) => {
+      if (readData.id === "all") {
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      } else {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === readData.id ? { ...n, is_read: true } : n))
+        );
+      }
+    };
+
+    socket.on("new_notification", handleNewNotification);
+    socket.on("notification_read", handleNotificationRead);
+
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+      socket.off("notification_read", handleNotificationRead);
+    };
+  }, [fetchNotifications]);
 
   const handleMarkAsRead = async (id) => {
     try {
       await markNotificationAsRead(id);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+        prev.map((item) => (item.id === id ? { ...item, is_read: true } : item)),
       );
+      const socket = initSocket();
+      socket.emit("mark_notification_read", { id });
     } catch (err) {
-      console.error(err);
+      console.error("Failed to mark as read:", err);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (notifications.length > 0 && !loading) {
+      const lastCursor = notifications[notifications.length - 1].id;
+      fetchNotifications(lastCursor);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="flex items-center gap-10 mb-10">
-        <Link
-          to="/profile"
-          className="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition shadow-sm">
-          <FiChevronLeft size={20} />
-        </Link>
-        <h2 className="text-2xl font-bold  flex items-center gap-4">
-          <FiBell className="text-blue-600" size={24} /> Mes notifications
-        </h2>
-      </div>
-      {loading && notifications.length === 0 ? (
-        <div className="text-center py-8">Chargement...</div>
-      ) : notifications.length === 0 ? (
-        <div className="text-center text-gray-400 py-8">
-          Aucune notification
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {notifications.map((notif) => {
-            const Icon = typeIcons[notif.type] || typeIcons.default;
-            const colorClass = typeColors[notif.type] || typeColors.default;
-            return (
-              <div
-                key={notif.id}
-                onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
-                className={`p-4 rounded-xl border border-gray-100 flex gap-4 cursor-pointer transition-colors hover:bg-gray-50 ${
-                  !notif.is_read ? "bg-blue-50/30" : ""
-                }`}>
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
-                  <Icon size={20} />
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`font-medium ${!notif.is_read ? "text-gray-900" : "text-gray-700"}`}>
-                    {notif.title}
-                  </p>
-                  <p className="text-sm text-gray-500 line-clamp-2 mt-1">
-                    {notif.message}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {timeAgo(notif.created_at)}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+    <NotificationList 
+      title="Mes notifications"
+      notifications={notifications}
+      loading={loading && notifications.length === 0}
+      onMarkAsRead={handleMarkAsRead}
+      userRole="customer"
+      backLink="/profile"
+      hasMore={hasMore}
+      onLoadMore={handleLoadMore}
+    />
   );
 }

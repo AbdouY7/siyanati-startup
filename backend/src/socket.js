@@ -60,6 +60,12 @@ const initSocket = (server) => {
       });
     });
 
+    socket.on("mark_notification_read", ({ id }) => {
+      // Broadcast this read event to the user's other open connections
+      // Excluding the sender socket itself
+      socket.broadcast.to(`user_${socket.user.sub}`).emit("notification_read", { id });
+    });
+
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
     });

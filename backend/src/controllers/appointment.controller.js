@@ -1,5 +1,6 @@
 const prisma = require("../prisma/client");
 const { emitWorkflowUpdate } = require("../socket");
+const { notifyUser } = require("../services/notification.service");
 
 const appointmentListInclude = {
   customer: {
@@ -153,6 +154,15 @@ const createAppointment = async (req, res, next) => {
       broadcastToRoles: ["admin"]
     });
 
+    // Notify the professional about the new appointment request
+    notifyUser(
+      appointment.professional.user_id,
+      "new_appointment",
+      "Nouveau rendez-vous",
+      `Un client a demandé un rendez-vous pour: ${service_type}.`,
+      appointment.id
+    );
+
     res.status(201).json({ success: true, data: appointment });
   } catch (error) {
     next(error);
@@ -295,6 +305,15 @@ const confirmAppointment = async (req, res, next) => {
       broadcastToRoles: ["admin"]
     });
 
+    // Notify the customer that their appointment was confirmed
+    notifyUser(
+      updated.customer_id,
+      "appointment_confirmed",
+      "Rendez-vous confirmé",
+      `Votre rendez-vous a été confirmé pour le ${scheduleDate.toLocaleDateString("fr-FR")}. Prix estimé: ${quoted_price_dzd} DZD.`,
+      updated.id
+    );
+
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error.code === "P2025") {
@@ -400,6 +419,15 @@ const completeAppointment = async (req, res, next) => {
       broadcastToRoles: ["admin"]
     });
 
+    // Notify the customer that their appointment was completed
+    notifyUser(
+      updated.customer_id,
+      "appointment_completed",
+      "Rendez-vous terminé",
+      `Votre rendez-vous est terminé. Prix final: ${final_price_dzd} DZD.`,
+      updated.id
+    );
+
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error.code === "P2025") {
@@ -460,6 +488,17 @@ const cancelAppointment = async (req, res, next) => {
       affectedUsers: [updated.customer_id, updated.professional.user_id],
       broadcastToRoles: ["admin"]
     });
+
+    // Notify the other party about the cancellation
+    const cancelledByCustomer = req.user.role === "customer";
+    const recipientId = cancelledByCustomer ? updated.professional.user_id : updated.customer_id;
+    notifyUser(
+      recipientId,
+      "appointment_cancelled",
+      "Rendez-vous annulé",
+      `Un rendez-vous a été annulé${cancellation_reason ? `: ${cancellation_reason}` : "."}.`,
+      updated.id
+    );
 
     res.json({ success: true, data: updated });
   } catch (error) {

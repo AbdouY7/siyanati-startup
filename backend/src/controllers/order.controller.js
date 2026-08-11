@@ -1,5 +1,6 @@
 const prisma = require("../prisma/client");
 const { emitWorkflowUpdate } = require("../socket");
+const { notifyUser } = require("../services/notification.service");
 const {
   calculateOrderTotals,
   generateOrderNumber,
@@ -288,6 +289,15 @@ const createOrder = async (req, res, next) => {
       broadcastToRoles: ["admin"]
     });
 
+    // Notify the store owner about the new order
+    notifyUser(
+      store.user_id,
+      "new_order",
+      "Nouvelle commande",
+      `Commande #${order.order_number} reçue (${Number(order.total_dzd).toLocaleString("fr-FR")} DZD).`,
+      order.id
+    );
+
     res.status(201).json({ success: true, data: order });
   } catch (error) {
     if (error.statusCode === 409 && error.message === "Insufficient stock") {
@@ -514,6 +524,23 @@ const updateOrderStatus = async (req, res, next) => {
       broadcastToRoles: ["admin"]
     });
 
+    // Notify the customer about meaningful status changes
+    const statusLabels = {
+      confirmed: "confirmée",
+      shipped: "expédiée",
+      delivered: "livrée",
+      cancelled: "annulée",
+    };
+    if (statusLabels[status]) {
+      notifyUser(
+        updatedOrder.customer_id,
+        "order_status_updated",
+        "Mise à jour de commande",
+        `Votre commande #${updatedOrder.order_number} a été ${statusLabels[status]}.`,
+        updatedOrder.id
+      );
+    }
+
     res.json({ success: true, data: updatedOrder });
   } catch (error) {
     if (error.code === "P2025") {
@@ -587,6 +614,15 @@ const cancelOrder = async (req, res, next) => {
       affectedUsers: [updatedOrder.customer_id, updatedOrder.store.user_id],
       broadcastToRoles: ["admin"]
     });
+
+    // Notify the store that the customer cancelled
+    notifyUser(
+      updatedOrder.store?.user_id,
+      "order_status_updated",
+      "Commande annulée",
+      `La commande #${updatedOrder.order_number} a été annulée par le client.`,
+      updatedOrder.id
+    );
 
     res.json({
       success: true,

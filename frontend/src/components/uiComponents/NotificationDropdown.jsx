@@ -1,51 +1,79 @@
-import React, { useState, useEffect, useRef } from "react";
-import { FiBell, FiCheck, FiCheckCircle, FiAlertTriangle, FiInfo } from "react-icons/fi";
-import { getMyNotifications, markNotificationAsRead } from "../../services/notificationService";
-import useWorkflowSubscription from "../../hooks/useWorkflowSubscription";
-
-const typeIcons = {
-  report_reviewed: FiAlertTriangle,
-  order_status_updated: FiInfo,
-  appointment_confirmed: FiCheckCircle,
-  default: FiInfo,
-};
-
-const typeColors = {
-  report_reviewed: "text-yellow-600 bg-yellow-50",
-  order_status_updated: "text-blue-600 bg-blue-50",
-  appointment_confirmed: "text-green-600 bg-green-50",
-  default: "text-gray-600 bg-gray-50",
-};
-
-function timeAgo(dateString) {
-  const now = new Date();
-  const date = new Date(dateString);
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return "À l'instant";
-  if (diffMins < 60) return `Il y a ${diffMins}min`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `Il y a ${diffHours}h`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `Il y a ${diffDays}j`;
-  return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
-}
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FiBell, FiCheck } from "react-icons/fi";
+import {
+  getMyNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "../../services/notificationService";
+import { initSocket } from "../../api/socket";
+import useAuthStore from "../../store/authStore";
+import {
+  typeIcons,
+  typeColors,
+  timeAgo,
+  getNotificationLink,
+} from "../../utils/notificationDisplay";
 
 export default function NotificationDropdown() {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+
+  const user = useAuthStore((state) => state.user);
+  const userRole = user?.role;
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  // Fetch notifications when dropdown opens
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getMyNotifications(null, 20); // Only need a few for dropdown
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (err) {
+      // Silently fail - user may not be logged in
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch when dropdown opens if empty, or just initially to get badge count
   useEffect(() => {
-    if (isOpen) {
+    if (user) {
       fetchNotifications();
     }
-  }, [isOpen]);
+  }, [user, fetchNotifications]);
+
+  // Socket logic
+  useEffect(() => {
+    if (!user) return;
+    
+    const socket = initSocket();
+    
+    const handleNewNotification = (newNotif) => {
+      setNotifications((prev) => [newNotif, ...prev].slice(0, 50));
+    };
+    
+    const handleNotificationRead = (readData) => {
+      if (readData.id === "all") {
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      } else {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === readData.id ? { ...n, is_read: true } : n))
+        );
+      }
+    };
+
+    socket.on("new_notification", handleNewNotification);
+    socket.on("notification_read", handleNotificationRead);
+    
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+      socket.off("notification_read", handleNotificationRead);
+    };
+  }, [user]);
 
   // Close on outside click
   useEffect(() => {
@@ -58,37 +86,18 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch periodically to show badge
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // every 60s
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchNotifications = React.useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await getMyNotifications();
-      setNotifications(Array.isArray(data) ? data : []);
-    } catch (err) {
-      // Silently fail - user may not be logged in
-    } finally {
-      setLoading(false);
+  const handleMarkAsRead = async (id, e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
     }
-  }, []);
-
-  useWorkflowSubscription({
-    onUpdate: () => {
-      fetchNotifications();
-    }
-  });
-
-  const handleMarkAsRead = async (id) => {
     try {
       await markNotificationAsRead(id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
+      const socket = initSocket();
+      socket.emit("mark_notification_read", { id });
     } catch (err) {
       console.error("Failed to mark notification as read", err);
     }
@@ -96,10 +105,23 @@ export default function NotificationDropdown() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await markNotificationAsRead("all");
+      await markAllNotificationsAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      const socket = initSocket();
+      socket.emit("mark_notification_read", { id: "all" });
     } catch (err) {
       console.error("Failed to mark all as read", err);
+    }
+  };
+
+  const handleRowClick = async (notif) => {
+    if (!notif.is_read) {
+      await handleMarkAsRead(notif.id);
+    }
+    setIsOpen(false);
+    const link = getNotificationLink(notif, userRole);
+    if (link && link !== "#") {
+      navigate(link);
     }
   };
 
@@ -108,10 +130,16 @@ export default function NotificationDropdown() {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+        aria-label="Notifications"
+        aria-expanded={isOpen}
+        className="relative p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
         <FiBell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full animate-pulse">
+          <span 
+            aria-live="polite"
+            className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full animate-pulse"
+          >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -126,14 +154,15 @@ export default function NotificationDropdown() {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors">
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors focus:outline-none focus:underline"
+              >
                 <FiCheck size={12} /> Tout marquer comme lu
               </button>
             )}
           </div>
 
           {/* List */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto" role="list">
             {loading && notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
@@ -148,12 +177,14 @@ export default function NotificationDropdown() {
                 const colorClass = typeColors[notif.type] || typeColors.default;
 
                 return (
-                  <div
+                  <button
                     key={notif.id}
-                    onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
-                    className={`px-4 py-3 border-b border-gray-50 flex gap-3 cursor-pointer transition-colors hover:bg-gray-50 ${
+                    onClick={() => handleRowClick(notif)}
+                    role="listitem"
+                    className={`w-full text-left px-4 py-3 border-b border-gray-50 flex gap-3 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-50 ${
                       !notif.is_read ? "bg-blue-50/30" : ""
-                    }`}>
+                    }`}
+                  >
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
                       <Icon size={16} />
                     </div>
@@ -163,7 +194,15 @@ export default function NotificationDropdown() {
                           {notif.title}
                         </p>
                         {!notif.is_read && (
-                          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                          <span 
+                            role="button" 
+                            tabIndex={0} 
+                            onClick={(e) => handleMarkAsRead(notif.id, e)} 
+                            onKeyDown={(e) => { if(e.key === 'Enter') handleMarkAsRead(notif.id, e); }}
+                            className="w-2 h-2 rounded-full bg-blue-500 shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            aria-label="Marquer comme lu"
+                            title="Marquer comme lu"
+                          ></span>
                         )}
                       </div>
                       <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">
@@ -173,7 +212,7 @@ export default function NotificationDropdown() {
                         {timeAgo(notif.created_at)}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}
