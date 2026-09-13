@@ -70,8 +70,9 @@ const AdminClientDetails = () => {
       <div className="p-6">
         <Link
           to="/admin/clients"
-          className="text-primary hover:underline flex items-center gap-2 mb-6">
-          <FiArrowLeft /> Retour aux clients
+          title="Retour aux clients"
+          className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center mb-6">
+          <FiArrowLeft size={20} />
         </Link>
         <div className="bg-red-50 text-red-600 p-4 rounded-lg shadow-sm border border-red-100">
           {error || "Client not found"}
@@ -86,8 +87,9 @@ const AdminClientDetails = () => {
     <div className="p-6 max-w-4xl mx-auto">
       <Link
         to="/admin/clients"
-        className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors">
-        <FiArrowLeft /> Retour aux clients
+        title="Retour aux clients"
+        className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center mb-6">
+        <FiArrowLeft size={20} />
       </Link>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">

@@ -1,0 +1,707 @@
+@startuml
+skinparam class {
+    BackgroundColor White
+    ArrowColor #2688d4
+    BorderColor #2688d4
+}
+skinparam linetype ortho
+enum WorkType {
+  individuel
+  avec_magasin
+}
+
+enum UserRole {
+  customer
+  professional
+  store
+  admin
+}
+
+enum ProfileStatus {
+  pending
+  approved
+  rejected
+}
+
+enum FuelType {
+  petrol
+  diesel
+  electric
+  hybrid
+  lpg
+}
+
+enum SellerType {
+  client
+  store
+}
+
+enum PartCondition {
+  new
+  used
+  refurbished
+}
+
+enum OrderDeliveryType {
+  home_delivery
+  store_pickup
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentMethod {
+  edahabia
+  cash_on_delivery
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+  refunded
+}
+
+enum AppointmentStatus {
+  pending
+  confirmed
+  in_progress
+  completed
+  cancelled
+}
+
+enum PostStatus {
+  open
+  resolved
+  closed
+}
+
+enum ReactionTarget {
+  post
+  comment
+}
+
+enum MessageType {
+  text
+  image
+  file
+  system
+}
+
+enum BillingCycle {
+  monthly
+  quarterly
+  annual
+}
+
+enum SubscriptionTarget {
+  professional
+  store
+}
+
+enum SubscriptionStatus {
+  active
+  cancelled
+  expired
+  suspended
+}
+
+enum ReviewTarget {
+  store
+  part
+  professional
+}
+
+enum LoyaltyOperation {
+  earn
+  redeem
+  expire
+  admin_adjust
+}
+
+enum FavoriteTarget {
+  store
+  professional
+  part
+}
+
+enum ReportTarget {
+  store
+  professional
+  post
+  comment
+  user
+  conversation
+}
+
+enum ReportReason {
+  spam
+  fraud
+  inappropriate_content
+  fake_parts
+  no_show
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  dismissed
+  actioned
+}
+
+enum NotificationType {
+  order_status_updated
+  appointment_requested
+  appointment_confirmed
+  appointment_cancelled
+  appointment_completed
+  new_message
+  subscription_expiring
+  subscription_expired
+  account_frozen
+  account_unfrozen
+  review_received
+  report_reviewed
+  professional_approved
+  professional_rejected
+  store_approved
+  store_rejected
+  loyalty_points_earned
+  diagnostic_post_answered
+  diagnostic_answer_accepted
+  new_store_registration
+  new_professional_registration
+  new_user_registration
+  new_order
+  new_appointment
+  new_report
+  admin_signal_response
+}
+
+class User {
+  <<PK>> id: String
+  <<UK>> email: String
+  password_hash: String
+  role: UserRole
+  is_active: Boolean
+  email_verified: Boolean
+  created_at: DateTime
+  updated_at: DateTime
+  refresh_token: String?
+  <<UK>> phone: String?
+  phone_verified: Boolean
+  email_otp_hash: String?
+  email_otp_expires_at: DateTime?
+  email_otp_last_sent_at: DateTime?
+  email_otp_attempts: Int
+  phone_otp_hash: String?
+  phone_otp_expires_at: DateTime?
+  phone_otp_last_sent_at: DateTime?
+  phone_otp_attempts: Int
+  email_verification_token: String?
+  email_verification_expires_at: DateTime?
+  phone_verification_code: String?
+  phone_verification_expires_at: DateTime?
+  reset_password_token: String?
+  reset_password_expires_at: DateTime?
+}
+
+class Favorite {
+  <<PK>> id: String
+  <<FK>> user_id: String
+  <<FK>> target_id: String
+  target_type: FavoriteTarget
+  created_at: DateTime
+}
+
+class ClientProfile {
+  <<PK>> id: String
+  <<UK,FK>> user_id: String
+  full_name: String
+  profilePicUrl: String?
+  wilaya: String?
+  address: String?
+  date_of_birth: DateTime?
+  national_id_number: String?
+  national_id_card: String[]
+  avatar_url: String?
+  preferred_language: String
+  created_at: DateTime
+}
+
+class StoreProfile {
+  <<PK>> id: String
+  <<UK,FK>> user_id: String
+  owner_name: String
+  store_name: String
+  description: String?
+  address: String
+  wilaya: String
+  location_coordinates: String?
+  documents: String[]
+  images: String[]
+  logo_url: String?
+  status: ProfileStatus
+  rejection_reason: String?
+  <<FK>> reviewed_by_admin_id: String?
+  reviewed_at: DateTime?
+  submitted_at: DateTime
+  is_frozen: Boolean
+  rating_avg: Decimal
+  rating_count: Int
+  dahabia_rip: String?
+  created_at: DateTime
+}
+
+class ProfessionalProfile {
+  <<PK>> id: String
+  <<UK,FK>> user_id: String
+  specialty_type: String
+  experience_years: Int?
+  wilaya: String
+  location_address: String?
+  documents: String[]
+  bio: String?
+  status: ProfileStatus
+  work_type: WorkType
+  rejection_reason: String?
+  <<FK>> reviewed_by_admin_id: String?
+  reviewed_at: DateTime?
+  submitted_at: DateTime
+  is_available: Boolean
+  is_frozen: Boolean
+  hourly_rate_dzd: Decimal?
+  rating_avg: Decimal
+  rating_count: Int
+  <<FK>> subscription_id: String?
+  dahabia_rip: String?
+  created_at: DateTime
+  full_name: String
+  avatar_url: String?
+}
+
+class ProfessionalStore {
+  <<PK>> id: String
+  <<UK,FK>> professional_id: String
+  name: String
+  wilaya: String
+  address: String
+  location_coordinates: String?
+  images: String[]
+  documents: String[]
+  logo_url: String?
+  status: ProfileStatus
+  created_at: DateTime
+}
+
+class Brand {
+  <<PK>> id: String
+  <<UK>> name: String
+  country: String?
+  logo_url: String?
+  is_deleted: Boolean
+}
+
+class Model {
+  <<PK>> id: String
+  <<FK>> brand_id: String
+  name: String
+  year_start: Int?
+  year_end: Int?
+}
+
+class Vehicle {
+  <<PK>> id: String
+  <<FK>> user_id: String
+  <<FK>> brand_id: String
+  <<FK>> model_id: String
+  year: Int
+  vehicule_picture_url: String?
+  fuel_type: FuelType?
+  health_status: Int?
+  engine_cc: Int?
+  registration_number: String?
+  registration_document_url: String?
+  <<UK>> vin: String?
+  is_default: Boolean
+  created_at: DateTime
+  color: String?
+  mileage_km: Int?
+  notes: String?
+}
+
+class Category {
+  <<PK>> id: String
+  <<FK>> parent_id: String?
+  name: String
+  slug: String
+  icon_url: String?
+}
+
+class Part {
+  <<PK>> id: String
+  <<FK>> seller_id: String
+  seller_type: SellerType
+  <<FK>> category_id: String?
+  name: String
+  description: String?
+  sku: String?
+  oem_reference: String?
+  condition: PartCondition
+  price_dzd: Decimal
+  stock_qty: Int
+  weight_kg: Decimal?
+  images: String[]
+  is_active: Boolean
+  is_featured: Boolean
+  is_verified: Boolean
+  verified_at: DateTime?
+  <<FK>> verified_by_admin_id: String?
+  views_count: Int
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+class PartCompatibility {
+  <<PK>> id: String
+  <<FK>> part_id: String
+  <<FK>> brand_id: String
+  <<FK>> model_id: String
+  year_from: Int
+  year_to: Int?
+  engine_variant: String?
+}
+
+class Order {
+  <<PK>> id: String
+  <<FK>> customer_id: String
+  <<FK>> store_id: String
+  <<UK>> order_number: String
+  status: OrderStatus
+  subtotal_dzd: Decimal
+  discount_dzd: Decimal
+  total_dzd: Decimal
+  delivery_type: OrderDeliveryType
+  delivery_address: String?
+  delivery_notes: String?
+  notes: String?
+  loyalty_points_used: Int
+  loyalty_points_earned: Int
+  cancelled_at: DateTime?
+  cancellation_reason: String?
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+class OrderItem {
+  <<PK>> id: String
+  <<FK>> order_id: String
+  <<FK>> part_id: String
+  part_name: String
+  part_sku: String?
+  quantity: Int
+  unit_price_dzd: Decimal
+  discount_pct: Decimal
+  line_total_dzd: Decimal
+}
+
+class Payment {
+  <<PK>> id: String
+  <<UK,FK>> order_id: String?
+  <<FK>> payer_id: String
+  method: PaymentMethod
+  amount_dzd: Decimal
+  status: PaymentStatus
+  <<UK>> edahabia_ref: String?
+  gateway_response: Json?
+  failed_reason: String?
+  paid_at: DateTime?
+  created_at: DateTime
+  <<UK,FK>> subscription_id: String?
+  <<UK,FK>> appointment_id: String?
+}
+
+class PaymentAccount {
+  <<PK>> id: String
+  <<FK>> client_id: String
+  account_name: String
+  ccp_code: String
+  ccp_key: String
+  full_name: String
+  is_default: Boolean
+  is_active: Boolean
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+class ProfessionalSchedule {
+  <<PK>> id: String
+  <<FK>> professional_id: String
+  day_of_week: Int
+  start_time: String
+  end_time: String
+  slot_duration_minutes: Int
+  is_active: Boolean
+}
+
+class ProfessionalScheduleException {
+  <<PK>> id: String
+  <<FK>> professional_id: String
+  exception_date: DateTime
+  is_day_off: Boolean
+  start_time: String?
+  end_time: String?
+  reason: String?
+}
+
+class Appointment {
+  <<PK>> id: String
+  <<FK>> customer_id: String
+  <<FK>> professional_id: String
+  <<FK>> vehicle_id: String?
+  service_type: String
+  description: String?
+  location_address: String?
+  scheduled_at: DateTime?
+  duration_minutes: Int?
+  quoted_price_dzd: Decimal?
+  confirmation_note: String?
+  final_price_dzd: Decimal?
+  payment_collected: Boolean
+  payment_collected_at: DateTime?
+  completion_notes: String?
+  completed_at: DateTime?
+  cancelled_by: String?
+  cancellation_reason: String?
+  cancelled_at: DateTime?
+  status: AppointmentStatus
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+class Review {
+  <<PK>> id: String
+  <<FK>> author_id: String
+  <<FK>> target_id: String
+  target_type: ReviewTarget
+  <<FK>> order_id: String?
+  <<FK>> appointment_id: String?
+  rating: Int
+  comment: String?
+  is_verified: Boolean
+  helpful_count: Int
+  media_urls: String[]
+  created_at: DateTime
+}
+
+class Report {
+  <<PK>> id: String
+  <<FK>> reporter_id: String
+  <<FK>> target_id: String
+  target_type: ReportTarget
+  reason: ReportReason
+  description: String?
+  status: ReportStatus
+  <<FK>> reviewed_by_admin_id: String?
+  <<FK>> conversation_id: String?
+  admin_notes: String?
+  reviewed_at: DateTime?
+  created_at: DateTime
+}
+
+class Notification {
+  <<PK>> id: String
+  <<FK>> user_id: String
+  type: NotificationType
+  title: String
+  message: String
+  <<FK>> reference_id: String?
+  is_read: Boolean
+  created_at: DateTime
+}
+
+class DiagnosticPost {
+  <<PK>> id: String
+  <<FK>> author_id: String
+  <<FK>> vehicle_id: String?
+  title: String
+  description: String
+  images: String[]
+  <<FK>> brand_id: String?
+  <<FK>> model_id: String?
+  year: Int?
+  fuel_type: FuelType?
+  status: PostStatus
+  views_count: Int
+  saves_count: Int
+  is_deleted: Boolean
+  <<FK>> deleted_by_admin_id: String?
+  deleted_at: DateTime?
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+class DiagnosticComment {
+  <<PK>> id: String
+  <<FK>> post_id: String
+  <<FK>> author_id: String
+  <<FK>> parent_id: String?
+  body: String
+  images: String[]
+  is_accepted_answer: Boolean
+  is_deleted: Boolean
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+class DiagnosticSave {
+  <<PK>> id: String
+  <<FK>> user_id: String
+  <<FK>> post_id: String
+  created_at: DateTime
+}
+
+class DiagnosticReaction {
+  <<PK>> id: String
+  <<FK>> user_id: String
+  <<FK>> target_id: String
+  target_type: ReactionTarget
+  created_at: DateTime
+  <<FK>> post_id: String?
+  <<FK>> comment_id: String?
+}
+
+class SubscriptionPlan {
+  <<PK>> id: String
+  name: String
+  description: String?
+  price_dzd: Decimal
+  billing_cycle: BillingCycle
+  duration_days: Int
+  target_type: SubscriptionTarget
+  features: Json?
+  is_free_trial: Boolean
+  trial_days: Int?
+  is_active: Boolean
+  created_at: DateTime
+}
+
+class Subscription {
+  <<PK>> id: String
+  <<FK>> subscriber_id: String
+  subscriber_type: SubscriptionTarget
+  <<FK>> plan_id: String
+  status: SubscriptionStatus
+  is_trial: Boolean
+  started_at: DateTime
+  expires_at: DateTime
+  auto_renew: Boolean
+  cancelled_at: DateTime?
+  expiry_warning_sent_at: DateTime?
+  expired_notified_at: DateTime?
+  created_at: DateTime
+}
+
+class PlatformSetting {
+  <<PK>> id: String
+  <<UK>> key: String
+  value: Json
+  description: String?
+  <<FK>> updated_by_admin_id: String?
+  updated_at: DateTime
+}
+
+class PendingRegistration {
+  <<PK>> id: String
+  <<UK>> email: String
+  password_hash: String
+  phone: String?
+  role: String
+  registration_data: Json
+  file_urls: Json?
+  otp_hash: String
+  otp_expires_at: DateTime
+  otp_last_sent_at: DateTime?
+  otp_attempts: Int
+  created_at: DateTime
+}
+
+class Conversation {
+  <<PK>> id: String
+  <<FK>> participant_one_id: String
+  <<FK>> participant_two_id: String
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+class Message {
+  <<PK>> id: String
+  <<FK>> conversation_id: String
+  <<FK>> sender_id: String
+  message_type: MessageType
+  content: String
+  is_read: Boolean
+  created_at: DateTime
+  updated_at: DateTime
+}
+
+User "1" -- "*" Appointment : customer_appointments
+User "1" -- "0..1" ClientProfile : client_profile
+User "1" -- "*" DiagnosticComment : diagnostic_comments
+User "1" -- "*" DiagnosticPost : diagnostic_posts
+User "1" -- "*" DiagnosticReaction : diagnostic_reactions
+User "1" -- "*" DiagnosticSave : diagnostic_saves
+User "1" -- "*" Order : orders_as_customer
+User "1" -- "*" Payment : payments
+User "1" -- "0..1" ProfessionalProfile : professional_profile
+User "1" -- "*" Report : authored_reports
+User "1" -- "*" Review : authored_reviews
+User "1" -- "0..1" StoreProfile : store_profile
+User "1" -- "*" Vehicle : vehicles
+User "1" -- "*" Notification : notifications
+User "1" -- "*" Favorite : favorites
+User "1" -- "*" Conversation : conversations_as_participant_one
+User "1" -- "*" Conversation : conversations_as_participant_two
+User "1" -- "*" Message : sent_messages
+ClientProfile "1" -- "*" PaymentAccount : payment_accounts
+StoreProfile "1" -- "*" Order : orders
+ProfessionalProfile "1" -- "*" Appointment : appointments
+ProfessionalProfile "1" -- "0..1" ProfessionalStore : ProfessionalStore
+ProfessionalProfile "1" -- "*" ProfessionalScheduleException : schedule_exceptions
+ProfessionalProfile "1" -- "*" ProfessionalSchedule : schedules
+Brand "0..1" -- "*" DiagnosticPost : diagnostic_posts
+Brand "1" -- "*" Model : models
+Brand "1" -- "*" PartCompatibility : part_compatibilities
+Brand "1" -- "*" Vehicle : vehicles
+Model "0..1" -- "*" DiagnosticPost : diagnostic_posts
+Model "1" -- "*" PartCompatibility : part_compatibilities
+Model "1" -- "*" Vehicle : vehicles
+Vehicle "0..1" -- "*" Appointment : appointments
+Vehicle "0..1" -- "*" DiagnosticPost : diagnostic_posts
+Category "0..1" -- "0..1" Category : parent
+Category "0..1" -- "*" Part : parts
+Part "1" -- "*" OrderItem : order_items
+Part "1" -- "*" PartCompatibility : compatibilities
+Order "1" -- "*" OrderItem : items
+Order "0..1" -- "0..1" Payment : payment
+Order "0..1" -- "*" Review : reviews
+Payment "0..1" -- "0..1" Appointment : appointment
+Payment "0..1" -- "0..1" Subscription : subscription
+Appointment "0..1" -- "*" Review : reviews
+Report "*" -- "0..1" Conversation : conversation
+DiagnosticPost "1" -- "*" DiagnosticComment : comments
+DiagnosticPost "0..1" -- "*" DiagnosticReaction : reactions
+DiagnosticPost "1" -- "*" DiagnosticSave : saves
+DiagnosticComment "0..1" -- "0..1" DiagnosticComment : parent
+DiagnosticComment "0..1" -- "*" DiagnosticReaction : reactions
+SubscriptionPlan "1" -- "*" Subscription : subscriptions
+Conversation "1" -- "*" Message : messages
+@enduml

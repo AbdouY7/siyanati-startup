@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
 import useAuthStore from '../../store/authStore';
 import LocationSelector from '../../components/uiComponents/LocationSelector';
+import { mapAuthErrorWithField, mapAuthError, mapValidationErrors } from '../../utils/authErrorMessages';
 
 const SPECIALTIES = [
   'Mécanique générale','Électricité auto','Carrosserie','Peinture','Climatisation',
@@ -120,8 +121,26 @@ const ProfessionalRegistration = () => {
         }
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Erreur de connexion au serveur';
-      setErrors({ general: msg });
+      if (err.code === "P2002") {
+        return setErrors({ general: mapAuthError("Email or phone number already in use") });
+      }
+      if (err.response && err.response.data && err.response.data.errors) {
+        setErrors(mapValidationErrors(err.response.data.errors));
+      } else {
+        const backendMsg = err.response?.data?.message;
+        if (backendMsg) {
+          const { field, message } = mapAuthErrorWithField(backendMsg);
+          if (field) {
+            setErrors({ [field]: message });
+            // Navigate to step 1 for account-related field errors
+            if (['email', 'phone', 'full_name'].includes(field)) setStep(1);
+          } else {
+            setErrors({ general: message });
+          }
+        } else {
+          setErrors({ general: mapAuthError(null) });
+        }
+      }
     } finally {
       setIsSubmitting(false);
     }

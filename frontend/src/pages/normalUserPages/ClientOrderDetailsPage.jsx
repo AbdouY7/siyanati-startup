@@ -16,7 +16,8 @@ import {
   FiHome,
   FiStar,
   FiRotateCcw,
-  FiXCircle
+  FiXCircle,
+  FiArrowLeft
 } from "react-icons/fi";
 
 const ClientOrderDetailsPage = () => {
@@ -113,8 +114,8 @@ const ClientOrderDetailsPage = () => {
       <div className="flex flex-col items-center justify-center min-h-screen text-gray-500">
         <FiAlertCircle size={48} className="mb-4" />
         <p className="text-lg">Commande introuvable</p>
-        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 hover:underline">
-          Retour à l'historique
+        <button onClick={() => navigate(-1)} className="mt-4 p-2 mx-auto rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition flex items-center justify-center w-fit" title="Retour à l'historique">
+          <FiArrowLeft size={20} />
         </button>
       </div>
     );

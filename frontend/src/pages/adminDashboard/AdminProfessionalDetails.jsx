@@ -146,8 +146,9 @@ const AdminProfessionalDetails = () => {
         </div>
         <Link
           to="/admin/professionals"
-          className="mt-4 inline-flex items-center text-primary hover:underline">
-          <FiArrowLeft className="mr-2" /> Retour à la liste
+          title="Retour à la liste"
+          className="mt-4 p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition inline-flex items-center justify-center">
+          <FiArrowLeft size={20} />
         </Link>
       </div>
     );
@@ -160,8 +161,9 @@ const AdminProfessionalDetails = () => {
       <div>
         <Link
           to="/admin/professionals"
-          className="inline-flex items-center text-gray-500 hover:text-primary mb-4 transition-colors">
-          <FiArrowLeft className="mr-2" /> Back to Professionals List
+          title="Retour"
+          className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition inline-flex items-center justify-center mb-4">
+          <FiArrowLeft size={20} />
         </Link>
         <h1 className="text-2xl font-bold text-gray-800">
           Professional Details

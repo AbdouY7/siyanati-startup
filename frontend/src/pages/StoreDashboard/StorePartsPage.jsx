@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getMyParts, deletePart, getCategories } from "../../services/partService";
 import { getBrands, getModelsByBrand } from "../../services/vehicleService";
 import CreatePartModal from "./CreatePartModal";
+import UploadCSVModal from "./UploadCSVModal";
 import {
   FiSearch,
   FiPlus,
@@ -14,6 +15,7 @@ import {
   FiBox,
   FiDollarSign,
   FiFilter,
+  FiUpload,
 } from "react-icons/fi";
 import { RiFileList3Line } from "react-icons/ri";
 
@@ -28,6 +30,7 @@ export default function StorePartsPage() {
   const [parts, setParts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showCSVModal, setShowCSVModal] = useState(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,6 +94,12 @@ export default function StorePartsPage() {
     fetchParts();
   };
 
+  const handleCSVUploaded = () => {
+    setShowCSVModal(false);
+    setPagination((p) => ({ ...p, page: 1 }));
+    fetchParts();
+  };
+
   return (
     <div className="px-6 py-6 space-y-6">
       {/* Header */}
@@ -101,12 +110,20 @@ export default function StorePartsPage() {
           </h1>
           <p className="text-sm text-[#6b7280] mt-0.5">Ajoutez, modifiez et gérez les pièces de votre magasin.</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-5 py-3 bg-[#2563eb] text-white rounded-xl hover:bg-[#1e40af] transition-colors font-semibold text-sm shadow-lg shadow-blue-200"
-        >
-          <FiPlus size={18} /> Ajouter une Pièce
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCSVModal(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-white text-[#2563eb] border-2 border-[#2563eb] rounded-xl hover:bg-blue-50 transition-colors font-semibold text-sm"
+          >
+            <FiUpload size={18} /> Importer CSV
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-[#2563eb] text-white rounded-xl hover:bg-[#1e40af] transition-colors font-semibold text-sm shadow-lg shadow-blue-200"
+          >
+            <FiPlus size={18} /> Ajouter une Pièce
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -291,6 +308,15 @@ export default function StorePartsPage() {
         <CreatePartModal
           onClose={() => setShowModal(false)}
           onCreated={handlePartCreated}
+          categories={categories}
+        />
+      )}
+
+      {/* CSV Upload Modal */}
+      {showCSVModal && (
+        <UploadCSVModal
+          onClose={() => setShowCSVModal(false)}
+          onUploaded={handleCSVUploaded}
           categories={categories}
         />
       )}

@@ -6,6 +6,8 @@ const uploadImage = require("../utils/uploadImage");
 const { generateNumericOTP, hashOTP } = require("../utils/otp.util");
 const { sendSMS } = require("../services/sms.service");
 const { sendEmail } = require("../utils/mail.utils");
+const { OAuth2Client } = require("google-auth-library");
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // ── Token helpers ─────────────────────────────────────────────────────────────
 
 function generateAccessToken(user) {
@@ -64,6 +66,75 @@ const login = async (req, res, next) => {
 
     return res.status(200).json({ accessToken, refreshToken });
   } catch (error) {
+    next(error);
+  }
+};
+
+const googleAuth = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: "Google token required" });
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleId = payload.sub;
+    const email = payload.email;
+
+    if (!payload.email_verified) {
+      return res.status(401).json({ message: "Google email not verified" });
+    }
+
+    // 1. Check if user exists by google_id
+    let user = await prisma.user.findUnique({ where: { google_id: googleId } });
+
+    if (!user) {
+      // 2. Check if user exists by email
+      user = await prisma.user.findUnique({ where: { email } });
+
+      if (user) {
+        // Link google_id to existing account
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { google_id: googleId },
+        });
+      } else {
+        // 3. Create new user as customer
+        const userId = randomUUID();
+        user = await prisma.user.create({
+          data: {
+            id: userId,
+            email,
+            google_id: googleId,
+            role: "customer",
+            email_verified: true,
+          },
+        });
+
+        // Create client profile for the new user
+        await prisma.clientProfile.create({
+          data: {
+            user_id: userId,
+            full_name: payload.name || "Google User",
+            avatar_url: payload.picture,
+          },
+        });
+      }
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refresh_token: refreshToken },
+    });
+
+    return res.status(200).json({ accessToken, refreshToken });
+  } catch (error) {
+    console.error("Google auth error:", error);
     next(error);
   }
 };
@@ -1003,6 +1074,7 @@ const resendRegistrationOtp = async (req, res, next) => {
 
 module.exports = {
   login,
+  googleAuth,
   register: registerCustomer,
   registerCustomer,
   registerStore,

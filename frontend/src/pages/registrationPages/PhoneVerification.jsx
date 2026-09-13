@@ -4,6 +4,7 @@ import useAuthStore from "../../store/authStore";
 import axiosInstance from "../../api/axios";
 import OtpInput from "../../components/uiComponents/OtpInput";
 import { FaPhoneAlt, FaSpinner } from "react-icons/fa";
+import { mapAuthError } from "../../utils/authErrorMessages";
 
 const PhoneVerification = () => {
   const [otp, setOtp] = useState("");
@@ -56,7 +57,7 @@ const PhoneVerification = () => {
       await checkAuth(); // Refresh user state
       navigate("/"); // Go to dashboard/home
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to verify phone");
+      setError(mapAuthError(err.response?.data?.message));
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ const PhoneVerification = () => {
       setSuccess("A new verification code has been sent via SMS.");
       setCountdown(60); // Reset timer
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to resend code");
+      setError(mapAuthError(err.response?.data?.message));
     } finally {
       setResendLoading(false);
     }

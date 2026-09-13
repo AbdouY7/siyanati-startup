@@ -6,36 +6,34 @@ import { BiSolidCarMechanic } from "react-icons/bi";
 import { RiStethoscopeLine } from "react-icons/ri";
 import { FiArrowRight } from "react-icons/fi";
 import serviceImage from "../../assets/img/servicesPicture.png";
+import { useTranslation } from "react-i18next";
 
 const Services = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   const services = [
     {
-      title: "Vente de pièces détachées",
+      title: t("service_1_title"),
       icon: <FaCogs size={36} />,
-      description:
-        "Un marché regroupant des pièces neuves et d'occasion, proposées par des vendeurs vérifiés, avec recherche avancée et compatibilité véhicule.",
+      description: t("service_1_desc"),
     },
     {
-      title: "Services de mécanique",
+      title: t("service_2_title"),
       icon: <BiSolidCarMechanic size={36} />,
-      description:
-        "Accès à un réseau de mécaniciens et électriciens qualifiés, avec devis, prise de rendez-vous et suivi des prestations.",
+      description: t("service_2_desc"),
     },
     {
-      title: "Diagnostic automobile en ligne",
+      title: t("service_3_title"),
       icon: <RiStethoscopeLine size={36} />,
-      description:
-        "Un outil intelligent permettant d'identifier rapidement les pannes possibles à partir des symptômes du véhicule, avec des recommandations adaptées.",
+      description: t("service_3_desc"),
     },
     {
-      title: "Gestion de flotte",
+      title: t("service_4_title"),
       icon: <FaCreditCard size={36} />,
-      description:
-        "Paiement simple et sécurisé via les solutions locales, avec facturation et historique des transactions.",
+      description: t("service_4_desc"),
     },
   ];
 
@@ -53,12 +51,11 @@ const Services = () => {
       {/* Top: title/description + image */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
         <div className="flex flex-col gap-6 max-w-[600px] items-center lg:items-start text-center lg:text-left">
-          <h1 className="text-[32px] sm:text-[48px] lg:text-[80px] font-bold font-secondary text-primary leading-[1.2] uppercase w-full lg:w-[70%]">
-            services de SIYANATI
+          <h1 className="text-[28px] sm:text-[48px] lg:text-[72px] font-bold font-secondary text-primary leading-[1.2] uppercase w-full lg:w-[70%]">
+            {t("services_heading")}
           </h1>
           <p className="text-[16px] text-gray-700 font-medium font-primary tracking-wide">
-            Une plateforme complète pour simplifier l'entretien et la réparation
-            automobile, du diagnostic au paiement.
+            {t("services_desc")}
           </p>
         </div>
         <img
@@ -85,10 +82,9 @@ const Services = () => {
                   relative flex flex-col items-center gap-4 p-6 rounded-2xl border
                   cursor-pointer select-none overflow-hidden
                   transition-all duration-500 ease-in-out
-                  ${
-                    isActive
-                      ? "bg-secondary border-secondary text-white shadow-xl shadow-secondary/30 scale-[1.04]"
-                      : "bg-white border-gray-100 text-gray-800 shadow-sm hover:shadow-md scale-100"
+                  ${isActive
+                    ? "bg-secondary border-secondary text-white shadow-xl shadow-secondary/30 scale-[1.04]"
+                    : "bg-white border-gray-100 text-gray-800 shadow-sm hover:shadow-md scale-100"
                   }
                 `}
                 style={{
@@ -155,15 +151,13 @@ const Services = () => {
             iconPosition="right"
             iconRight
             onClick={() => navigate("/register")}>
-            commencez avec SIYANATI
+            {t("hero_btn_start")}
           </AnimatedButton>
           <AnimatedButton
             variant="outline-white"
             className="border border-primary w-full max-w-xs sm:w-auto justify-center"
-            icon={<FiArrowRight size={20} />}
-            iconPosition="right"
-            iconRight>
-            CHERCHER DES PIéces
+            onClick={() => navigate("/search")}>
+            {t("service_btn_search")}
           </AnimatedButton>
         </div>
       </div>

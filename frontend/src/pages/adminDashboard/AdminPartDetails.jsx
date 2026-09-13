@@ -108,7 +108,9 @@ export default function AdminPartDetails() {
       <div className="px-6 py-20 text-center">
         <FiAlertTriangle className="mx-auto text-4xl text-rose-400 mb-3" />
         <p className="text-gray-700 font-medium">Pièce introuvable</p>
-        <button onClick={() => navigate(-1)} className="mt-4 text-sm text-blue-600 hover:underline">← Retour</button>
+        <button onClick={() => navigate(-1)} className="mt-4 p-2 mx-auto rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition flex items-center justify-center w-fit" title="Retour">
+          <FiArrowLeft size={20} />
+        </button>
       </div>
     );
   }

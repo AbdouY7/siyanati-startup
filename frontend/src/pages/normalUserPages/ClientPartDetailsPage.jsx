@@ -192,9 +192,10 @@ export default function ClientPartDetailsPage() {
         <p className="text-gray-700 font-medium">Pièce introuvable</p>
         <button
           onClick={() => navigate(-1)}
-          className="mt-4 text-sm text-blue-600 hover:underline"
+          className="mt-4 p-2 mx-auto rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition flex items-center justify-center w-fit"
+          title="Retour"
         >
-          ← Retour
+          <FiArrowLeft size={20} />
         </button>
       </div>
     );

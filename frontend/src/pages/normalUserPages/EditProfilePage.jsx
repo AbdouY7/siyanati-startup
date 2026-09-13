@@ -106,9 +106,9 @@ const EditProfilePage = () => {
       <div className="mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary transition">
-          <FiArrowLeft size={16} />
-          Retour
+          title="Retour"
+          className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center">
+          <FiArrowLeft size={20} />
         </button>
       </div>
 
@@ -273,8 +273,9 @@ const EditProfilePage = () => {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="text-sm font-medium text-gray-500 hover:text-gray-700 transition flex items-center gap-1.5">
-              <FiArrowLeft size={15} /> Annuler
+              title="Annuler"
+              className="p-2 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center">
+              <FiArrowLeft size={18} />
             </button>
 
             <button

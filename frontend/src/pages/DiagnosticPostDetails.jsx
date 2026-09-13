@@ -162,13 +162,12 @@ const DiagnosticPostDetails = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Navigation Back */}
-        <Link 
-          to={backLink} 
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-blue-600 font-medium mb-6 transition"
-        >
-          <FiChevronLeft size={20} />
-          Retour aux diagnostics
-        </Link>
+        <button
+          onClick={() => navigate(-1)}
+          title="Retour aux diagnostics"
+          className="p-2 w-fit rounded-full hover:bg-gray-200 text-slate-500 hover:text-blue-600 transition mb-6 flex items-center justify-center">
+          <FiChevronLeft size={22} />
+        </button>
 
         {/* Post Content */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mb-8">

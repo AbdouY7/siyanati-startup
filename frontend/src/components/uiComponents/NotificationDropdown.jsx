@@ -15,7 +15,7 @@ import {
   getNotificationLink,
 } from "../../utils/notificationDisplay";
 
-export default function NotificationDropdown() {
+export default function NotificationDropdown({ className, iconClassName }) {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -132,9 +132,9 @@ export default function NotificationDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Notifications"
         aria-expanded={isOpen}
-        className="relative p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={className || "relative p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"}
       >
-        <FiBell size={20} />
+        <FiBell size={20} className={iconClassName} />
         {unreadCount > 0 && (
           <span 
             aria-live="polite"

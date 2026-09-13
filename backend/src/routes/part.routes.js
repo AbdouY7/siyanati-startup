@@ -5,6 +5,7 @@ const { requireAdmin } = require("../middlewares/admin.middleware");
 const upload = require("../middlewares/upload");
 const {
   createPart,
+  createBulkParts,
   getAllParts,
   getMyParts,
   getPartById,
@@ -16,6 +17,7 @@ const {
   partCreateSchema,
   partUpdateSchema,
   partVerifySchema,
+  partBulkCreateSchema,
 } = require("../validators/part.validator");
 
 const router = express.Router();
@@ -48,6 +50,13 @@ router.post(
   ]),
   validateSchema(partCreateSchema),
   createPart,
+);
+
+router.post(
+  "/parts/bulk",
+  authMiddleware,
+  validateSchema(partBulkCreateSchema),
+  createBulkParts,
 );
 
 

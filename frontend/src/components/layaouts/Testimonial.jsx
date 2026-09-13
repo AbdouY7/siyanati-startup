@@ -5,29 +5,8 @@ import { GlassIconButton } from "../uiComponents/GlassIconButton";
 import { FaAngleRight, FaAngleLeft } from "react-icons/fa6";
 import { FiMapPin } from "react-icons/fi";
 
-const testimonials = [
-  {
-    name: "John Doe",
-    place: "Alger",
-    initials: "JD",
-    feedback:
-      "Siyanati a transformé la façon dont j'entretiens ma voiture. Le diagnostic en ligne m'a permis d'identifier rapidement une panne, et j'ai pu trouver les pièces nécessaires facilement. Je recommande vivement !",
-  },
-  {
-    name: "Jane Smith",
-    place: "Oran",
-    initials: "JS",
-    feedback:
-      "En tant que professionnel de l'automobile, Siyanati m'a permis d'élargir ma clientèle et de gérer mes rendez-vous plus efficacement. La plateforme est intuitive et le support est excellent.",
-  },
-  {
-    name: "Karim Mekki",
-    place: "Constantine",
-    initials: "KM",
-    feedback:
-      "Grâce à Siyanati, j'ai trouvé un mécanicien de confiance près de chez moi en quelques minutes. Le processus est simple et les avis des autres clients m'ont vraiment aidé à choisir.",
-  },
-];
+// Testimonials array moved inside component for translation
+
 
 /* Avatar cluster — decorative floating circles with initials */
 const avatarData = [
@@ -109,7 +88,32 @@ const AvatarCluster = () => (
   </div>
 );
 
+import { useTranslation } from "react-i18next";
+
 const Testimonial = () => {
+  const { t } = useTranslation();
+  
+  const testimonials = [
+    {
+      name: "John Doe",
+      place: "Alger",
+      initials: "JD",
+      feedback: t("testi_feedback_1"),
+    },
+    {
+      name: "Jane Smith",
+      place: "Oran",
+      initials: "JS",
+      feedback: t("testi_feedback_2"),
+    },
+    {
+      name: "Karim Mekki",
+      place: "Constantine",
+      initials: "KM",
+      feedback: t("testi_feedback_3"),
+    },
+  ];
+
   const [isSelected, setIsSelected] = useState(0);
   const touchStartX = useRef(0);
 
@@ -133,7 +137,7 @@ const Testimonial = () => {
   const next = () =>
     setIsSelected((p) => (p === testimonials.length - 1 ? 0 : p + 1));
 
-  const t = testimonials[isSelected];
+  const currentTesti = testimonials[isSelected];
 
   return (
     <section className="relative w-full overflow-hidden bg-black py-16 px-6">
@@ -145,10 +149,10 @@ const Testimonial = () => {
         {/* ── Section header ── */}
         <div className="text-center mb-12">
           <h2 className="text-white font-bold font-secondary text-2xl md:text-3xl tracking-tight">
-            LES AVIS DE NOS CLIENTS
+            {t("testi_header")}
           </h2>
           <p className="text-slate-400 text-sm mt-2 font-primary">
-            Des automobilistes qui font confiance à Siyanati chaque jour
+            {t("testi_sub")}
           </p>
         </div>
 
@@ -168,7 +172,7 @@ const Testimonial = () => {
               <p
                 key={isSelected}
                 className="text-slate-300 text-base leading-relaxed italic font-primary mt-4 mb-6">
-                {t.feedback}
+                {currentTesti.feedback}
               </p>
 
               {/* Divider */}
@@ -182,13 +186,13 @@ const Testimonial = () => {
                     background: avatarData[isSelected % avatarData.length].bg,
                     color: avatarData[isSelected % avatarData.length].color,
                   }}>
-                  {t.initials}
+                  {currentTesti.initials}
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">{t.name}</p>
+                  <p className="text-white font-semibold text-sm">{currentTesti.name}</p>
                   <p className="text-slate-400 text-xs flex items-center gap-1 mt-0.5">
                     <FiMapPin size={11} />
-                    {t.place}
+                    {currentTesti.place}
                   </p>
                 </div>
               </div>
@@ -224,13 +228,13 @@ const Testimonial = () => {
             <p
               key={isSelected}
               className="text-slate-300 text-sm leading-relaxed italic font-primary mt-4 mb-5 text-center">
-              {t.feedback}
+              {currentTesti.feedback}
             </p>
             <div className="w-8 h-0.5 bg-emerald-500 rounded-full mb-3 mx-auto" />
             <div className="flex flex-col items-center gap-1">
-              <p className="text-white font-semibold text-sm">{t.name}</p>
+              <p className="text-white font-semibold text-sm">{currentTesti.name}</p>
               <p className="text-slate-400 text-xs flex items-center gap-1">
-                <FiMapPin size={11} /> {t.place}
+                <FiMapPin size={11} /> {currentTesti.place}
               </p>
             </div>
           </div>
@@ -252,7 +256,7 @@ const Testimonial = () => {
         {/* ── Car strip — desktop only ── */}
         <div className="hidden md:flex items-center gap-4 mt-14 pt-8 border-t border-white/10">
           <span className="text-slate-500 text-xs uppercase tracking-widest whitespace-nowrap font-primary">
-            Siyanati
+            {t("testi_car_1")}
           </span>
           <div className="flex-1 h-px bg-white/10" />
           {/* Car image */}
@@ -263,7 +267,7 @@ const Testimonial = () => {
           />
           <div className="flex-1 h-px bg-white/10" />
           <span className="text-slate-500 text-xs uppercase tracking-widest whitespace-nowrap font-primary">
-            Vos avis comptent
+            {t("testi_car_2")}
           </span>
         </div>
       </div>

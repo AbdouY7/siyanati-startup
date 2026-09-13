@@ -35,6 +35,7 @@ const detailOrderInclude = {
 const isAdmin = (user) => user?.role === "admin";
 const isCustomer = (user) => user?.role === "customer";
 const isStore = (user) => user?.role === "store";
+const isBuyer = (user) => ["customer", "professional"].includes(user?.role);
 
 const aggregateItems = (items) => {
   const itemMap = new Map();
@@ -60,7 +61,7 @@ const getStoreProfileForUser = (userId) =>
 
 const getOrderAccessWhere = async (user) => {
   if (isAdmin(user)) return {};
-  if (isCustomer(user)) return { customer_id: user.id };
+  if (isBuyer(user)) return { customer_id: user.id };
 
   if (isStore(user)) {
     const storeProfile = await getStoreProfileForUser(user.id);
@@ -98,10 +99,10 @@ const restoreOrderStock = async (tx, items) => {
  */
 const createOrder = async (req, res, next) => {
   try {
-    if (!isCustomer(req.user)) {
+    if (!isBuyer(req.user)) {
       return res.status(403).json({
         success: false,
-        message: "Only customers can create orders",
+        message: "Only customers and professionals can create orders",
       });
     }
 
@@ -426,7 +427,7 @@ const getOrderById = async (req, res, next) => {
  */
 const updateOrderStatus = async (req, res, next) => {
   try {
-    if (!isAdmin(req.user) && !isStore(req.user) && !isCustomer(req.user)) {
+    if (!isAdmin(req.user) && !isStore(req.user) && !isBuyer(req.user)) {
       return res.status(403).json({
         success: false,
         message: "You are not allowed to update order status",
@@ -469,10 +470,10 @@ const updateOrderStatus = async (req, res, next) => {
       });
     }
 
-    if (isCustomer(req.user) && status !== "delivered") {
+    if (isBuyer(req.user) && status !== "delivered") {
       return res.status(403).json({
         success: false,
-        message: "Customers can only confirm delivery of their orders",
+        message: "Buyers can only confirm delivery of their orders",
       });
     }
 
@@ -559,10 +560,10 @@ const updateOrderStatus = async (req, res, next) => {
  */
 const cancelOrder = async (req, res, next) => {
   try {
-    if (!isCustomer(req.user)) {
+    if (!isBuyer(req.user)) {
       return res.status(403).json({
         success: false,
-        message: "Only customers can cancel their orders",
+        message: "Only buyers can cancel their orders",
       });
     }
 

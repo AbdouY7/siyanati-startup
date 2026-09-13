@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { getAllSubscriptions, suspendSubscription, reactivateSubscription } from "../../services/subscriptionService";
+import { getAdminSubscriptionStats } from "../../services/statisticsService";
+import { FiUsers, FiDollarSign, FiAlertCircle } from "react-icons/fi";
 
 export default function AdminSubscriptions() {
   const [subscriptions, setSubscriptions] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11,8 +14,12 @@ export default function AdminSubscriptions() {
 
   const fetchSubscriptions = async () => {
     try {
-      const data = await getAllSubscriptions();
+      const [data, statsData] = await Promise.all([
+        getAllSubscriptions(),
+        getAdminSubscriptionStats()
+      ]);
       setSubscriptions(data);
+      setStats(statsData);
     } catch (error) {
       console.error(error);
     } finally {
@@ -43,6 +50,40 @@ export default function AdminSubscriptions() {
         </h1>
         <p className="text-sm text-[#6b7280]">Consultez et gérez les abonnements actifs et expirés.</p>
       </div>
+
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-2xl border border-[#e9effd] p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+              <FiUsers size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 leading-none">{stats.totalActive}</p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Abonnements actifs</p>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-2xl border border-[#e9effd] p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+              <FiAlertCircle size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 leading-none">{stats.totalExpired + stats.totalCancelled}</p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Expirés / Annulés</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-[#e9effd] p-5 flex items-center gap-4 md:col-span-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+              <FiDollarSign size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900 leading-none">{stats.totalRevenue.toLocaleString()} DZD</p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Revenus totaux générés</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-[#e9effd] overflow-hidden">
         <table className="w-full text-left border-collapse">

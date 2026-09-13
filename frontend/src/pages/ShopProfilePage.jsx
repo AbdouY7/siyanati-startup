@@ -137,8 +137,8 @@ function ImageCarousel({ images }) {
     images.length > 0
       ? images
       : [
-          "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=700&q=80",
-        ];
+        "https://images.unsplash.com/photo-1567789884554-0b844b597180?w=700&q=80",
+      ];
   return (
     <div className="relative rounded-2xl overflow-hidden h-full min-h-[280px] bg-slate-100">
       <img
@@ -152,9 +152,8 @@ function ImageCarousel({ images }) {
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === idx ? "bg-white scale-125" : "bg-white/50"
-              }`}
+              className={`w-2 h-2 rounded-full transition-all ${i === idx ? "bg-white scale-125" : "bg-white/50"
+                }`}
             />
           ))}
         </div>
@@ -347,9 +346,9 @@ export default function ShopProfilePage() {
         <p className="text-red-400 text-lg font-medium">
           {error || "Magasin introuvable"}
         </p>
-        <Link to="/magasins" className="text-blue-600 hover:underline text-sm">
-          ← Retour aux magasins
-        </Link>
+        <button onClick={() => navigate(-1)} className="p-2 mx-auto rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition flex items-center justify-center w-fit" title="Retour aux magasins">
+          <FiArrowLeft size={20} />
+        </button>
       </div>
     );
   }
@@ -363,11 +362,12 @@ export default function ShopProfilePage() {
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Blue hero header */}
       <div className="bg-blue-700 px-6 pt-[110px] pb-20 relative">
-        <Link
-          to="/magasins"
-          className="text-white/80 hover:text-white flex items-center gap-1 text-sm mb-4 no-underline w-fit">
-          <FiArrowLeft size={16} /> Retour
-        </Link>
+        <button
+          onClick={() => navigate(-1)}
+          title="Retour"
+          className="p-2 w-fit rounded-full hover:bg-white/20 text-white/80 hover:text-white transition flex items-center justify-center mb-4">
+          <FiArrowLeft size={20} />
+        </button>
 
         <div className="max-w-6xl mx-auto flex items-start gap-5">
           {/* Logo */}
@@ -439,10 +439,9 @@ export default function ShopProfilePage() {
               }}
               disabled={storeToggling}
               className={`p-2 rounded-xl border-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed
-                ${
-                  storeIsFav
-                    ? "bg-red-500 border-red-500 text-white"
-                    : "bg-white border-white text-blue-700 hover:bg-blue-50"
+                ${storeIsFav
+                  ? "bg-red-500 border-red-500 text-white"
+                  : "bg-white border-white text-blue-700 hover:bg-blue-50"
                 }`}>
               <FiHeart size={16} fill={storeIsFav ? "currentColor" : "none"} />
             </button>
@@ -517,7 +516,7 @@ export default function ShopProfilePage() {
               {store.description || "Aucune description disponible."}
             </p>
 
-            <button 
+            <button
               onClick={() => {
                 if (!user) {
                   setAuthModalOpen(true);
@@ -651,7 +650,7 @@ export default function ShopProfilePage() {
         )}
       </div>
 
-      <Footer />
+
       <AuthRequiredModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}

@@ -28,6 +28,7 @@ const navItems = [
   },
   { label: "Rendez-vous", icon: RiCalendarLine, path: "/pro/appointments" },
   { label: "Planification", icon: RiTimeLine, path: "/pro/schedule" },
+  { label: "Mes Achats", icon: RiDashboardLine, path: "/pro/orders" }, // TODO update icon if needed
   { label: "Avis", icon: RiStarLine, path: "/pro/reviews" },
   { label: "Profil", icon: RiUserLine, path: "/pro/profile" },
   {
@@ -38,6 +39,8 @@ const navItems = [
   },
   { label: "Messages", icon: RiMessage3Line, path: "/pro/chat", badge: 3 },
   { label: "Diagnostic", icon: RiCarLine, path: "/pro/diagnostic" },
+  { label: "Catalogues", icon: RiSearchLine, path: "/catalogues" },
+  { label: "Magasins", icon: RiHome5Line, path: "/magasins" },
 ];
 
 export default function HomePro() {

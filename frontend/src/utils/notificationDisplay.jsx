@@ -65,7 +65,8 @@ export function getNotificationLink(notification, userRole) {
     case "order_status_updated":
     case "new_order":
       if (userRole === "store") return "/store/orders";
-      if (userRole === "customer") return "/orders";
+      if (userRole === "customer") return "/profile/orders";
+      if (userRole === "professional") return "/pro/orders";
       return "#";
     case "appointment_requested":
     case "appointment_confirmed":

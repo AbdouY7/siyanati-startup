@@ -131,8 +131,9 @@ const AdminClientParts = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <Link
         to={`/admin/clients/${id}`}
-        className="text-gray-500 hover:text-primary flex items-center gap-2 mb-6 transition-colors">
-        <FiArrowLeft /> Retour aux détails du client
+        title="Retour aux détails du client"
+        className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center mb-6">
+        <FiArrowLeft size={20} />
       </Link>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

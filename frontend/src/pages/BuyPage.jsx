@@ -401,12 +401,9 @@ export default function BuyPartPage() {
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="group flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-7 transition-colors">
-          <FiArrowLeft
-            size={15}
-            className="group-hover:-translate-x-0.5 transition-transform"
-          />
-          Retour
+          title="Retour"
+          className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition mb-7 flex items-center justify-center">
+          <FiArrowLeft size={20} />
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">

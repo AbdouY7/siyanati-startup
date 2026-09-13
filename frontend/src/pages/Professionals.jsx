@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { FiSearch, FiFilter, FiPlus, FiChevronDown } from "react-icons/fi";
+import { FiFilter } from "react-icons/fi";
+import { IoSearchOutline } from "react-icons/io5";
 
 import Footer from "../components/layaouts/Footer";
 import ProfessionalCard from "../components/uiComponents/ProfessionalCard";
+import DropDownList from "../components/uiComponents/DropDownList";
 import { getAllProfessionals } from "../services/professionalService";
 import { getImageUrl } from "../utils/imageUtils";
 
@@ -29,57 +31,7 @@ const ratings = ["Toutes", "4.5+", "4.0+", "3.5+"];
 const experiences = ["Toutes", "3+ ans", "5+ ans", "8+ ans"];
 const availabilities = ["Toutes", "Disponible", "Indisponible"];
 
-// ─── Reusable filter pill dropdown ───────────────────────────────────────────
-function FilterDropdown({ label, options, value, onChange }) {
-  const [open, setOpen] = useState(false);
-
-  // Close on outside click
-  React.useEffect(() => {
-    if (!open) return;
-    const handler = () => setOpen(false);
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const isActive = value !== options[0];
-
-  return (
-    <div className="relative" onMouseDown={(e) => e.stopPropagation()}>
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border transition-all duration-150 font-medium whitespace-nowrap
-          ${
-            isActive
-              ? "border-blue-500 bg-blue-50 text-blue-700"
-              : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-          }`}>
-        {label}
-        {isActive && ` · ${value}`}
-        <FiChevronDown
-          size={14}
-          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 min-w-[180px]">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              className={`w-full text-left text-sm px-4 py-2 hover:bg-blue-50 hover:text-blue-700 transition-colors
-                ${value === opt ? "text-blue-700 font-semibold bg-blue-50" : "text-gray-700"}`}>
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+// Removed inline FilterDropdown
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Professionals() {
@@ -182,72 +134,98 @@ export default function Professionals() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-8">
+        {/* Page header */}
+        <div className="mb-7">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase mb-1.5">
+            Professionnels
+          </h1>
+          <p className="text-gray-400 text-sm max-w-xl leading-relaxed">
+            Trouvez les meilleurs professionnels pour la réparation et l'entretien 
+            de votre véhicule. Filtrez par spécialité, expérience ou avis.
+          </p>
+        </div>
+
         {/* Search row */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5 w-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 w-full">
           <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm w-full sm:max-w-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-            <FiSearch className="text-gray-400 shrink-0" size={16} />
+            <IoSearchOutline className="text-gray-400 shrink-0" size={17} />
             <input
               type="text"
-              placeholder="rechercher le professionels ..."
+              placeholder="Rechercher des professionnels..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
             />
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl transition-all duration-150 shadow-sm w-full sm:w-auto flex justify-center items-center">
-            <FiPlus size={18} />
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl transition-all duration-150 shadow-sm flex-1 sm:flex-none flex justify-center items-center">
+              <IoSearchOutline size={18} />
+            </button>
+            <button
+              onClick={resetAll}
+              title="Réinitialiser les filtres"
+              className={`p-2.5 rounded-xl transition-all duration-150 active:scale-95 flex-1 sm:flex-none flex justify-center items-center
+                ${
+                  anyActive
+                    ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-500"
+                }`}>
+              <FiFilter size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Filter pills */}
         <div className="flex items-center gap-2 mb-8 flex-wrap">
-          <FilterDropdown
-            label="Spécialité"
-            options={specialties}
+          <DropDownList
+            name="specialty"
+            placeholder="Spécialité"
+            options={specialties.map(o => ({ value: o, label: o }))}
             value={specialty}
             onChange={setSpecialty}
           />
-          <FilterDropdown
-            label="Wilaya"
-            options={wilayas}
+          <DropDownList
+            name="wilaya"
+            placeholder="Wilaya"
+            options={wilayas.map(o => ({ value: o, label: o }))}
             value={wilaya}
             onChange={setWilaya}
           />
-          <FilterDropdown
-            label="Note minimale"
-            options={ratings}
+          <DropDownList
+            name="rating"
+            placeholder="Note minimale"
+            options={ratings.map(o => ({ value: o, label: o }))}
             value={rating}
             onChange={setRating}
           />
-          <FilterDropdown
-            label="Années d'expérience"
-            options={experiences}
+          <DropDownList
+            name="experience"
+            placeholder="Années d'expérience"
+            options={experiences.map(o => ({ value: o, label: o }))}
             value={experience}
             onChange={setExperience}
           />
-          <FilterDropdown
-            label="Disponibilité"
-            options={availabilities}
+          <DropDownList
+            name="availability"
+            placeholder="Disponibilité"
+            options={availabilities.map(o => ({ value: o, label: o }))}
             value={availability}
             onChange={setAvailability}
           />
-          <button className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-500 hover:border-gray-300 transition-all">
-            Localisation du vendeur <FiChevronDown size={14} />
-          </button>
-
-          {/* Reset button */}
-          <button
-            onClick={resetAll}
-            title="Réinitialiser les filtres"
-            className={`mt-2 sm:mt-0 sm:ml-auto w-full sm:w-auto p-2.5 rounded-xl transition-all duration-150 active:scale-95 flex justify-center items-center
-              ${
-                anyActive
-                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-500"
-              }`}>
-            <FiFilter size={16} />
-          </button>
         </div>
+
+        {/* Results count */}
+        <p className="text-xs text-gray-400 mb-4">
+          {filtered.length} professionnel{filtered.length !== 1 ? "s" : ""}{" "}
+          trouvé{filtered.length !== 1 ? "s" : ""}
+          {anyActive && (
+            <button
+              onClick={resetAll}
+              className="ml-2 text-blue-500 hover:text-blue-700 underline transition-colors">
+              Effacer les filtres
+            </button>
+          )}
+        </p>
 
         {/* Loading state */}
         {isLoading && (
@@ -298,7 +276,7 @@ export default function Professionals() {
         )}
       </main>
 
-      <Footer />
+
     </div>
   );
 }

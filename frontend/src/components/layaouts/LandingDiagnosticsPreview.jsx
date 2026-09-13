@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { getDiagnosticPosts } from "../../services/diagnosticService";
 import { MessageCircle, ThumbsUp, Wrench, Search, Clock } from "lucide-react";
 import { getImageUrl } from "../../utils/imageUtils";
+import { useTranslation } from "react-i18next";
 
 export default function LandingDiagnosticsPreview({ onRequireAuth }) {
+  const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +22,7 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
     const minutes = Math.floor(diff / (1000 * 60));
     if (minutes > 0) return rtf.format(-minutes, "minute");
     
-    return "à l'instant";
+    return t("diag_just_now");
   };
 
   useEffect(() => {
@@ -94,22 +96,21 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
           <div className="max-w-2xl flex flex-col items-center md:items-start">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-sm font-semibold mb-4">
               <Search size={16} />
-              Diagnostics Communautaires
+              {t("diag_badge")}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Un problème avec votre véhicule ?
+              {t("diag_header")}
             </h2>
             <p className="text-gray-500 text-lg">
-              Explorez les diagnostics partagés par la communauté Siyanati. 
-              Posez vos questions et recevez des conseils de nos professionnels de l'automobile.
+              {t("diag_sub")}
             </p>
           </div>
           <button
-            onClick={() => onRequireAuth("Inscrivez-vous pour consulter tous les diagnostics et poser vos questions.")}
+            onClick={() => onRequireAuth(t("diag_req_auth_all"))}
             className="shrink-0 flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white w-full max-w-xs md:max-w-none md:w-auto px-6 py-3 rounded-xl font-semibold transition-all active:scale-[0.98]"
           >
             <Wrench size={18} />
-            Voir tous les diagnostics
+            {t("diag_btn_all")}
           </button>
         </div>
 
@@ -119,14 +120,14 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-10 bg-gray-50 rounded-2xl border border-gray-100">
-            <p className="text-gray-500">Aucun diagnostic disponible pour le moment.</p>
+            <p className="text-gray-500">{t("diag_empty")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {posts.map((post) => (
               <div
                 key={post.id}
-                onClick={() => onRequireAuth("Connectez-vous pour lire ce diagnostic en détail.")}
+                onClick={() => onRequireAuth(t("diag_req_auth_read"))}
                 className="group bg-white border border-gray-200 hover:border-blue-300 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all cursor-pointer flex flex-col h-full relative overflow-hidden text-center md:text-left"
               >
                 <div className="flex items-start justify-center md:justify-between mb-4">
@@ -139,7 +140,7 @@ export default function LandingDiagnosticsPreview({ onRequireAuth }) {
                     />
                     <div className="text-center md:text-left">
                       <p className="text-sm font-bold text-gray-900 leading-tight">
-                        {post.user?.full_name || "Utilisateur"}
+                        {post.user?.full_name || t("diag_user")}
                       </p>
                       <div className="flex items-center justify-center md:justify-start gap-1 text-xs text-gray-400 mt-0.5">
                         <Clock size={10} />

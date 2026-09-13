@@ -256,13 +256,13 @@ const PaymentAccountsPage = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Mohamed Benali"
+                  placeholder="EX: MOHAMED BENALI"
                   value={form.full_name}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, full_name: e.target.value }))
+                    setForm((prev) => ({ ...prev, full_name: e.target.value.toUpperCase() }))
                   }
                   required
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1a3a8f]/30 focus:border-[#1a3a8f] transition bg-gray-50"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1a3a8f]/30 focus:border-[#1a3a8f] transition bg-gray-50 uppercase"
                 />
               </div>
 
@@ -273,11 +273,15 @@ const PaymentAccountsPage = () => {
                   </label>
                   <input
                     type="text"
-                    placeholder="Ex: 123456789"
+                    placeholder="Ex: 1234567890"
                     value={form.ccp_code}
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, ccp_code: e.target.value }))
+                      setForm((prev) => ({ ...prev, ccp_code: e.target.value.replace(/\D/g, '') }))
                     }
+                    maxLength={10}
+                    minLength={10}
+                    pattern="\d{10}"
+                    title="Le code CCP doit contenir exactement 10 chiffres"
                     required
                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1a3a8f]/30 focus:border-[#1a3a8f] transition bg-gray-50"
                   />
@@ -291,8 +295,12 @@ const PaymentAccountsPage = () => {
                     placeholder="Ex: 12"
                     value={form.ccp_key}
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, ccp_key: e.target.value }))
+                      setForm((prev) => ({ ...prev, ccp_key: e.target.value.replace(/\D/g, '') }))
                     }
+                    maxLength={2}
+                    minLength={2}
+                    pattern="\d{2}"
+                    title="La clé CCP doit contenir exactement 2 chiffres"
                     required
                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1a3a8f]/30 focus:border-[#1a3a8f] transition bg-gray-50"
                   />

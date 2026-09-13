@@ -34,8 +34,23 @@ const partVerifySchema = z.object({
   is_featured: z.boolean().optional(),
 });
 
+const partBulkCreateSchema = z.array(
+  z.object({
+    category_id: z.string().uuid().optional().nullable(),
+    name: z.string().min(2),
+    description: z.string().optional().nullable(),
+    sku: z.string().optional().nullable(),
+    oem_reference: z.string().optional().nullable(),
+    condition: partConditionSchema.optional(),
+    price_dzd: z.coerce.number().positive(),
+    stock_qty: z.coerce.number().int().nonnegative().optional(),
+    weight_kg: z.coerce.number().positive().optional().nullable(),
+  })
+);
+
 module.exports = {
   partCreateSchema,
   partUpdateSchema,
   partVerifySchema,
+  partBulkCreateSchema,
 };

@@ -4,8 +4,10 @@ import AnimatedButton from "../uiComponents/Animatedbutton";
 import PartCard from "../uiComponents/PartCard";
 import { FiArrowRight, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { getAllParts } from "../../services/partService";
+import { useTranslation } from "react-i18next";
 
 const BestParts = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -78,12 +80,12 @@ const BestParts = () => {
       <div className="flex flex-col gap-3 text-center lg:text-left">
         <h1 className="text-[36px] sm:text-[48px] lg:text-[72px] font-bold font-secondary text-primary leading-[1.2] uppercase">
           <b className="bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
-            Pièces
+            {t("bestparts_title1")}
           </b>{" "}
-          en vedette
+          {t("bestparts_title2")}
         </h1>
         <p className="text-[15px] text-gray-600 font-primary font-medium tracking-wide">
-          Découvrez notre sélection des meilleures pièces automobiles du moment.
+          {t("bestparts_subtitle")}
         </p>
       </div>
 
@@ -119,7 +121,7 @@ const BestParts = () => {
                   <PartCard
                     title={part.name}
                     details={`${brand} • ${cat}`}
-                    description={part.description || "Aucune description."}
+                    description={part.description || t("bestparts_no_desc")}
                     price={Number(part.price_dzd)}
                     status={4.5} // default rating
                     image={part.images?.[0]}
@@ -157,7 +159,7 @@ const BestParts = () => {
             iconPosition="right"
             iconRight
             onClick={() => navigate("/register")}>
-            commencez avec SIYANATI
+            {t("hero_btn_start")}
           </AnimatedButton>
         </div>
       </div>

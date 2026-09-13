@@ -13,6 +13,7 @@ import { getPartById } from "../services/partService";
 import useFavoriteStore from "../store/useFavoriteStore";
 import useAuthStore from "../store/authStore";
 import AuthRequiredModal from "../components/modals/AuthRequiredModal";
+import { FiArrowLeft } from "react-icons/fi";
 
 const formatCondition = (condition) => {
   const labels = {
@@ -114,9 +115,10 @@ export default function PartDetails() {
       <div className="min-h-screen bg-slate-50 px-6 pt-28">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 mb-6"
+          className="p-2 hover:bg-slate-200 rounded-full transition-colors flex items-center justify-center text-slate-600 hover:text-blue-600 mb-6 w-fit"
+          title="Retour"
         >
-          <ChevronLeft className="w-5 h-5" /> Retour
+          <ChevronLeft className="w-6 h-6" />
         </button>
         <div className="max-w-3xl bg-red-50 border border-red-100 text-red-700 rounded-xl p-4">
           {error || "Piece introuvable."}
@@ -132,22 +134,16 @@ export default function PartDetails() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <ChevronLeft className="w-6 h-6 text-slate-700" />
-              <span className="font-bold text-slate-700">Retour</span>
-            </button>
-            <h1 className="text-xl font-bold text-slate-900 border-l border-slate-200 pl-4">Details du produit</h1>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[100px] pb-8">
+        {/* Go back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center mb-6"
+          title="Retour"
+        >
+          <FiArrowLeft size={20} />
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
           <div className="flex flex-col gap-4">
             <div className="relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden aspect-square flex items-center justify-center">

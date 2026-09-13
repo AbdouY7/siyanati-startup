@@ -385,8 +385,61 @@ const deletePart = async (req, res, next) => {
   }
 };
 
+// Bulk create parts for the logged-in store.
+const createBulkParts = async (req, res, next) => {
+  try {
+    if (!canSellParts(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only customers and stores can create parts",
+      });
+    }
+
+    const partsData = req.body; // Array of validated parts
+    const seller_type = getSellerType(req.user);
+    const is_verified = seller_type === "store" ? true : false;
+    
+    // Check if category exists for all distinct category_ids provided
+    const categoryIds = [...new Set(partsData.map(p => p.category_id).filter(Boolean))];
+    if (categoryIds.length > 0) {
+      const existingCategories = await prisma.category.findMany({
+        where: { id: { in: categoryIds } }
+      });
+      if (existingCategories.length !== categoryIds.length) {
+         return res.status(404).json({ success: false, message: "One or more categories not found" });
+      }
+    }
+
+    const dataToInsert = partsData.map(data => ({
+      ...data,
+      seller_id: req.user.id,
+      seller_type,
+      images: [],
+      is_active: true,
+      is_verified,
+      verified_at: is_verified ? new Date() : null,
+    }));
+
+    const result = await prisma.part.createMany({
+      data: dataToInsert,
+      skipDuplicates: true, // skip if SKU already exists for this seller (needs unique constraint on schema, otherwise it might just insert or throw depending on Prisma setup)
+    });
+
+    res.status(201).json({ success: true, count: result.count });
+  } catch (error) {
+    if (error.code === "P2002") {
+      return res.status(409).json({
+        success: false,
+        message: "One or more parts conflict with existing SKUs",
+      });
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   createPart,
+  createBulkParts,
   getAllParts,
   getMyParts,
   getPartById,

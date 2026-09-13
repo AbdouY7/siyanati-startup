@@ -6,6 +6,8 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axios";
 import useAuthStore from "../../store/authStore";
 import { decodeJwt } from "../../utils/jwtUtils";
+import { GoogleLogin } from "@react-oauth/google";
+import { mapAuthErrorWithField, mapAuthError } from "../../utils/authErrorMessages";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -98,10 +100,16 @@ const Login = () => {
           navigate(redirectByRole(userRole));
         }, 1000);
       } catch (err) {
-        if (err.response && err.response.data && err.response.data.message) {
-          setErrors({ general: err.response.data.message });
+        const backendMsg = err.response?.data?.message;
+        if (backendMsg) {
+          const { field, message } = mapAuthErrorWithField(backendMsg);
+          if (field) {
+            setErrors({ [field]: message });
+          } else {
+            setErrors({ general: message });
+          }
         } else {
-          setErrors({ general: "Erreur de connexion. Veuillez vérifier vos identifiants." });
+          setErrors({ general: mapAuthError(null) });
         }
         setSubmitStatus("error");
       } finally {
@@ -111,6 +119,42 @@ const Login = () => {
 
     submitLogin();
   }, [isSubmitting, formData, navigate, setAuth]); // runs every time isSubmitting flips to true
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setSubmitStatus(null);
+      const response = await axiosInstance.post("/auth/google", {
+        token: credentialResponse.credential,
+      });
+
+      const { accessToken, refreshToken } = response.data;
+      const decoded = decodeJwt(accessToken);
+      const userRole = decoded?.role;
+
+      await setAuth(null, accessToken, refreshToken);
+      setSubmitStatus("success");
+
+      const redirectByRole = (role) => {
+        switch (role) {
+          case "professional": return "/pro";
+          case "admin": return "/admin";
+          case "store": return "/store";
+          case "customer": default: return "/home-user";
+        }
+      };
+
+      setTimeout(() => navigate(redirectByRole(userRole)), 1000);
+    } catch (err) {
+      const backendMsg = err.response?.data?.message;
+      setErrors({ general: mapAuthError(backendMsg) });
+      setSubmitStatus("error");
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrors({ general: "L'authentification Google a échoué. Veuillez réessayer." });
+    setSubmitStatus("error");
+  };
 
   // ─── Handlers ───────────────────────────────────────────────────
   const handleChange = (e) => {
@@ -237,8 +281,26 @@ const Login = () => {
                   type="button"
                   style="solid"
                   onClick={handleSubmit}
+                  disabled={isSubmitting}
                 />
-                <p className="text-gray-500 text-sm">- OU -</p>
+                
+                <div className="w-full flex items-center justify-center my-2">
+                  <div className="flex-grow border-t border-gray-300"></div>
+                  <span className="px-3 text-gray-500 text-sm">OU</span>
+                  <div className="flex-grow border-t border-gray-300"></div>
+                </div>
+
+                <div className="w-full flex justify-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    text="continue_with"
+                    theme="outline"
+                    size="large"
+                    width="100%"
+                  />
+                </div>
+                
                 <Input
                   name="S'inscrire"
                   placeholder="S'inscrire"

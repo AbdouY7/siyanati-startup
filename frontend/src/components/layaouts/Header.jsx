@@ -10,8 +10,12 @@ import {
 } from "react-icons/fi";
 import siyanatiLogo from "../../assets/img/siyanati-vertical-logo.png";
 import useAuthStore from "../../store/authStore";
+import LanguageSwitcher from "../LanguageSwitcher";
+import { useTranslation } from "react-i18next";
+import NotificationDropdown from "../uiComponents/NotificationDropdown";
 
 const Header = () => {
+  const { t } = useTranslation();
   const { isAuthenticated, user, clearAuth } = useAuthStore();
   const isAuth = isAuthenticated && !!user;
   const navigate = useNavigate();
@@ -25,32 +29,70 @@ const Header = () => {
   const [selectedIcon, setSelectedIcon] = useState(null);
   const drawerRef = useRef(null);
 
+  const getDashboardPath = () => {
+    if (!isAuth) return "/";
+    switch (user?.role) {
+      case "customer": return "/home-user";
+      case "professional": return "/pro";
+      case "store": return "/store";
+      case "admin": return "/admin";
+      default: return "/";
+    }
+  };
+
+  const getProfilePath = () => {
+    switch (user?.role) {
+      case "professional": return "/pro/profile";
+      case "store": return "/store/profile";
+      case "admin": return "/admin";
+      default: return "/profile";
+    }
+  };
+
+  const getChatPath = () => {
+    switch (user?.role) {
+      case "professional": return "/pro/chat";
+      case "store": return "/store/chat";
+      case "admin": return "/admin/chat";
+      default: return "/profile/chat";
+    }
+  };
+
+  const getNotificationsPath = () => {
+    switch (user?.role) {
+      case "professional": return "/pro/notifications";
+      case "store": return "/store/notifications";
+      case "admin": return "/admin/notifications";
+      default: return "/profile/notifications";
+    }
+  };
+
   const menuItems = [
-    { name: "Accueil", href: isAuth ? "/home-user" : "/" },
-    { name: "Catalogues", href: "/catalogues" },
-    { name: "Magasins", href: "/magasins" },
-    { name: "Professionnels", href: "/professionnels" },
-    { name: "Diagnostic", href: "/diagnostic" },
+    { name: t("nav_home"), href: getDashboardPath() },
+    { name: t("nav_catalogs"), href: "/catalogues" },
+    { name: t("nav_stores"), href: "/magasins" },
+    { name: t("nav_professionals"), href: "/professionnels" },
+    { name: t("nav_diagnostic"), href: "/diagnostic" },
   ];
 
   const icons = [
     {
       name: "User",
       icon: <FiUser size={18} />,
-      label: "Profil",
-      link: "/profile",
+      label: t("nav_profile"),
+      link: getProfilePath(),
     },
     {
       name: "Message",
       icon: <FiMessageSquare size={18} />,
-      label: "Messages",
-      link: "/profile/chat",
+      label: t("nav_messages"),
+      link: getChatPath(),
     },
     {
       name: "Notifications",
       icon: <FiBell size={18} />,
-      label: "Notifications",
-      link: "/profile/notifications",
+      label: t("nav_notifications"),
+      link: getNotificationsPath(),
     },
   ];
 
@@ -115,10 +157,22 @@ const Header = () => {
 
           {/* Right side — desktop */}
           <div className="hidden lg:flex items-center gap-2">
+            <LanguageSwitcher />
             {isAuth ? (
               // ── Authenticated: icon buttons ──────────────────────────────────
               <>
                 {icons.map((icon) => (
+                  icon.name === "Notifications" ? (
+                    <NotificationDropdown 
+                      key={icon.name} 
+                      className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
+                        selectedIcon === icon.name
+                          ? "bg-white text-secondary shadow-md scale-105"
+                          : "text-white/60 hover:text-white hover:bg-white/10"
+                      }`}
+                      iconClassName="!w-[18px] !h-[18px]"
+                    />
+                  ) : (
                   <NavLink
                     key={icon.name}
                     onClick={() => setSelectedIcon(icon.name)}
@@ -131,12 +185,13 @@ const Header = () => {
                     to={icon.link}>
                     {icon.icon}
                   </NavLink>
+                  )
                 ))}
                 <button
                   onClick={handleLogout}
-                  aria-label="Déconnexion"
+                  aria-label={t("nav_logout")}
                   className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 text-red-400 hover:text-white hover:bg-red-500/20"
-                  title="Se déconnecter">
+                  title={t("nav_logout")}>
                   <FiLogOut size={18} />
                 </button>
               </>
@@ -146,12 +201,12 @@ const Header = () => {
                 <NavLink
                   to="/login"
                   className="text-sm text-white/70 hover:text-white px-4 py-1.5 rounded-lg transition-colors duration-150 hover:bg-white/[0.07]">
-                  Se connecter
+                  {t("nav_login")}
                 </NavLink>
                 <NavLink
                   to="/register"
                   className="text-sm font-semibold bg-white text-secondary px-4 py-1.5 rounded-lg transition-all duration-150 hover:bg-white/90 hover:shadow-md">
-                  S'inscrire
+                  {t("nav_register")}
                 </NavLink>
               </>
             )}
@@ -211,11 +266,15 @@ const Header = () => {
 
         <div className="h-px bg-white/[0.07] mx-4 my-3" />
 
+        <div className="px-4 pb-3 flex justify-center">
+          <LanguageSwitcher />
+        </div>
+
         {isAuth ? (
           // ── Authenticated mobile: icon row ─────────────────────────────────
           <div className="px-4 pb-4">
             <p className="text-xs text-white/40 uppercase tracking-wider mb-3 font-semibold">
-              Actions rapides
+              {t("nav_quick_actions")}
             </p>
             <div className="flex gap-2">
               {icons.map((icon, index) => (
@@ -249,7 +308,7 @@ const Header = () => {
                   handleLogout();
                   setMenuOpen(false);
                 }}
-                aria-label="Déconnexion"
+                aria-label={t("nav_logout")}
                 style={{
                   transitionDelay: menuOpen
                     ? `${menuItems.length * 50 + icons.length * 40}ms`
@@ -275,13 +334,13 @@ const Header = () => {
               to="/login"
               onClick={() => setMenuOpen(false)}
               className="w-full text-center text-sm text-white/70 hover:text-white px-4 py-3 rounded-lg border border-white/[0.12] hover:bg-white/[0.07] transition-colors duration-150">
-              Se connecter
+              {t("nav_login")}
             </NavLink>
             <NavLink
               to="/register"
               onClick={() => setMenuOpen(false)}
               className="w-full text-center text-sm font-semibold bg-white text-secondary px-4 py-3 rounded-lg hover:bg-white/90 transition-colors duration-150">
-              S'inscrire
+              {t("nav_register")}
             </NavLink>
           </div>
         )}

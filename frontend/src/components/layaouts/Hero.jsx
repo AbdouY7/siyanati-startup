@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import heroImage from "../../assets/img/syanati-hero-pic.png";
 import AnimatedButton from "../uiComponents/Animatedbutton";
 import { FiArrowRight } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 const Hero = () => {
+  const { t } = useTranslation();
   const headingRef = useRef(null);
   const navigate = useNavigate();
 
@@ -66,7 +68,7 @@ const Hero = () => {
             className="w-1.5 h-1.5 rounded-full animate-pulse"
             style={{ background: "#38bdf8" }}
           />
-          La plateforme automobile N°1 en Algérie
+          {t("hero_eyebrow")}
         </div>
 
         {/* Main heading */}
@@ -78,9 +80,9 @@ const Hero = () => {
             color: "#ffffff",
             textShadow: "0 4px 40px rgba(0,0,0,0.5)",
           }}>
-          Pièces auto & <span style={{ color: "#ffffff" }}>réparations,</span>
+          {t("hero_heading_1")} <span style={{ color: "#ffffff" }}>{t("hero_heading_2")}</span>
           <br />
-          en un seul{" "}
+          {t("hero_heading_3")}{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #38bdf8, #2563eb)",
@@ -88,7 +90,7 @@ const Hero = () => {
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}>
-            ENDROIT
+            {t("hero_heading_4")}
           </span>
         </h1>
 
@@ -101,8 +103,7 @@ const Hero = () => {
             lineHeight: 1.65,
             fontWeight: 400,
           }}>
-          SIYANATI, la plateforme qui vous permet de trouver vos pièces de
-          voiture facilement — partout en Algérie.
+          {t("hero_subtext")}
         </p>
 
         {/* CTA Buttons */}
@@ -117,7 +118,7 @@ const Hero = () => {
             iconPosition="right"
             iconRight
             onClick={() => navigate("/register")}>
-            commencez avec SIYANATI
+            {t("hero_btn_start")}
           </AnimatedButton>
 
           <AnimatedButton
@@ -130,7 +131,7 @@ const Hero = () => {
               backdropFilter: "blur(12px)",
             }}
             onClick={() => navigate("/register-role")}>
-            soyez professionnel SIYANATI
+            {t("hero_btn_pro")}
           </AnimatedButton>
         </div>
       </div>

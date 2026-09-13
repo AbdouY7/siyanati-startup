@@ -12,6 +12,10 @@ import {
   RiSave3Line,
   RiStarFill,
   RiUser3Line,
+  RiCarLine,
+  RiHeartLine,
+  RiStore2Line,
+  RiShoppingCartLine,
 } from "react-icons/ri";
 import useAuthStore from "../../store/authStore";
 import {
@@ -225,6 +229,30 @@ export default function ProfilePro() {
           {error}
         </div>
       )}
+
+      {/* Quick Links for Client Features */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => navigate("/pro/vehicules")}
+          className="inline-flex items-center gap-2 rounded-xl border border-[#e9effd] bg-white px-4 py-2.5 text-sm font-semibold text-[#1f1f1f] hover:border-[#2563eb] hover:text-[#2563eb] shadow-sm transition-colors">
+          <RiCarLine /> Mes Véhicules
+        </button>
+        <button
+          onClick={() => navigate("/pro/favorite-pieces")}
+          className="inline-flex items-center gap-2 rounded-xl border border-[#e9effd] bg-white px-4 py-2.5 text-sm font-semibold text-[#1f1f1f] hover:border-[#2563eb] hover:text-[#2563eb] shadow-sm transition-colors">
+          <RiHeartLine /> Pièces Favorites
+        </button>
+        <button
+          onClick={() => navigate("/pro/followed-stores")}
+          className="inline-flex items-center gap-2 rounded-xl border border-[#e9effd] bg-white px-4 py-2.5 text-sm font-semibold text-[#1f1f1f] hover:border-[#2563eb] hover:text-[#2563eb] shadow-sm transition-colors">
+          <RiStore2Line /> Magasins Suivis
+        </button>
+        <button
+          onClick={() => navigate("/pro/my-parts")}
+          className="inline-flex items-center gap-2 rounded-xl border border-[#e9effd] bg-white px-4 py-2.5 text-sm font-semibold text-[#1f1f1f] hover:border-[#2563eb] hover:text-[#2563eb] shadow-sm transition-colors">
+          <RiShoppingCartLine /> Mes Pièces (Vente)
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="rounded-2xl border border-[#e9effd] bg-white p-6 shadow-sm xl:col-span-2">

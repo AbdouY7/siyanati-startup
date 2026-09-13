@@ -1,5 +1,6 @@
 import "./App.css";
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Routes, Route } from "react-router-dom";
 import useAuthStore from "./store/authStore";
 import LandingPage from "./pages/LandingPage";
@@ -85,10 +86,16 @@ import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   const { checkAuth, isCheckingAuth } = useAuthStore();
+  const { i18n } = useTranslation();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
 
   if (isCheckingAuth) {
     return (
@@ -213,6 +220,15 @@ function App() {
               path="appointments/:id"
               element={<AppointmentDetailsPro />}
             />
+            {/* Added routes for Professional as Buyer */}
+            <Route path="orders" element={<OrderHistoryPage />} />
+            <Route path="orders/:id" element={<ClientOrderDetailsPage />} />
+            <Route path="vehicules" element={<VehiculesPage />} />
+            <Route path="favorite-pieces" element={<FavoritePiecesPage />} />
+            <Route path="followed-stores" element={<FollowedStoresPage />} />
+            <Route path="my-parts" element={<ClientPartsPage />} />
+            <Route path="my-parts/:id" element={<ClientPartDetailsPage />} />
+            <Route path="payment-accounts" element={<PaymentAccountsPage />} />
           </Route>
         </Route>
 

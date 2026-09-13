@@ -4,6 +4,7 @@ import useAuthStore from "../../store/authStore";
 import axiosInstance from "../../api/axios";
 import OtpInput from "../../components/uiComponents/OtpInput";
 import { FaEnvelope, FaSpinner } from "react-icons/fa";
+import { mapAuthError } from "../../utils/authErrorMessages";
 
 const EmailVerification = () => {
   const [otp, setOtp] = useState("");
@@ -77,7 +78,7 @@ const EmailVerification = () => {
         navigate("/");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to verify email");
+      setError(mapAuthError(err.response?.data?.message));
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ const EmailVerification = () => {
       setSuccess("A new verification code has been sent to your email.");
       setCountdown(60); // Reset timer
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to resend code");
+      setError(mapAuthError(err.response?.data?.message));
     } finally {
       setResendLoading(false);
     }

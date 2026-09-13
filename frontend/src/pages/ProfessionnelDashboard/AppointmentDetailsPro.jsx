@@ -180,8 +180,9 @@ export default function AppointmentDetailsPro() {
         <p className="text-[#9ca3af]">Rendez-vous non trouvé</p>
         <button
           onClick={() => navigate("/pro/appointments")}
-          className="mt-3 text-sm text-[#2563eb] hover:underline">
-          Retour
+          title="Retour"
+          className="mt-3 p-2 mx-auto rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition flex items-center justify-center w-fit">
+          <RiArrowLeftLine className="text-xl" />
         </button>
       </div>
     );

@@ -5,6 +5,7 @@ import axios from '../../api/axios';
 import useAuthStore from '../../store/authStore';
 import registrationImg from '../../assets/img/registrationImg.png';
 import LocationSelector from '../../components/uiComponents/LocationSelector';
+import { mapAuthErrorWithField, mapAuthError, mapValidationErrors } from '../../utils/authErrorMessages';
 
 const WILAYAS = [
   'Adrar','Chlef','Laghouat','Oum El Bouaghi','Batna','Béjaïa','Biskra','Béchar',
@@ -100,8 +101,23 @@ const StoreRegistration = () => {
         }
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Erreur de connexion au serveur';
-      setErrors({ general: msg });
+      if (err.response && err.response.data && err.response.data.errors) {
+        setErrors(mapValidationErrors(err.response.data.errors));
+      } else {
+        const backendMsg = err.response?.data?.message;
+        if (backendMsg) {
+          const { field, message } = mapAuthErrorWithField(backendMsg);
+          if (field) {
+            setErrors({ [field]: message });
+            // Navigate to step 1 for account-related field errors
+            if (['email', 'phone', 'owner_name'].includes(field)) setStep(1);
+          } else {
+            setErrors({ general: message });
+          }
+        } else {
+          setErrors({ general: mapAuthError(null) });
+        }
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -59,9 +59,8 @@ function ImageCarousel({ images }) {
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === idx ? "bg-white scale-125" : "bg-white/50"
-              }`}
+              className={`w-2 h-2 rounded-full transition-all ${i === idx ? "bg-white scale-125" : "bg-white/50"
+                }`}
             />
           ))}
         </div>
@@ -274,11 +273,9 @@ export default function ProfessionalProfilePage() {
         <p className="text-red-400 text-lg font-medium">
           {error || "Professionnel introuvable"}
         </p>
-        <Link
-          to="/professionnels"
-          className="text-blue-600 hover:underline text-sm">
-          ← Retour aux professionnels
-        </Link>
+        <button onClick={() => navigate(-1)} className="p-2 mx-auto rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition flex items-center justify-center w-fit" title="Retour aux professionnels">
+          <FiArrowLeft size={20} />
+        </button>
       </div>
     );
   }
@@ -294,8 +291,9 @@ export default function ProfessionalProfilePage() {
       <div className="bg-blue-700 px-6 pt-[110px] pb-20 relative">
         <button
           onClick={() => navigate(-1)}
-          className="text-white/70 hover:text-white flex items-center gap-1 text-sm mb-4 transition-colors w-fit">
-          <FiArrowLeft size={15} /> Retour
+          title="Retour"
+          className="p-2 w-fit rounded-full hover:bg-white/20 text-white/70 hover:text-white transition flex items-center justify-center mb-4">
+          <FiArrowLeft size={20} />
         </button>
 
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-5">
@@ -359,10 +357,9 @@ export default function ProfessionalProfilePage() {
               }}
               disabled={proToggling}
               className={`p-2 rounded-xl border-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed
-                ${
-                  proIsFav
-                    ? "bg-red-500 border-red-500 text-white"
-                    : "bg-white border-white text-blue-700 hover:bg-blue-50"
+                ${proIsFav
+                  ? "bg-red-500 border-red-500 text-white"
+                  : "bg-white border-white text-blue-700 hover:bg-blue-50"
                 }`}>
               <FiHeart size={16} fill={proIsFav ? "currentColor" : "none"} />
             </button>
@@ -442,9 +439,8 @@ export default function ProfessionalProfilePage() {
                   Professionnel disponibilité
                 </p>
                 <span
-                  className={`font-semibold text-sm ${
-                    pro.is_available ? "text-emerald-600" : "text-red-400"
-                  }`}>
+                  className={`font-semibold text-sm ${pro.is_available ? "text-emerald-600" : "text-red-400"
+                    }`}>
                   {pro.is_available ? "Disponible" : "Indisponible"}
                 </span>
               </div>
@@ -473,7 +469,7 @@ export default function ProfessionalProfilePage() {
               {pro.bio || "Aucune description disponible."}
             </p>
 
-            <button 
+            <button
               onClick={() => {
                 if (!user) {
                   setAuthModalOpen(true);
@@ -709,7 +705,7 @@ export default function ProfessionalProfilePage() {
         </div>
       )}
 
-      <Footer />
+
       <AuthRequiredModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}

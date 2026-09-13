@@ -6,6 +6,7 @@ import { SlSocialFacebook } from "react-icons/sl";
 import { SlSocialLinkedin } from "react-icons/sl";
 import { SlSocialGoogle } from "react-icons/sl";
 import siyanatiLogo from "../../assets/img/siyanati-logo-white-withoutbg.png";
+import { useTranslation } from "react-i18next";
 
 // ─── Inline styles (no Tailwind dependency issues) ───────────────────────────
 const styles = {
@@ -247,6 +248,7 @@ const responsiveCSS = `
 `;
 
 const Footer = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const socialIcons = [
     { name: "Instagram", link: "#", icon: <SlSocialInstagram size={18} /> },
@@ -257,16 +259,16 @@ const Footer = () => {
 
   const navColumns = [
     [
-      { label: "À propos", href: "#" },
-      { label: "Services", href: "#" },
+      { label: t("footer_nav_about"), href: "#" },
+      { label: t("footer_nav_services"), href: "#" },
     ],
     [
-      { label: "Devenir partenaire", href: "#" },
-      { label: "Assistance & support", href: "#" },
+      { label: t("footer_nav_partner"), href: "#" },
+      { label: t("footer_nav_support"), href: "#" },
     ],
     [
-      { label: "Conditions générales", href: "#" },
-      { label: "Politique de confidentialité", href: "#" },
+      { label: t("footer_nav_terms"), href: "#" },
+      { label: t("footer_nav_privacy"), href: "#" },
     ],
   ];
 
@@ -296,8 +298,7 @@ const Footer = () => {
           <div className="footer-content-block" style={styles.contentBlock}>
             {/* Tagline */}
             <p className="footer-tagline" style={styles.tagline}>
-              La plateforme qui simplifie la réparation et l'entretien
-              automobile.
+              {t("footer_tagline")}
             </p>
 
             {/* Nav links — 3 columns on desktop, stacked on mobile */}
@@ -340,7 +341,7 @@ const Footer = () => {
               {/* Social icons */}
               <div className="footer-social-block" style={styles.socialBlock}>
                 <p style={styles.socialLabel}>
-                  suivez-nous sur les réseaux sociaux
+                  {t("footer_social_label")}
                 </p>
                 <div style={styles.socialIcons}>
                   {socialIcons.map((social) => (
@@ -361,13 +362,13 @@ const Footer = () => {
               {/* CTA */}
               <div className="footer-cta-block" style={styles.ctaBlock}>
                 <p style={styles.ctaLabel}>
-                  suivez-nous sur les réseaux sociaux
+                  {t("footer_social_label")}
                 </p>
                 <button
                   className="footer-cta-btn"
                   style={styles.ctaButton}
                   onClick={() => navigate("/register")}>
-                  COMMENCEZ AVEC SIYANATI
+                  {t("footer_btn_start")}
                   <FiArrowRight size={16} />
                 </button>
               </div>
@@ -376,7 +377,7 @@ const Footer = () => {
         </div>
 
         {/* ── Copyright ── */}
-        <p style={styles.copyright}>© SIYANATI – Tous droits réservés.</p>
+        <p style={styles.copyright}>{t("footer_copyright")}</p>
       </footer>
     </>
   );

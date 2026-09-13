@@ -21,6 +21,7 @@ const validateSchema = (schema) => (req, res, next) => {
 };
 
 router.post("/login", validateSchema(loginSchema), authController.login);
+router.post("/google", authController.googleAuth);
 router.post(
   "/register",
   validateSchema(registerSchema),

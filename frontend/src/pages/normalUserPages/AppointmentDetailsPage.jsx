@@ -130,12 +130,12 @@ const AppointmentDetailsPage = () => {
     return (
       <div className="min-h-screen bg-gray-50/50 pb-12">
         <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8">
-          <Link
-            to="/profile/appointments"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition mb-6">
-            <FiChevronLeft size={18} />
-            Retour
-          </Link>
+          <button
+            onClick={() => navigate(-1)}
+            title="Retour"
+            className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center mb-6">
+            <FiChevronLeft size={22} />
+          </button>
           <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-8 text-center">
             <FiAlertCircle size={48} className="mx-auto mb-4 text-red-500" />
             <p className="text-xl font-semibold text-gray-900 mb-2">Erreur</p>
@@ -153,12 +153,12 @@ const AppointmentDetailsPage = () => {
     <div className="min-h-screen bg-gray-50/50 pb-12">
       <div className="max-w-6xl mx-auto px-4 md:px-8 pt-8">
         {/* Back Button */}
-        <Link
-          to="/profile/appointments"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition mb-6">
-          <FiChevronLeft size={18} />
-          Retour aux rendez-vous
-        </Link>
+        <button
+          onClick={() => navigate(-1)}
+          title="Retour aux rendez-vous"
+          className="p-2 w-fit rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition flex items-center justify-center mb-6">
+          <FiChevronLeft size={22} />
+        </button>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

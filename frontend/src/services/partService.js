@@ -42,6 +42,16 @@ export const createPart = async (formData) => {
   }
 };
 
+export const createBulkParts = async (partsData) => {
+  try {
+    const response = await axiosInstance.post('/parts/bulk', partsData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating bulk parts:', error);
+    throw error;
+  }
+};
+
 export const updatePart = async (id, formData) => {
   try {
     const response = await axiosInstance.patch(`/parts/${id}`, formData, {

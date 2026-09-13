@@ -5,6 +5,9 @@ import Input from "../../components/uiComponents/InputField";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axios";
 import useAuthStore from "../../store/authStore";
+import { decodeJwt } from "../../utils/jwtUtils";
+import { GoogleLogin } from "@react-oauth/google";
+import { mapAuthErrorWithField, mapAuthError, mapValidationErrors } from "../../utils/authErrorMessages";
 
 const RegisterClient = () => {
   const navigate = useNavigate();
@@ -89,11 +92,21 @@ const RegisterClient = () => {
         } catch (err) {
           if (err.response && err.response.data && err.response.data.errors) {
             // Map backend validation errors to the form's error state
-            setErrors(err.response.data.errors);
-          } else if (err.response && err.response.data && err.response.data.message) {
-            setErrors({ general: err.response.data.message });
+            setErrors(mapValidationErrors(err.response.data.errors));
           } else {
-            setErrors({ general: "Erreur d'inscription. Veuillez réessayer." });
+            const backendMsg = err.response?.data?.message;
+            if (backendMsg) {
+              const { field, message } = mapAuthErrorWithField(backendMsg);
+              if (field) {
+                setErrors({ [field]: message });
+                // Navigate to the step containing the errored field
+                if (['email', 'phone', 'fullName'].includes(field)) setStep(1);
+              } else {
+                setErrors({ general: message });
+              }
+            } else {
+              setErrors({ general: mapAuthError(null) });
+            }
           }
           setSubmitStatus("error");
           setIsSubmitting(false);
@@ -105,6 +118,42 @@ const RegisterClient = () => {
       setIsSubmitting(false);
     }
   }, [isSubmitting, formData, navigate]);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setSubmitStatus(null);
+      const response = await axiosInstance.post("/auth/google", {
+        token: credentialResponse.credential,
+      });
+
+      const { accessToken, refreshToken } = response.data;
+      const decoded = decodeJwt(accessToken);
+      const userRole = decoded?.role;
+
+      await setAuth(null, accessToken, refreshToken);
+      setSubmitStatus("success");
+
+      const redirectByRole = (role) => {
+        switch (role) {
+          case "professional": return "/pro";
+          case "admin": return "/admin";
+          case "store": return "/store";
+          case "customer": default: return "/home-user";
+        }
+      };
+
+      setTimeout(() => navigate(redirectByRole(userRole)), 1000);
+    } catch (err) {
+      const backendMsg = err.response?.data?.message;
+      setErrors({ general: mapAuthError(backendMsg) });
+      setSubmitStatus("error");
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrors({ general: "L'authentification Google a échoué. Veuillez réessayer." });
+    setSubmitStatus("error");
+  };
 
   // ─── Handlers ───────────────────────────────────────────────────
   const handleChange = (e) => {
@@ -209,10 +258,27 @@ const RegisterClient = () => {
                     >
                       Suivant <ArrowRight size={18} />
                     </button>
-                    <p className="text-gray-500 text-sm my-1">- OU -</p>
+                    
+                    <div className="w-full flex items-center justify-center my-1">
+                      <div className="flex-grow border-t border-gray-300"></div>
+                      <span className="px-3 text-gray-500 text-sm">OU</span>
+                      <div className="flex-grow border-t border-gray-300"></div>
+                    </div>
+
+                    <div className="w-full flex justify-center mb-1">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        text="signup_with"
+                        theme="outline"
+                        size="large"
+                        width="100%"
+                      />
+                    </div>
+
                     <Input
                       name="login-btn"
-                      placeholder="Se connecter"
+                      placeholder="Se connecter avec un email"
                       type="button"
                       style="outline"
                       onClick={() => navigate("/login")}

@@ -46,3 +46,13 @@ export const getStoreDashboardStats = async () => {
     throw error;
   }
 };
+
+export const getAdminSubscriptionStats = async () => {
+  try {
+    const response = await axiosInstance.get("/statistics/admin-subscriptions");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching admin subscription stats:", error);
+    throw error;
+  }
+};

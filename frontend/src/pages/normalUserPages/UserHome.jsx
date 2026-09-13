@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiSearch,
   FiChevronRight,
@@ -22,6 +22,7 @@ import DiagnosticPostCard from "../../components/uiComponents/DiagnosticPostCard
 import Footer from "../../components/layaouts/Footer";
 
 import useAuthStore from "../../store/authStore";
+import { getUserStatistics } from "../../services/statisticsService";
 import { getAllStores } from "../../services/storeService";
 import { getAllProfessionals } from "../../services/professionalService";
 import { getAllParts } from "../../services/partService";
@@ -72,7 +73,7 @@ function ScrollSection({ title, viewAllTo, viewAllLabel, children }) {
 
         <div
           ref={ref}
-          className="flex gap-4 overflow-x-auto pb-2"
+          className="flex gap-5 overflow-x-auto pb-2"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {children}
         </div>
@@ -158,6 +159,7 @@ function CarSwitcherModal({ cars, activeCar, onSelect, onClose }) {
 
 // ─── UserHome Page ────────────────────────────────────────────────────────────
 export default function UserHome() {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
 
   // Derive user info from auth store
@@ -181,19 +183,34 @@ export default function UserHome() {
 
   const [topShops, setTopShops] = useState([]);
   const [topPros, setTopPros] = useState([]);
+  const [allParts, setAllParts] = useState([]);
   const [featuredParts, setFeaturedParts] = useState([]);
   const [recentPosts, setRecentPosts] = useState([]);
   const [regionShops, setRegionShops] = useState([]);
   const [regionPros, setRegionPros] = useState([]);
   const [stats, setStats] = useState({
-    questions: 0,
-    responses: 0,
+    completed_orders: 0,
+    pending_appointments: 0,
+    total_vehicles: 0,
+    total_diagnostic_posts: 0,
+    saved_posts: 0,
+    total_activities: 0,
     prosCount: 0,
   });
 
   useEffect(() => {
+    // Fetch generic user statistics
+    getUserStatistics()
+      .then((data) => {
+        setStats((prev) => ({
+          ...prev,
+          ...data
+        }));
+      })
+      .catch(() => {});
+
     // Fetch user vehicles
-    getUserVehicles()
+    const fetchVehicles = getUserVehicles()
       .then((data) => {
         const mapped = (data || []).map((v) => ({
           id: v.id,
@@ -208,8 +225,9 @@ export default function UserHome() {
         }));
         setUserCars(mapped);
         if (mapped.length > 0) setActiveCar(mapped[0]);
+        return mapped;
       })
-      .catch(() => {});
+      .catch(() => []);
 
     // Fetch stores
     getAllStores()
@@ -268,19 +286,7 @@ export default function UserHome() {
     // Fetch parts
     getAllParts()
       .then((data) => {
-        const mapped = (data || []).slice(0, 6).map((p) => {
-          const comp = p.compatibilities?.[0];
-          return {
-            id: p.id,
-            title: p.name,
-            details: `${comp?.brand?.name || "Universel"} ${comp?.model?.name || ""} · ${comp?.year_from || ""}`,
-            description: p.description || "",
-            price: Number(p.price_dzd),
-            status: 4,
-            image: getImageUrl(p.images?.[0]) || null,
-          };
-        });
-        setFeaturedParts(mapped);
+        setAllParts(data || []);
       })
       .catch(() => {});
 
@@ -334,30 +340,68 @@ export default function UserHome() {
           };
         });
         setRecentPosts(mapped);
-        setStats((prev) => ({ ...prev, questions: data?.total || 0 }));
       })
       .catch(() => {});
   }, [userWilaya]);
 
+  useEffect(() => {
+    if (!allParts.length) return;
+    
+    const calculateScore = (part) => {
+      let score = 0;
+      if (!activeCar) return 0;
+      
+      for (const comp of part.compatibilities || []) {
+        const compBrand = comp?.brand?.name;
+        const compModel = comp?.model?.name;
+        
+        if (compBrand === activeCar.brand && compModel === activeCar.model) {
+          score += 2; // Exact match for brand and model
+        } else if (compBrand === activeCar.brand) {
+          score += 1; // Brand match only
+        }
+      }
+      return score;
+    };
+
+    const sortedParts = [...allParts].sort((a, b) => {
+      return calculateScore(b) - calculateScore(a);
+    });
+
+    const mapped = sortedParts.slice(0, 6).map((p) => {
+      const comp = p.compatibilities?.[0];
+      return {
+        id: p.id,
+        title: p.name,
+        details: `${comp?.brand?.name || "Universel"} ${comp?.model?.name || ""} · ${comp?.year_from || ""}`,
+        description: p.description || "",
+        price: Number(p.price_dzd),
+        status: 4,
+        image: getImageUrl(p.images?.[0]) || null,
+      };
+    });
+    setFeaturedParts(mapped);
+  }, [allParts, activeCar]);
+
   const computedStats = [
     {
-      icon: FiMessageSquare,
-      label: "Questions posées",
-      value: String(stats.questions),
+      icon: FiPackage,
+      label: "Commandes livrées",
+      value: String(stats.completed_orders || 0),
       color: "text-blue-600",
       bg: "bg-blue-50",
     },
     {
-      icon: FiUsers,
-      label: "Magasins",
-      value: String(topShops.length),
+      icon: FiMessageSquare,
+      label: "Posts diag.",
+      value: String(stats.total_diagnostic_posts || 0),
       color: "text-emerald-600",
       bg: "bg-emerald-50",
     },
     {
       icon: FiTool,
-      label: `Pros à ${userWilaya}`,
-      value: String(stats.prosCount),
+      label: `Rdv. en attente`,
+      value: String(stats.pending_appointments || 0),
       color: "text-violet-600",
       bg: "bg-violet-50",
     },
@@ -544,7 +588,7 @@ export default function UserHome() {
             </p>
           ) : (
             featuredParts.map((part) => (
-              <div key={part.id} className="shrink-0 w-[210px]">
+              <div key={part.id} className="shrink-0 w-[280px]">
                 <PartCard
                   title={part.title}
                   details={part.details}
@@ -553,6 +597,8 @@ export default function UserHome() {
                   status={part.status}
                   isConnected={true}
                   image={part.image}
+                  onVoirPlus={() => navigate(`/part-details/${part.id}`)}
+                  onAchetez={() => navigate(`/Buy-part/${part.id}`)}
                 />
               </div>
             ))
