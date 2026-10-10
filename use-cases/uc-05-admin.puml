@@ -1,0 +1,103 @@
+@startuml
+' ──────────────────────────────────────────────────────────────────────────
+'  SIYANATI — Diagramme de Cas d'Utilisation — ADMINISTRATEUR (Admin)
+' ──────────────────────────────────────────────────────────────────────────
+skinparam dpi 200
+skinparam usecase {
+  BackgroundColor #E1BEE7
+  BorderColor #6A1B9A
+  FontSize 12
+  Padding 6
+}
+skinparam actor {
+  BorderColor #37474F
+  FontSize 13
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #6A1B9A
+  FontSize 14
+  FontStyle bold
+  RoundCorner 12
+  BackgroundColor #FAFAFA
+}
+skinparam ArrowThickness 1.5
+
+left to right direction
+
+actor "Admin" as Admin
+
+rectangle "Plateforme SIYANATI — Administration" {
+  usecase "Dashboard Admin\n& Statistiques" as A01
+  usecase "Gérer Utilisateurs" as A02
+  usecase "Lister Clients" as A03
+  usecase "Détails Client" as A04
+  usecase "Activer/Désactiver\nUtilisateur" as A05
+  usecase "Gérer Inscriptions\n(Approbation)" as A06
+  usecase "Approuver Magasin" as A07
+  usecase "Rejeter Magasin" as A08
+  usecase "Approuver Pro" as A09
+  usecase "Rejeter Pro" as A10
+  usecase "Voir Documents Profil" as A11
+  usecase "Gérer Magasins (Admin)" as A12
+  usecase "Détails Magasin" as A13
+  usecase "Pièces Magasin" as A14
+  usecase "Geler/Dégeler Magasin" as A15
+  usecase "Gérer Pros (Admin)" as A16
+  usecase "Détails Pro" as A17
+  usecase "Geler/Dégeler Pro" as A18
+  usecase "Gérer Pièces (Admin)" as A19
+  usecase "Vérifier/Valider Pièce" as A20
+  usecase "Gérer Signalements" as A21
+  usecase "Examiner Signalement" as A22
+  usecase "Voir Chat Signalé" as A23
+  usecase "Gérer Plans Abonnement" as A24
+  usecase "Créer/Modifier Plan" as A25
+  usecase "Gérer Abonnements" as A26
+  usecase "Suspendre Abonnement" as A27
+  usecase "Réactiver Abonnement" as A28
+  usecase "Paramètres Plateforme" as A29
+  usecase "Notifications Admin" as A30
+  usecase "Chat Admin" as A31
+  usecase "Se déconnecter" as A32
+}
+
+Admin --> A01
+Admin --> A02
+Admin --> A06
+Admin --> A12
+Admin --> A16
+Admin --> A19
+Admin --> A21
+Admin --> A24
+Admin --> A26
+Admin --> A29
+Admin --> A30
+Admin --> A31
+Admin --> A32
+
+A02 ..> A03 : <<include>>
+A02 ..> A04 : <<include>>
+A02 <.. A05 : <<extend>>
+A06 ..> A07 : <<include>>
+A06 ..> A08 : <<include>>
+A06 ..> A09 : <<include>>
+A06 ..> A10 : <<include>>
+A06 ..> A11 : <<include>>
+A12 ..> A13 : <<include>>
+A12 ..> A14 : <<include>>
+A12 <.. A15 : <<extend>>
+A16 ..> A17 : <<include>>
+A16 <.. A18 : <<extend>>
+A19 <.. A20 : <<extend>>
+A21 ..> A22 : <<include>>
+A21 <.. A23 : <<extend>>
+A24 ..> A25 : <<include>>
+A26 <.. A27 : <<extend>>
+A26 <.. A28 : <<extend>>
+
+note right of A06
+  L'admin examine les documents
+  soumis avant approbation
+end note
+@enduml

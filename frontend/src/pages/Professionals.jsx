@@ -26,7 +26,18 @@ const specialties = [
   "Diagnostic électronique",
   "Services automobiles divers",
 ];
-const wilayas = ["Toutes", "Alger", "Oran", "Constantine", "Sétif", "Blida"];
+const wilayas = [
+  "Toutes", "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra",
+  "Béchar", "Blida", "Bouira", "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret",
+  "Tizi Ouzou", "Alger", "Djelfa", "Jijel", "Sétif", "Saïda", "Skikda",
+  "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem",
+  "M'Sila", "Mascara", "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arreridj",
+  "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt", "El Oued", "Khenchela",
+  "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent",
+  "Ghardaïa", "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal",
+  "Béni Abbès", "In Salah", "In Guezzam", "Touggourt", "Djanet", "El M'Ghair",
+  "El Meniaa"
+];
 const ratings = ["Toutes", "4.5+", "4.0+", "3.5+"];
 const experiences = ["Toutes", "3+ ans", "5+ ans", "8+ ans"];
 const availabilities = ["Toutes", "Disponible", "Indisponible"];

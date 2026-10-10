@@ -1,0 +1,208 @@
+@startuml
+' ──────────────────────────────────────────────────────────────────────────
+'  SIYANATI — Diagramme de Cas d'Utilisation Général (Vue d'ensemble)
+'  Tous les acteurs avec leurs cas d'utilisation principaux
+' ──────────────────────────────────────────────────────────────────────────
+skinparam dpi 200
+
+skinparam usecase {
+  BackgroundColor<<shared>> #C8E6C9
+  BackgroundColor<<customer>> #BBDEFB
+  BackgroundColor<<professional>> #FFE0B2
+  BackgroundColor<<store>> #F8BBD0
+  BackgroundColor<<admin>> #E1BEE7
+  BorderColor #546E7A
+  ArrowColor #455A64
+  FontSize 11
+  Padding 5
+}
+
+skinparam actor {
+  BackgroundColor #ECEFF1
+  BorderColor #37474F
+  FontSize 12
+  FontStyle bold
+}
+
+skinparam rectangle {
+  BorderColor #1565C0
+  FontSize 14
+  FontStyle bold
+  RoundCorner 12
+  BackgroundColor #FAFAFA
+}
+
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #FBC02D
+  FontSize 9
+}
+
+skinparam ArrowThickness 1.5
+skinparam Padding 3
+
+left to right direction
+
+' ══════════════════════════════════════════════════
+'  ACTORS
+' ══════════════════════════════════════════════════
+actor "Visiteur\n(Guest)" as Guest
+actor "Client\n(Customer)" as Customer
+actor "Professionnel" as Professional
+actor "Magasin\n(Store)" as Store
+actor "Admin" as Admin
+actor "Edahabia\n(Paiement)" as PayGW #LightCoral
+
+Customer --|> Guest
+Professional --|> Guest
+Store --|> Guest
+
+' ══════════════════════════════════════════════════
+'  SYSTEM — Main Use Cases Only
+' ══════════════════════════════════════════════════
+rectangle "Plateforme SIYANATI" {
+
+  ' ── Shared / Auth ──
+  usecase "S'inscrire" as UC1 <<shared>>
+  usecase "Se connecter" as UC2 <<shared>>
+  usecase "Se déconnecter" as UC3 <<shared>>
+  usecase "Réinitialiser MDP" as UC4 <<shared>>
+  usecase "Consulter Catalogue" as UC5 <<shared>>
+  usecase "Rechercher par\nCompatibilité" as UC6 <<shared>>
+  usecase "Lister Magasins" as UC7 <<shared>>
+  usecase "Lister Professionnels" as UC8 <<shared>>
+  usecase "Forum Diagnostic" as UC9 <<shared>>
+
+  ' ── Customer ──
+  usecase "Gérer Profil" as UC10 <<customer>>
+  usecase "Gérer Véhicules" as UC11 <<customer>>
+  usecase "Gérer Comptes CCP" as UC12 <<customer>>
+  usecase "Passer Commande" as UC13 <<customer>>
+  usecase "Historique Commandes" as UC14 <<customer>>
+  usecase "Prendre RDV" as UC15 <<customer>>
+  usecase "Historique RDV" as UC16 <<customer>>
+  usecase "Publier Pièce\nà Vendre" as UC17 <<customer>>
+  usecase "Écrire Avis" as UC18 <<customer>>
+  usecase "Signaler Contenu" as UC19 <<customer>>
+  usecase "Gérer Favoris" as UC20 <<customer>>
+  usecase "Publier Post\nDiagnostic" as UC21 <<customer>>
+  usecase "Chat Client" as UC22 <<customer>>
+  usecase "Notifications" as UC23 <<customer>>
+
+  ' ── Professional ──
+  usecase "Dashboard Pro" as UC30 <<professional>>
+  usecase "Gérer Profil Pro" as UC31 <<professional>>
+  usecase "Gérer Planning" as UC32 <<professional>>
+  usecase "Gérer RDV Reçus" as UC33 <<professional>>
+  usecase "Consulter Avis" as UC34 <<professional>>
+  usecase "Souscrire\nAbonnement Pro" as UC35 <<professional>>
+  usecase "Chat Pro" as UC36 <<professional>>
+  usecase "Notifications Pro" as UC37 <<professional>>
+
+  ' ── Store ──
+  usecase "Dashboard Magasin" as UC40 <<store>>
+  usecase "Gérer Profil Magasin" as UC41 <<store>>
+  usecase "Gérer Inventaire" as UC42 <<store>>
+  usecase "Gérer Commandes\n(Store)" as UC43 <<store>>
+  usecase "Consulter Avis\nMagasin" as UC44 <<store>>
+  usecase "Souscrire\nAbonnement Mag" as UC45 <<store>>
+  usecase "Chat Magasin" as UC46 <<store>>
+  usecase "Notifications Mag" as UC47 <<store>>
+
+  ' ── Admin ──
+  usecase "Dashboard Admin\n& Statistiques" as UC50 <<admin>>
+  usecase "Gérer Utilisateurs" as UC51 <<admin>>
+  usecase "Gérer Inscriptions\n(Approbation)" as UC52 <<admin>>
+  usecase "Gérer Magasins\n(Admin)" as UC53 <<admin>>
+  usecase "Gérer Pros (Admin)" as UC54 <<admin>>
+  usecase "Gérer Pièces\n(Admin)" as UC55 <<admin>>
+  usecase "Gérer Signalements" as UC56 <<admin>>
+  usecase "Gérer Plans\nAbonnement" as UC57 <<admin>>
+  usecase "Gérer Abonnements" as UC58 <<admin>>
+  usecase "Paramètres\nPlateforme" as UC59 <<admin>>
+  usecase "Chat Admin" as UC60 <<admin>>
+}
+
+' ══════════════════════════════════════════════════
+'  ASSOCIATIONS
+' ══════════════════════════════════════════════════
+
+Guest -- UC1
+Guest -- UC2
+Guest -- UC4
+Guest -- UC5
+Guest -- UC6
+Guest -- UC7
+Guest -- UC8
+Guest -- UC9
+
+Customer -- UC10
+Customer -- UC11
+Customer -- UC12
+Customer -- UC13
+Customer -- UC14
+Customer -- UC15
+Customer -- UC16
+Customer -- UC17
+Customer -- UC18
+Customer -- UC19
+Customer -- UC20
+Customer -- UC21
+Customer -- UC22
+Customer -- UC23
+Customer -- UC3
+
+Professional -- UC30
+Professional -- UC31
+Professional -- UC32
+Professional -- UC33
+Professional -- UC34
+Professional -- UC35
+Professional -- UC36
+Professional -- UC37
+Professional -- UC3
+
+Store -- UC40
+Store -- UC41
+Store -- UC42
+Store -- UC43
+Store -- UC44
+Store -- UC45
+Store -- UC46
+Store -- UC47
+Store -- UC3
+
+Admin -- UC50
+Admin -- UC51
+Admin -- UC52
+Admin -- UC53
+Admin -- UC54
+Admin -- UC55
+Admin -- UC56
+Admin -- UC57
+Admin -- UC58
+Admin -- UC59
+Admin -- UC60
+Admin -- UC3
+
+PayGW -- UC13
+PayGW -- UC15
+PayGW -- UC35
+PayGW -- UC45
+
+note right of UC6
+  Filtrage auto par véhicule
+  (Marque / Modèle / Année)
+end note
+
+note left of PayGW
+  Edahabia (Algérie Poste)
+  ou Paiement à la livraison
+end note
+
+note right of UC52
+  L'admin examine les documents
+  soumis avant approbation
+end note
+
+@enduml

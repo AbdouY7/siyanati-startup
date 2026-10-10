@@ -349,11 +349,14 @@ const verifyPart = async (req, res, next) => {
   }
 };
 
-// Delete a part. Compatibility rows are deleted by Prisma cascade.
+// Delete a part. If it has orders, soft-delete it by anonymizing seller_id to preserve order history.
 const deletePart = async (req, res, next) => {
   try {
     const existing = await prisma.part.findUnique({
       where: { id: req.params.id },
+      include: {
+        order_items: { select: { id: true }, take: 1 } // Just check if it has any orders
+      }
     });
 
     if (!existing) {
@@ -369,9 +372,22 @@ const deletePart = async (req, res, next) => {
       });
     }
 
-    await prisma.part.delete({
-      where: { id: req.params.id },
-    });
+    if (existing.order_items && existing.order_items.length > 0) {
+      // Soft delete: hide from seller's dashboard and catalog, free up SKU uniqueness by changing seller_id
+      await prisma.part.update({
+        where: { id: req.params.id },
+        data: {
+          is_active: false,
+          seller_id: `DELETED_${existing.seller_id}`,
+          sku: null,
+        },
+      });
+    } else {
+      // Hard delete is safe if there are no order items
+      await prisma.part.delete({
+        where: { id: req.params.id },
+      });
+    }
 
     res.json({ success: true, message: "Part deleted successfully" });
   } catch (error) {

@@ -1,0 +1,77 @@
+@startuml
+' ──────────────────────────────────────────────────────────────────────────
+'  SIYANATI — Diagramme de Cas d'Utilisation — MAGASIN (Store)
+' ──────────────────────────────────────────────────────────────────────────
+skinparam dpi 200
+skinparam usecase {
+  BackgroundColor #F8BBD0
+  BorderColor #AD1457
+  FontSize 12
+  Padding 6
+}
+skinparam actor {
+  BorderColor #37474F
+  FontSize 13
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #AD1457
+  FontSize 14
+  FontStyle bold
+  RoundCorner 12
+  BackgroundColor #FAFAFA
+}
+skinparam ArrowThickness 1.5
+
+left to right direction
+
+actor "Magasin\n(Store)" as Store
+actor "Edahabia\n(Paiement)" as PayGW #LightCoral
+
+rectangle "Plateforme SIYANATI — Magasin" {
+  usecase "Dashboard Magasin" as S01
+  usecase "Gérer Profil Magasin" as S02
+  usecase "Modifier Profil Magasin" as S03
+  usecase "Gérer Inventaire\nde Pièces" as S04
+  usecase "Ajouter Pièce" as S05
+  usecase "Modifier Pièce" as S06
+  usecase "Supprimer Pièce" as S07
+  usecase "Définir Compatibilité" as S08
+  usecase "Gérer Commandes" as S09
+  usecase "Confirmer Commande" as S10
+  usecase "Expédier Commande" as S11
+  usecase "Marquer Livré" as S12
+  usecase "Consulter Avis\nMagasin" as S13
+  usecase "Notifications Magasin" as S14
+  usecase "Souscrire\nAbonnement Magasin" as S15
+  usecase "Payer Abonnement" as S16
+  usecase "Annuler Abonnement" as S17
+  usecase "Chat Magasin" as S18
+  usecase "Forum Diagnostic\n(Magasin)" as S19
+  usecase "Se déconnecter" as S20
+}
+
+Store --> S01
+Store --> S02
+Store --> S04
+Store --> S09
+Store --> S13
+Store --> S14
+Store --> S15
+Store --> S18
+Store --> S19
+Store --> S20
+
+PayGW --> S16
+
+S02 ..> S03 : <<include>>
+S04 ..> S05 : <<include>>
+S04 <.. S06 : <<extend>>
+S04 <.. S07 : <<extend>>
+S05 ..> S08 : <<include>>
+S09 ..> S10 : <<include>>
+S09 <.. S11 : <<extend>>
+S09 <.. S12 : <<extend>>
+S15 ..> S16 : <<include>>
+S15 <.. S17 : <<extend>>
+@enduml

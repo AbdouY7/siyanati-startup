@@ -6,10 +6,21 @@ import DropDownList from "../components/uiComponents/DropDownList";
 import { getAllStores } from "../services/storeService";
 import { getImageUrl } from "../utils/imageUtils";
 
-const wilayas = ["Toutes", "Sétif", "Alger", "Annaba", "Oran"];
+const wilayas = [
+  "Toutes", "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra",
+  "Béchar", "Blida", "Bouira", "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret",
+  "Tizi Ouzou", "Alger", "Djelfa", "Jijel", "Sétif", "Saïda", "Skikda",
+  "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem",
+  "M'Sila", "Mascara", "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arreridj",
+  "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt", "El Oued", "Khenchela",
+  "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent",
+  "Ghardaïa", "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal",
+  "Béni Abbès", "In Salah", "In Guezzam", "Touggourt", "Djanet", "El M'Ghair",
+  "El Meniaa"
+];
 const ratings = ["Toutes", "4.5+", "4.0+", "3.5+"];
 const experiences = ["Toutes", "2+ ans", "5+ ans", "8+ ans"];
-const availabilities = ["Toutes", "Disponible", "Sur commande"];
+const availabilities = ["Toutes", "Disponible", "Indisponible"];
 
 // Removed inline FilterDropdown
 
@@ -68,7 +79,10 @@ export default function Magasins() {
       (rating === "4.5+" && s.rating_avg >= 4.5) ||
       (rating === "4.0+" && s.rating_avg >= 4.0) ||
       (rating === "3.5+" && s.rating_avg >= 3.5);
-    const matchAvail = availability === "Toutes";
+    const matchAvail =
+      availability === "Toutes" ||
+      (availability === "Disponible" && !s.is_frozen) ||
+      (availability === "Indisponible" && s.is_frozen);
     return matchSearch && matchWilaya && matchRating && matchAvail;
   });
 
@@ -209,7 +223,7 @@ export default function Magasins() {
         ) : (
           !isLoading &&
           !error && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
               {filtered.map((store) => (
                 <ShopCards
                   key={store.id}

@@ -1,0 +1,75 @@
+@startuml
+' ──────────────────────────────────────────────────────────────────────────
+'  SIYANATI — Diagramme de Cas d'Utilisation Général — VISITEUR (Guest)
+' ──────────────────────────────────────────────────────────────────────────
+skinparam dpi 200
+skinparam usecase {
+  BackgroundColor #C8E6C9
+  BorderColor #2E7D32
+  FontSize 12
+  Padding 6
+}
+skinparam actor {
+  BorderColor #37474F
+  FontSize 13
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #1565C0
+  FontSize 14
+  FontStyle bold
+  RoundCorner 12
+  BackgroundColor #FAFAFA
+}
+skinparam ArrowThickness 1.5
+
+left to right direction
+
+actor "Visiteur\n(Guest)" as Guest
+
+rectangle "Plateforme SIYANATI — Visiteur" {
+  usecase "S'inscrire" as R
+  usecase "S'inscrire Client" as RC
+  usecase "S'inscrire Pro" as RP
+  usecase "S'inscrire Magasin" as RS
+  usecase "Se connecter" as LI
+  usecase "Google OAuth" as GO
+  usecase "Réinitialiser MDP" as RW
+  usecase "Vérifier Email (OTP)" as VE
+  usecase "Vérifier Téléphone" as VP
+  usecase "Consulter Catalogue" as BC
+  usecase "Rechercher par\nCompatibilité" as SC
+  usecase "Voir Détails Pièce" as PD
+  usecase "Lister Magasins" as LM
+  usecase "Profil Magasin" as PM
+  usecase "Lister\nProfessionnels" as LP
+  usecase "Profil Professionnel" as PP
+  usecase "Forum Diagnostic" as FD
+  usecase "Voir Post Diagnostic" as VPD
+}
+
+Guest --> R
+Guest --> LI
+Guest --> RW
+Guest --> BC
+Guest --> SC
+Guest --> PD
+Guest --> LM
+Guest --> PM
+Guest --> LP
+Guest --> PP
+Guest --> FD
+Guest --> VPD
+
+RC --|> R
+RP --|> R
+RS --|> R
+R ..> VE : <<include>>
+R <.. VP : <<extend>>
+LI <.. GO : <<extend>>
+
+note right of SC
+  Filtrage auto par véhicule
+  (Marque / Modèle / Année)
+end note
+@enduml

@@ -1,0 +1,113 @@
+@startuml
+' ──────────────────────────────────────────────────────────────────────────
+'  SIYANATI — Diagramme de Cas d'Utilisation — CLIENT (Customer)
+' ──────────────────────────────────────────────────────────────────────────
+skinparam dpi 200
+skinparam usecase {
+  BackgroundColor #BBDEFB
+  BorderColor #1565C0
+  FontSize 12
+  Padding 6
+}
+skinparam actor {
+  BorderColor #37474F
+  FontSize 13
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #1565C0
+  FontSize 14
+  FontStyle bold
+  RoundCorner 12
+  BackgroundColor #FAFAFA
+}
+skinparam ArrowThickness 1.5
+
+left to right direction
+
+actor "Client\n(Customer)" as Customer
+actor "Edahabia\n(Paiement)" as PayGW #LightCoral
+
+rectangle "Plateforme SIYANATI — Client" {
+  usecase "Gérer Profil" as C01
+  usecase "Modifier Profil" as C02
+  usecase "Gérer Véhicules" as C03
+  usecase "Ajouter Véhicule" as C04
+  usecase "Modifier Véhicule" as C05
+  usecase "Supprimer Véhicule" as C06
+  usecase "Gérer Comptes CCP" as C07
+  usecase "Passer Commande" as C08
+  usecase "Ajouter au Panier" as C09
+  usecase "Valider Panier" as C10
+  usecase "Payer Commande" as C11
+  usecase "Historique Commandes" as C12
+  usecase "Annuler Commande" as C13
+  usecase "Prendre RDV" as C14
+  usecase "Voir Créneaux" as C15
+  usecase "Payer RDV" as C16
+  usecase "Historique RDV" as C17
+  usecase "Annuler RDV" as C18
+  usecase "Publier Pièce\nà Vendre" as C19
+  usecase "Gérer Mes Pièces" as C20
+  usecase "Écrire Avis" as C21
+  usecase "Signaler Contenu" as C22
+  usecase "Gérer Favoris" as C23
+  usecase "Suivre Magasin" as C24
+  usecase "Sauvegarder Pro" as C25
+  usecase "Pièce Favoris" as C26
+  usecase "Publier Post\nDiagnostic" as C27
+  usecase "Commenter\nDiagnostic" as C28
+  usecase "Réagir Post" as C29
+  usecase "Sauvegarder Post\nDiagnostic" as C30
+  usecase "Accepter Réponse" as C31
+  usecase "Chat Client" as C32
+  usecase "Notifications" as C33
+  usecase "Se déconnecter" as C35
+  usecase "Supprimer Compte" as C34
+}
+
+Customer --> C01
+Customer --> C03
+Customer --> C07
+Customer --> C08
+Customer --> C12
+Customer --> C14
+Customer --> C17
+Customer --> C19
+Customer --> C20
+Customer --> C21
+Customer --> C22
+Customer --> C23
+Customer --> C27
+Customer --> C28
+Customer --> C29
+Customer --> C30
+Customer --> C31
+Customer --> C32
+Customer --> C33
+Customer --> C34
+Customer --> C35
+
+PayGW --> C11
+PayGW --> C16
+
+C01 ..> C02 : <<include>>
+C03 ..> C04 : <<include>>
+C03 <.. C05 : <<extend>>
+C03 <.. C06 : <<extend>>
+C08 ..> C09 : <<include>>
+C08 ..> C10 : <<include>>
+C08 ..> C11 : <<include>>
+C12 <.. C13 : <<extend>>
+C14 ..> C15 : <<include>>
+C14 <.. C16 : <<extend>>
+C17 <.. C18 : <<extend>>
+C23 ..> C24 : <<include>>
+C23 ..> C25 : <<include>>
+C23 ..> C26 : <<include>>
+
+note right of C11
+  Paiement Edahabia
+  ou Cash on Delivery
+end note
+@enduml

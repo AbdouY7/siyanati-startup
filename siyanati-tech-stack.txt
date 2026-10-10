@@ -1,0 +1,60 @@
+================================================================
+SIYANATI - STACK TECHNIQUE & TECHNOLOGIES UTILISÉES
+(Fiche récapitulative pour présentation / jury)
+================================================================
+
+1. ARCHITECTURE GLOBALE
+----------------------------------------------------------------
+• Architecture Client-Serveur séparée (Découplage Frontend / Backend).
+• Communication via API RESTful (Axios côté client) et WebSockets pour le temps réel.
+• Système multi-rôles : Visiteur, Client, Professionnel, Magasin, Admin.
+
+2. FRONTEND (Côté Client)
+----------------------------------------------------------------
+• Framework Principal : React.js (version 19) propulsé par Vite.js pour une compilation ultra-rapide.
+• Gestion d'État (State Management) : Zustand (Léger, performant et évite le boilerplate de Redux).
+• Routage : React Router v7 pour la navigation fluide (Single Page Application).
+• Design & UI : 
+  - TailwindCSS v4 (Stylisation utilitaire, responsive design).
+  - Framer Motion (Animations fluides et interactions dynamiques).
+  - Lucide-React & React-Icons (Typographie et icônes).
+• Cartographie : Leaflet & React-Leaflet (Pour la géolocalisation des garages/magasins).
+• Visualisation de données : Recharts (Pour les statistiques du Dashboard Admin/Pro).
+• Internationalisation (i18n) : i18next (Support multi-langues).
+• Temps réel : Socket.io-client (Pour le chat et les notifications instantanées).
+
+3. BACKEND (Côté Serveur)
+----------------------------------------------------------------
+• Environnement & Framework : Node.js avec Express.js.
+• Base de Données : PostgreSQL.
+• ORM (Object-Relational Mapping) : Prisma (Garantit la sécurité des types et facilite les requêtes SQL complexes).
+• Temps Réel : Socket.io (Serveur WebSocket pour synchroniser les statuts de commande, RDV et le chat en direct).
+• Tâches planifiées : Node-cron (CRON jobs, ex: expiration des abonnements, rappels de RDV).
+• Gestion des fichiers : Multer (Interception des uploads avant envoi vers le cloud).
+• Validation des données : Zod (Schémas de validation stricts pour sécuriser les entrées API).
+
+4. SÉCURITÉ & AUTHENTIFICATION
+----------------------------------------------------------------
+• Authentification : JWT (JSON Web Tokens) avec gestion des Refresh Tokens.
+• Hachage des mots de passe : Bcrypt (Sécurité renforcée des données sensibles).
+• Sécurité API : 
+  - Helmet.js (Protection contre les failles XSS, sécurisation des headers HTTP).
+  - CORS (Contrôle strict des domaines autorisés).
+  - Express-Rate-Limit (Protection contre les attaques Brute-force et DDoS).
+• Social Login : Google OAuth 2.0.
+
+5. SERVICES TIERS & API EXTERNES (Cloud & Intégrations)
+----------------------------------------------------------------
+• Stockage Médias : Cloudinary (Hébergement optimisé des images de profils et des pièces).
+• Envoi d'Emails : Nodemailer (Confirmation d'email, réinitialisation de mot de passe).
+• Envoi de SMS (OTP) : Twilio (Vérification des numéros de téléphone).
+• Paiement : Intégration prévue pour Edahabia (Algérie Poste) et Cash on Delivery (Paiement à la livraison).
+
+================================================================
+POINTS CLÉS À METTRE EN AVANT DEVANT LE JURY :
+================================================================
+👉 Performance : Utilisation de Vite + React 19 pour un chargement instantané côté client.
+👉 Maintenabilité : Utilisation de Prisma ORM qui permet d'avoir un schéma de base de données lisible, évolutif et typé.
+👉 Expérience Utilisateur (UX) : Interface moderne avec TailwindCSS + animations Framer Motion, et notifications en temps réel grâce à Socket.io.
+👉 Sécurité robuste : Zod pour bloquer les mauvaises requêtes, Helmet/Rate-Limiter contre les attaques, et JWT sécurisé.
+👉 Évolutivité (Scalability) : Architecture découplée prête à être déployée sur le cloud (ex: frontend sur Vercel, backend sur Render/VPS, BDD sur Supabase/AWS).

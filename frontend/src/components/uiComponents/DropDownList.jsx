@@ -55,7 +55,7 @@ const DropDownList = ({ name, placeholder, options, value, onChange }) => {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 min-w-[160px]">
+        <div className="absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 min-w-[160px] max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
           {/* "All / reset" option */}
           <button
             type="button"

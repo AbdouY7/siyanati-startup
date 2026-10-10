@@ -559,8 +559,6 @@ const updateMyProfessionalProfile = async (req, res, next) => {
     if (wilaya !== undefined) profileUpdateData.wilaya = wilaya;
     if (location_address !== undefined)
       profileUpdateData.location_address = location_address;
-    if (location_coordinates !== undefined)
-      profileUpdateData.location_coordinates = location_coordinates;
     if (bio !== undefined) profileUpdateData.bio = bio;
     if (hourly_rate_dzd !== undefined) {
       profileUpdateData.hourly_rate_dzd =

@@ -1,0 +1,75 @@
+@startuml
+' ──────────────────────────────────────────────────────────────────────────
+'  SIYANATI — Diagramme de Cas d'Utilisation — PROFESSIONNEL
+' ──────────────────────────────────────────────────────────────────────────
+skinparam dpi 200
+skinparam usecase {
+  BackgroundColor #FFE0B2
+  BorderColor #E65100
+  FontSize 12
+  Padding 6
+}
+skinparam actor {
+  BorderColor #37474F
+  FontSize 13
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #E65100
+  FontSize 14
+  FontStyle bold
+  RoundCorner 12
+  BackgroundColor #FAFAFA
+}
+skinparam ArrowThickness 1.5
+
+left to right direction
+
+actor "Professionnel" as Professional
+actor "Edahabia\n(Paiement)" as PayGW #LightCoral
+
+rectangle "Plateforme SIYANATI — Professionnel" {
+  usecase "Dashboard Pro" as P01
+  usecase "Gérer Profil Pro" as P02
+  usecase "Modifier Profil Pro" as P03
+  usecase "Gérer Garage" as P04
+  usecase "Gérer Planning" as P05
+  usecase "Définir Horaires\nHebdomadaires" as P06
+  usecase "Ajouter Exception\n(Jour Off)" as P07
+  usecase "Gérer RDV Reçus" as P08
+  usecase "Confirmer RDV" as P09
+  usecase "Terminer RDV" as P10
+  usecase "Annuler RDV (Pro)" as P11
+  usecase "Consulter Avis Pro" as P12
+  usecase "Notifications Pro" as P13
+  usecase "Souscrire\nAbonnement Pro" as P14
+  usecase "Payer Abonnement" as P15
+  usecase "Annuler Abonnement" as P16
+  usecase "Chat Pro" as P17
+  usecase "Forum Diagnostic\n(Pro)" as P18
+  usecase "Se déconnecter" as P19
+}
+
+Professional --> P01
+Professional --> P02
+Professional --> P05
+Professional --> P08
+Professional --> P12
+Professional --> P13
+Professional --> P14
+Professional --> P17
+Professional --> P18
+Professional --> P19
+
+PayGW --> P15
+
+P02 ..> P03 : <<include>>
+P02 <.. P04 : <<extend>>
+P05 ..> P06 : <<include>>
+P05 <.. P07 : <<extend>>
+P08 ..> P09 : <<include>>
+P08 <.. P10 : <<extend>>
+P08 <.. P11 : <<extend>>
+P14 ..> P15 : <<include>>
+P14 <.. P16 : <<extend>>
+@enduml
